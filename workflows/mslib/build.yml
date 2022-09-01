@@ -1,0 +1,246 @@
+name: Build
+
+# Kontrolliert, welche Events die Action auslösen
+on:
+  push:
+    branches-ignore:
+      - release
+  pull_request:
+    branches-ignore:
+      - release
+      - develop
+  workflow_dispatch:
+    inputs:
+      gradleOptions:
+        description: 'Zusätzliche optionale Gradle Parameter'
+        required: false
+      actionsRepositoryBranch:
+        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        required: false
+        default: main
+
+jobs:
+  build:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+    env:
+      GRADLE_COMMAND: clean build
+      PUBLISH_COMMAND: publish artifactoryPublish
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER,
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/JIRA_URL = JIRA_URL 
+
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ env.TOKEN }}
+
+      # Branch name ermitteln (wenn kein Pull Request)
+      - name: Get branch name (no pull_request)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      # Branch name ermitteln (wenn Pull Request)
+      - name: Get branch name (pull request)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
+      # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
+      - name: Determine build type
+        shell: bash
+        run: |
+          if  [[ $BRANCH_NAME == release* ]] ;
+          then
+            echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
+            echo "DRAFT=false" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == develop ]] ;
+          then
+            echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
+            echo "DRAFT=true" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == feature* ]] ;
+          then
+            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == bugfix* ]] ;
+          then
+            echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
+          else
+            # default ist feature
+            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+          fi
+
+      # Build Properties einlesen
+      - name: Read build.properties
+        shell: bash
+        run: |
+          cat ./.github/build.properties >> $GITHUB_ENV
+
+      # JAVA installieren
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+
+      # Checkout developer-tools (master) in ./devtools
+      - name: checkout atldevtools
+        uses: actions/checkout@v2
+        with:
+          repository: 'freenet-group/atldevtools'
+          token: ${{ env.TOKEN }}
+          path: 'devtools'
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        if: ${{ env.COMPONENT != '' }}
+        uses: actions/checkout@v3
+        with:
+          repository: 'freenet-group/mcbscore_actions'
+          token: ${{ env.TOKEN }}
+          path: 'mcbscore/actions'
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # Komponenten Version ermitteln
+      - name: Determine component version
+        id: componentVersion
+        if: ${{ env.COMPONENT != '' }}
+        uses: ./mcbscore/actions/createVersion
+        with:
+          JIRA_URL: ${{ env.JIRA_URL }}
+          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
+          MATCH: ${{ env.TAG_PATTERN }}
+          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          COMPONENT: ${{ env.COMPONENT }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+
+      # COMPONENT_VERSION Umgebungsvariable setzen
+      - name: Set component version
+        if: ${{ env.COMPONENT != '' }}
+        shell: bash
+        run: |
+          if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+          then
+            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+          else
+            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
+          fi
+          echo "RAW_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+          echo "issueList=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+
+      - name: Determine Version
+        if: ${{ env.COMPONENT == '' }}
+        shell: bash
+        run: |
+          # letztes Tag ermitteln
+          LAST_VERSION=`git describe --abbrev=0 --tags --match "[0-9]*"`
+          echo "last version : ${LAST_VERSION}"
+          echo "RAW_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')" >> $GITHUB_ENV
+
+          if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+          then
+            echo "COMPONENT_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')" >> $GITHUB_ENV
+          else
+            echo "COMPONENT_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')-SNAPSHOT" >> $GITHUB_ENV
+          fi
+
+          echo "version : ${{ env.COMPONENT_VERSION }}"
+
+      - name: Add Sonarqube Gradle Task
+        if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
+        run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} sonarqube -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }}" >> $GITHUB_ENV
+
+      - name: Add Publish Gradle Task
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{env.PUBLISH_COMMAND}}" >> $GITHUB_ENV
+
+      # Gradle Build
+      - name: Build with Gradle
+        run: sh ./gradlew -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ secrets.MD_ARTIFACTORY_USER }} -PartifactoryPassword=${{ secrets.MD_ARTIFACTORY_PW }} ${{ env.GRADLE_COMMAND }} ${{ github.event.inputs.gradleOptions }}
+
+      # Existierende Draft Releases löschen
+      - name: Delete draft releases
+        if: env.BUILD_TYPE == 'DEVELOP'
+        uses: hugo19941994/delete-draft-releases@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+
+      # Release erstellen
+      - name: Create Release
+        id: create_release
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          tag_name: ${{ env.COMPONENT_VERSION }}
+          release_name: ${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
+          prerelease: false
+
+      # Release JAR hinzufügen
+      - name: Upload Release JAR
+        id: upload-release-jar
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.APPLICATION_JAR_NAME != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      # ##################################################################################
+      # Re-Merge
+      # ##################################################################################
+      - name: Merge development -> staging
+        if: env.BUILD_TYPE == 'RELEASE'
+        uses: devmasx/merge-branch@master
+        with:
+          type: now
+          from_branch: release
+          target_branch: develop
+          github_token: ${{ env.TOKEN }}
+
+      # Starte postBuild auf RELEASE
+      - name: Invoke postBuild workflow
+        if: env.BUILD_TYPE == 'RELEASE' && hashFiles('**/postBuild.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PostBuild
+          token: ${{ env.TOKEN }}
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.issueList }}" }'
