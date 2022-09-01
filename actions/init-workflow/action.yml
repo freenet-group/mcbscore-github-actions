@@ -10,6 +10,10 @@ inputs:
     description: auszulesende AWS Parameter
     default: |
       /github/secrets/mcbs_token = TOKEN
+  installJava:
+    description: JDK installieren?
+    type: boolean
+    default: false
 
 runs:
   using: "composite"
@@ -26,4 +30,16 @@ runs:
     - name: Read workflow.properties
       shell: bash
       run: |
-        cat ./.github/workflow.properties >> $GITHUB_ENV
+        # Einlesen beider Dateien, da build.properties in workflow.properties umbenannt werden sollte. Somit bleibt es
+        # abwärtskompatibel
+        if [ -f ./.github/workflow.properties ]; then cat ./.github/workflow.properties >> $GITHUB_ENV; fi
+        if [ -f ./.github/build.properties ]; then cat ./.github/build.properties >> $GITHUB_ENV; fi
+
+    # JAVA installieren
+    - name: Set up JDK
+      if: ${{ inputs.installJava }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: zulu
+        java-version: ${{ env.JAVA_VERSION }}
+
