@@ -77,7 +77,7 @@ runs:
         for WORKFLOW in "${WORKFLOWS[@]}"; do
           WORKFLOW=$(sed -e 's/^[[:space:]]*//' <<< "$WORKFLOW")
           SOURCE_RELATIVE=workflows/${{ matrix.repository.group }}/$WORKFLOW.yml
-          SOURCE=$WORKING_DIRECTORY/mcbscore_workflows/$SOURCE_RELATIVE
+          SOURCE=$WORKING_DIRECTORY/$SOURCE_RELATIVE
           TARGET=./.github/workflows/$(basename -- "$WORKFLOW.yml")
 
           {
