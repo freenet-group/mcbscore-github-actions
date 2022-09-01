@@ -6,15 +6,16 @@ on:
       group:
         description: 'Zu aktualisierende Gruppe'
         type: choice
-        required: false
+        required: true
+        default: ALL
         options:
+          - ALL
           - mslib
           - test
-          -
 
 jobs:
   mslib:
-    if: ${{ github.event.inputs.group == 'mslib' || github.event.inputs.group == '' }}
+    if: ${{ github.event.inputs.group == 'mslib' || github.event.inputs.group == 'ALL' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -38,7 +39,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   test:
-    if: ${{ github.event.inputs.group == 'test' || github.event.inputs.group == '' }}
+    if: ${{ github.event.inputs.group == 'test' || github.event.inputs.group == 'ALL' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
