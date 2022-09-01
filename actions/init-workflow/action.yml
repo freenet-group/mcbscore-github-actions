@@ -1,0 +1,29 @@
+name: Initialize Workflow
+description: Generischer Workflow, der zur Initialisierung aller Workflows verwendet werden kann
+
+inputs:
+  awsAccessKeyId:
+    description: AWS Access Key Id
+  awsSecretAccessKey:
+    description: AWS Secret Access Key
+  awsParameterPairs:
+    description: auszulesende AWS Parameter
+    default: |
+      /github/secrets/mcbs_token = TOKEN
+
+runs:
+  using: "composite"
+  steps:
+    - id: read-aws-secrets
+      name: Read AWS Secrets
+      uses: ./.github/actions/read-aws-secrets
+      with:
+        awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
+        awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
+        awsParameterPairs: ${{ inputs.awsParameterPairs }}
+
+    # Workflow Properties einlesen
+    - name: Read workflow.properties
+      shell: bash
+      run: |
+        cat ./.github/workflow.properties >> $GITHUB_ENV
