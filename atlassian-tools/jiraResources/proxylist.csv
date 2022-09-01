@@ -1,0 +1,11 @@
+authorities-information;v1/authoritiesInformation;microservice;proxy
+OIDC;v2/oidc;microservice;proxy
+user;v2/user;microservice;proxy
+cuba;v1/usages;cuba;proxy
+customer;v1/customer/customers;customerProduct;proxy
+customerchange;v1/customer/customerChange;microservice;proxy
+customerproduct;v1/customerProduct;customerProduct;proxy
+invoice;v1/invoice;microservice;proxy
+billingaccount-frontend;v1/customer/billingAccounts;microservice;proxy
+contentprovider;v1/contentproviders;microservice;proxy
+abrms-health;abrms-healthcheck;microservice;proxy
