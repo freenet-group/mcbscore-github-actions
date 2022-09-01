@@ -1,0 +1,6 @@
+C|CPE |Die Applikation : \r\n\r\n   +CPE\r\n\r\nist zu testen.\r\n\r\nDanke...\r\n\r\n 
+A|Actions etc. |Die Applikationen : \r\n\r\n   +ActionProcessor,\r\n   +ActionFileReader,\r\n   +BarringImporter\r\n\r\nsind zu testen.\r\n\r\nDanke...\r\n\r\n
+B|Billing,Output etc. |Die Applikationen : \r\n\r\n   +RunBilling,\r\n   +BillOutput,\r\n   + ...\r\n\r\nsind zu testen.\r\n\r\nDanke...\r\n\r\n  
+K|Konfiguration |Die \r\n\r\n   +Konfiguration zu o.g. Release\r\n\r\nist zu testen.\r\n\r\nDanke...\r\n\r\n 
+G|Service-Applikation (MCBS-GUI) |Die Applikation : \r\n\r\n   +MCBSService-Applikation (GUI)\r\n\r\nist zu testen.\r\n\r\nDanke...\r\n\r\n 
+S|Stockimport etc. |Die Applikationen : \r\n\r\n   +StockImport,\r\n   +DocksFileReader,\r\n   +DocksFileWriter,\r\n   +DebitcardRechargeProcesso,\r\n   +Lagerapplikation (McStockApp),\r\n   +NSP\r\n\r\nsind zu testen.\r\n\r\nDanke...\r\n\r\n       

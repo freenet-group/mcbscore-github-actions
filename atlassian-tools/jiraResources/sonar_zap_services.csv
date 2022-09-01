@@ -1,0 +1,6 @@
+coverage;de.mobilcom.stock;stock-service
+coverage;de.mobilcom.network;network-service
+coverage;de.mobilcom.party;party-service
+coverage;de.mobilcom.fee;fee-service
+coverage;de.mobilcom.invoice;invoice-service
+coverage;de.mobilcom.contract;contract-service
