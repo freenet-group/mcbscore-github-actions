@@ -10,6 +10,7 @@ on:
         options:
           - mslib
           - test
+          -
 
 jobs:
   mslib:
