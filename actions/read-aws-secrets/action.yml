@@ -4,14 +4,15 @@ description: Liest Parameter aus dem AWS Parameter Store ein
 inputs:
   awsAccessKeyId:
     description: AWS Access Key Id
+    required: true
   awsSecretAccessKey:
     description: AWS Secret Access Key
+    required: true
   awsParameterPairs:
     description: |
       Kommaseparierte Liste von Key/Value Paaren einzulesender Parameter. Format '<key> = <value>'. Der Key ist der 
       Schlüssel im AWS Parameter Store. Der Value ist der Name der Umgebungsvariable, in die der Wert übertragen werden soll.
-    default: |
-      /github/secrets/mcbs_token = TOKEN
+    required: true
 
 runs:
   using: "composite"

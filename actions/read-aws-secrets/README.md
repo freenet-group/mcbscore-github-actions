@@ -11,9 +11,7 @@ Github Action zum Einlesen von Werten aus dem AWS Parameter Store. Die Daten wer
     required: true
 ### awsParameterPairs
     description: Kommaseparierte Liste von Key/Value Paaren einzulesender Parameter. Format: <key> = <value>. Der Key ist der Schlüssel im AWS Parameter Store. Der Value ist der Name der Umgebungsvariable, in die der Wert übertragen werden soll.
-    required: false
-    default: |
-        /github/secrets/mcbs_token = TOKEN 
+    required: true
 
 ---
 

@@ -9,10 +9,10 @@ inputs:
     description: Der Branch des Repositories
     required: true
   awsAccessKeyId:
-    description: Ein Github Token
+    description: AWS Access Key Id
     required: true
   awsSecretAccessKey:
-    description: Ein Github Token
+    description: AWS Secret Access Key
     required: true
 
 runs:
@@ -50,7 +50,7 @@ runs:
 
         if [ -d "$WORKFLOW_DIRECTORY" ]; then
           for filename in ./.github/workflows/*.yml; do
-            # remove path and extension
+            # Pfad und Dateiendung entfernen
             basename=$(basename -- "$filename" .yml)
 
             if ! grep --fixed --line-regexp --quiet -- "$basename" <<< "$WORKFLOWS"; then # $basename not contained in $WORKFLOWS

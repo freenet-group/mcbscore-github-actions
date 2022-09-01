@@ -1,5 +1,5 @@
 name: Initialize Workflow
-description: Generischer Workflow, der zur Initialisierung aller Workflows verwendet werden kann
+description: Generische Action, die zur Initialisierung aller Workflows verwendet werden kann
 
 inputs:
   awsAccessKeyId:
