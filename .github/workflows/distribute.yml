@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       group:
-        description: 'Zu aktualisierende Gruppe'
+        description: 'Die zu aktualisierende Gruppe. Per default werden "ALL (alle Workflows)" aktualisiert'
         type: choice
         required: true
         default: ALL
@@ -43,7 +43,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-github-test-repo, branch: main, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-github-test-repo, branch: main, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v3
         with:

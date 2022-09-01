@@ -18,23 +18,13 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # ##################################################################################
-    # AWS Secrets
-    # ##################################################################################
-
-    # Secrets aus AWS auslesen
-    - id: read_secrets
-      name: Read and set AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    - id: read-aws-secrets
+      name: Read AWS Secrets
+      uses: ./actions/read-aws-secrets
       with:
-        aws-access-key-id: ${{ inputs.awsAccessKeyId }}
-        aws-secret-access-key: ${{ inputs.awsSecretAccessKey }}
-        aws-region: 'eu-central-1'
-
-    - name: Read AWS Parameters
-      uses: dkershner6/aws-ssm-getparameters-action@v1
-      with:
-        parameterPairs: |
+        awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
+        awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
+        awsParameterPairs: |
           /github/secrets/mcbs_token = TOKEN,
           /github/secrets/mcbs_user = USER
 
