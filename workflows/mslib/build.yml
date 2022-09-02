@@ -44,6 +44,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER, 
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/JIRA_URL = JIRA_URL
+
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
         uses: actions/checkout@v3
@@ -61,13 +73,6 @@ jobs:
         name: Initialize Workflow
         uses: ./mcbscore-actions/actions/init-workflow
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          awsParameterPairs: |
-            /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/mcbs_user = USER, 
-            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
-            /github/common/JIRA_URL = JIRA_URL
           installJava: true
 
       # Branch name ermitteln (wenn kein Pull Request)
