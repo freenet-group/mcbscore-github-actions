@@ -96,7 +96,7 @@ runs:
         # read-aws-secrets composite action muß in jedes repo
         source=$workingDirectory/actions/read-aws-secrets/action.yml
         target=./.github/actions/read-aws-secrets/action.yml
-        cp "$source" "$target"
+        mkdir -p ./.github/actions/read-aws-secrets && cp "$source" "$target"
         git add -v -- "$target"
         
         git config user.email "it.abr.abba.entw@md.de"
