@@ -75,59 +75,9 @@ jobs:
         with:
           installJava: true
 
-      # Branch name ermitteln (wenn kein Pull Request)
-      - name: Get branch name (no pull_request)
-        if: github.event_name != 'pull_request'
-        shell: bash
-        run: |
-          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      # Branch name ermitteln (wenn Pull Request)
-      - name: Get branch name (pull request)
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-
-      # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
-      - name: Determine build type
-        shell: bash
-        run: |
-          if  [[ $BRANCH_NAME == release* ]] ;
-          then
-            echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
-            echo "DRAFT=false" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == develop ]] ;
-          then
-            echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
-            echo "DRAFT=true" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == feature* ]] ;
-          then
-            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == bugfix* ]] ;
-          then
-            echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
-          else
-            # default ist feature
-            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
-          fi
-
-      # Checkout developer-tools (master) in ./devtools
-      - name: checkout atldevtools
-        uses: actions/checkout@v2
-        with:
-          repository: 'freenet-group/atldevtools'
-          token: ${{ env.TOKEN }}
-          path: 'devtools'
-
-      # Die internen Actions auschecken
-      - name: checkout mcbscore actions
-        if: ${{ env.COMPONENT != '' }}
-        uses: actions/checkout@v3
-        with:
-          repository: 'freenet-group/mcbscore_actions'
-          token: ${{ env.TOKEN }}
-          path: 'mcbscore/actions'
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+      - id: determine-branch-type-and-name
+        name: Determine Branch Type And Name
+        uses: ./mcbscore-actions/actions/branch-type-and-name
 
       # Komponenten Version ermitteln
       - name: Determine component version
