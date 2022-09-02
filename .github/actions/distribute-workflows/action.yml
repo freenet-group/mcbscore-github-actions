@@ -93,6 +93,11 @@ runs:
           git add -v -- "$target"
         done
 
+        # read-aws-secrets composite action muß in jedes repo
+        source=$workingDirectory/actions/read-aws-secrets
+        target=./.github/actions/
+        cp -r "$source" "$target"
+        
         git config user.email "it.abr.abba.entw@md.de"
         git config user.name "${{ env.USER }}"
 
