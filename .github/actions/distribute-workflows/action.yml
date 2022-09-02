@@ -5,8 +5,14 @@ inputs:
   repositoryName:
     description: Der Name des Repositories
     required: true
+  repositoryGroup:
+    description: Die Gruppe der Repositories
+    required: true
   repositoryBranch:
     description: Der Branch des Repositories
+    required: true
+  workflows:
+    description: Kommaseparierte Liste der zu verteilenden Workflows
     required: true
   awsAccessKeyId:
     description: AWS Access Key Id
@@ -42,11 +48,11 @@ runs:
         set -e
 
         # Workflows in grep-freundliche zeilenweise List überführen
-        WORKFLOWS=$(tr , '\n' <<< '${{ matrix.repository.workflows }}' | sed -e 's/^[[:space:]]*//g')
+        WORKFLOWS=$(tr , '\n' <<< '${{ inputs.workflows }}' | sed -e 's/^[[:space:]]*//g')
 
         WORKING_DIRECTORY=$(pwd)
-        WORKFLOW_DIRECTORY=$WORKING_DIRECTORY/${{ matrix.repository.name }}/.github/workflows
-        cd -- '${{ matrix.repository.name }}'
+        WORKFLOW_DIRECTORY=$WORKING_DIRECTORY/${{ inputs.repositoryName }}/.github/workflows
+        cd -- '${{ inputs.repositoryName }}'
 
         if [ -d "$WORKFLOW_DIRECTORY" ]; then
           for filename in ./.github/workflows/*.yml; do
@@ -67,16 +73,16 @@ runs:
         set -e
 
         # Workflows in ein Array überführen
-        IFS=',' read -ra WORKFLOWS <<< "${{ matrix.repository.workflows }}"
+        IFS=',' read -ra WORKFLOWS <<< "${{ inputs.workflows }}"
 
         WORKING_DIRECTORY=$(pwd)
-        WORKFLOW_DIRECTORY=$WORKING_DIRECTORY/${{ matrix.repository.name }}/.github/workflows
-        cd -- '${{ matrix.repository.name }}'
+        WORKFLOW_DIRECTORY=$WORKING_DIRECTORY/${{ inputs.repositoryName }}/.github/workflows
+        cd -- '${{ inputs.repositoryName }}'
         mkdir -p -- "$WORKFLOW_DIRECTORY"
 
         for WORKFLOW in "${WORKFLOWS[@]}"; do
           WORKFLOW=$(sed -e 's/^[[:space:]]*//' <<< "$WORKFLOW")
-          SOURCE_RELATIVE=workflows/${{ matrix.repository.group }}/$WORKFLOW.yml
+          SOURCE_RELATIVE=workflows/${{ inputs.repositoryGroup }}/$WORKFLOW.yml
           SOURCE=$WORKING_DIRECTORY/$SOURCE_RELATIVE
           TARGET=./.github/workflows/$(basename -- "$WORKFLOW.yml")
 
@@ -96,7 +102,7 @@ runs:
         if [ -n "$CHANGES_DETECTED" ]; then
           echo "git commit + push"
           git commit -av -m "Github Workflows aktualisiert"
-          # git push origin ${{ matrix.repository.branch }}
+          # git push origin ${{ inputs.repositoryBranch }}
           git push
         else
           echo "kein git commit"
