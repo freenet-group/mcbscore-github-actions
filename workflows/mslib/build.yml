@@ -29,9 +29,18 @@ jobs:
       ACTIONS_PATH: mcbscore-actions
 
     steps:
-      - id: prepare-environment
-        name: Bereitet die Umgebung vor
-        uses: ./.github/actions/prepare-environment
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
 
       # Repository auschecken unter $GITHUB_WORKSPACE
       - id: checkout-repository
