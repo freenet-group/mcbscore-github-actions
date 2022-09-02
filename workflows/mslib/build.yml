@@ -75,9 +75,9 @@ jobs:
         with:
           installJava: true
 
-      - id: determine-branch-type-and-name
-        name: Determine Branch Type And Name
-        uses: ./mcbscore-actions/actions/branch-type-and-name
+      - id: determine-build-type-and-branch-name
+        name: Determine Build Type And Branch Name
+        uses: ./mcbscore-actions/actions/build-type-and-branch-name
 
       # Komponenten Version ermitteln
       - name: Determine component version

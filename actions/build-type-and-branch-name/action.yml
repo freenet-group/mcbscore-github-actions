@@ -1,5 +1,5 @@
-name: Get Branch Type And Name
-description: Ermittelt den Namen und die Art des Branches (DEVELOP/RELEASE/FEATURE/BUGFIX)
+name: Get Build Type And Branch Name
+description: Ermittelt den Namen des Branches und die Art des Builds (DEVELOP/RELEASE/FEATURE/BUGFIX)
 
 runs:
   using: "composite"
