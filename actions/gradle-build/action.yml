@@ -1,19 +1,34 @@
 name: Gradle Build
 description: Composite Action zur Durchführung eines Gradle Builds
-env:
-  GRADLE_COMMAND: clean build
-  PUBLISH_COMMAND: publish
+inputs:
+  gradleCommand:
+    description: Das Gradle Kommando
+    required: false
+    default: clean build
+  publishCommand:
+    description: Das Gradle publish Kommando
+    required: false
+    default: publish
+  sonarqubeUrl:
+    description: Die Sonarqube URL
+    required: false
+  sonarqubeToken:
+    description: Das Sonarqube Token
+    required: false
 
 runs:
   using: "composite"
   steps:
+    - name: Set Gradle Command
+      run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} >> $GITHUB_ENV
+
     - name: Add Sonarqube Gradle Task
       if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
-      run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} sonarqube -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }}" >> $GITHUB_ENV
+      run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} sonarqube -Dsonar.login=${{ inputs.sonarqubeToken }} -Dsonar.host.url=${{ inputs.sonarqubeUrl }}" >> $GITHUB_ENV
 
     - name: Add Publish Gradle Task
       if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-      run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{env.PUBLISH_COMMAND}}" >> $GITHUB_ENV
+      run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{ inputs.publishCommand }}" >> $GITHUB_ENV
 
     # Gradle Build
     - name: Build with Gradle
