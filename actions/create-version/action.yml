@@ -96,7 +96,15 @@ runs:
         # Ermitteln der nächsten Version basierend auf dem letztem Tag , der Komponente und der zuvor erzeugten Datei mit den beinhalteten Issues 
         cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
         atlassianToolsDir=./mcbscore/github/atlassian-tools
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools mcbs_info.CreateNewMCBSComponentVersionKt $lastTag "${{inputs.component}}" "branch_issues.txt" "${{inputs.jiraUrl}}" "${{inputs.jiraCredentials}}"
+        
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          mcbs_info.CreateNewMCBSComponentVersionKt \
+          $lastTag \
+          "${{inputs.component}}" \
+          "branch_issues.txt" \
+          "${{inputs.jiraUrl}}" \
+          "${{inputs.jiraCredentials}}"
         
         # Output-Variablen belegen
         outVarVersion=`cat newVersion.txt`
