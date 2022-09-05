@@ -9,12 +9,21 @@ inputs:
     description: Das Gradle publish Kommando
     required: false
     default: publish
+  gradleOptions:
+    description: 'Zusätzliche optionale Gradle Parameter'
+    required: false
   sonarqubeUrl:
     description: Die Sonarqube URL
     required: false
   sonarqubeToken:
     description: Das Sonarqube Token
     required: false
+  artifactoryUserName:
+    description: Login für das Artifactory
+    required: true
+  artifactoryPassword:
+    description: Passwort für das Artifactory
+    required: true
 
 runs:
   using: "composite"
@@ -36,5 +45,5 @@ runs:
     # Gradle Build
     - name: Build with Gradle
       shell: bash
-      run: sh ./gradlew -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ secrets.MD_ARTIFACTORY_USER }} -PartifactoryPassword=${{ secrets.MD_ARTIFACTORY_PW }} ${{ env.GRADLE_COMMAND }} ${{ github.event.inputs.gradleOptions }}
+      run: sh ./gradlew -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ inputs.artifactoryUserName }} -PartifactoryPassword=${{ inputs.artifactoryPassword }} ${{ env.GRADLE_COMMAND }} ${{ inputs.gradleOptions }}
 

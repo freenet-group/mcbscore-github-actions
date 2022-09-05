@@ -97,6 +97,9 @@ jobs:
       - id: gradle-build
         name: Gradle Build
         uses: ./mcbscore-actions/actions/gradle-build
+        with:
+          artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
+          artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
 
       # Existierende Draft Releases löschen
       - name: Delete draft releases
