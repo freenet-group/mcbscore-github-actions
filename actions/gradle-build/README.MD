@@ -1,8 +1,8 @@
 # gradleBuild
 
-Github Action zur Durchführung eines Gradle Builds. Wenn das Property COVERAGE_APP gesetzt ist, wird der Sonarqube Task gerufen.
+Github Action zur DurchfÃ¼hrung eines Gradle Builds. Wenn das Property COVERAGE_APP gesetzt ist, wird der Sonarqube Task gerufen.
 Das Default Gradle Kommando ist: clean build
-Für die Branches release und develop wird zusätzlich der publish Task gerufen.
+FÃ¼r die Branches release und develop wird zusÃ¤tzlich der publish Task gerufen.
 
 ## Parameter:
 ### gradleCommand
@@ -14,7 +14,7 @@ Für die Branches release und develop wird zusätzlich der publish Task gerufen.
     required: false
     default: publish
 ### gradleOptions
-    description: 'Zusätzliche optionale Gradle Parameter'
+    description: 'ZusÃ¤tzliche optionale Gradle Parameter'
     required: false
 ### sonarqubeUrl
     description: Die Sonarqube URL
@@ -23,23 +23,23 @@ Für die Branches release und develop wird zusätzlich der publish Task gerufen.
     description: Das Sonarqube Token
     required: false
 ### artifactoryUserName
-    description: Login für das Artifactory
+    description: Login fÃ¼r das Artifactory
     required: true
 ### artifactoryPassword
-    description: Passwort für das Artifactory
+    description: Passwort fÃ¼r das Artifactory
     required: true
 
 ---
 
 ## Ergebnisse:
 
-gradlew wurde durchgeführt.
+gradlew wurde durchgefÃ¼hrt.
 
 ---
 
 ## Voraussetzungen:
 
-JAVA muß installiert sein.
+JAVA muÃŸ installiert sein.
 
 ---
 

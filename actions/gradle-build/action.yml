@@ -1,5 +1,5 @@
 name: Gradle Build
-description: Composite Action zur Durchführung eines Gradle Builds
+description: Composite Action zur DurchfÃ¼hrung eines Gradle Builds
 inputs:
   gradleCommand:
     description: Das Gradle Kommando
@@ -10,7 +10,7 @@ inputs:
     required: false
     default: publish
   gradleOptions:
-    description: 'Zusätzliche optionale Gradle Parameter'
+    description: 'ZusÃ¤tzliche optionale Gradle Parameter'
     required: false
   sonarqubeUrl:
     description: Die Sonarqube URL
@@ -19,10 +19,10 @@ inputs:
     description: Das Sonarqube Token
     required: false
   artifactoryUserName:
-    description: Login für das Artifactory
+    description: Login fÃ¼r das Artifactory
     required: true
   artifactoryPassword:
-    description: Passwort für das Artifactory
+    description: Passwort fÃ¼r das Artifactory
     required: true
 
 runs:
