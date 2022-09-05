@@ -7,20 +7,16 @@ inputs:
   JIRA_CREDENTIALS:
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
     required: true
-  COMPONENT:
+  component:
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
     required: true
   tagPattern:
     description: das zu erfüllende Muster für die Suche nach einem Tag im Repository (e.g "*" , "ms-bm.*" ,"[0-9]*") ( Regex )
     required: true
-  ATLASSIAN_DEVELOPER_TOOLS:
+  atlassianToolsVersion:
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
     required: true
-  LOGLEVEL:
-    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
-    required: true
-    default: 'info'
-  BRANCH_NAME:
+  branchName:
     description: Der Branchname zur Steuerung des Versions-Suffix '-SNAPSHOT'
     required: true
 outputs:
@@ -40,7 +36,7 @@ runs:
         # chmod -R 777 .
         # pwd
         ls -l
-        # git checkout ${{ inputs.BRANCH_NAME }}
+        # git checkout ${{ inputs.branchName }}
         # letztes Tag ermitteln
         lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
         # lastTag=`git tag --sort=-creatordate | head -n 1`
@@ -97,7 +93,7 @@ runs:
         
         # Ermitteln der nächsten Version basierend auf dem letztem Tag , der Komponente und der zuvor erzeugten Datei mit den beinhalteten Issues 
         cp -r ./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools/jiraResources .
-        java -Dlog4j2.configurationFile=./mcbscore-actions/atlassian-tools/log4j2-info.xml -cp ./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools-all-${{inputs.ATLASSIAN_DEVELOPER_TOOLS}}.jar:.:./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools mcbs_info.CreateNewMCBSComponentVersionKt $lastTag "${{inputs.COMPONENT}}" "branch_issues.txt" "${{inputs.JIRA_URL}}" "${{inputs.JIRA_CREDENTIALS}}"
+        java -Dlog4j2.configurationFile=./mcbscore-actions/atlassian-tools/log4j2-info.xml -cp ./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools mcbs_info.CreateNewMCBSComponentVersionKt $lastTag "${{inputs.component}}" "branch_issues.txt" "${{inputs.JIRA_URL}}" "${{inputs.JIRA_CREDENTIALS}}"
         
         # Output-Variablen belegen
         outVarVersion=`cat newVersion.txt`
