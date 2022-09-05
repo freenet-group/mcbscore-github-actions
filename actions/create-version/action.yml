@@ -10,7 +10,7 @@ inputs:
   COMPONENT:
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
     required: true
-  MATCH:
+  tagPattern:
     description: das zu erfüllende Muster für die Suche nach einem Tag im Repository (e.g "*" , "ms-bm.*" ,"[0-9]*") ( Regex )
     required: true
   ATLASSIAN_DEVELOPER_TOOLS:
@@ -42,7 +42,7 @@ runs:
         ls -l
         # git checkout ${{ inputs.BRANCH_NAME }}
         # letztes Tag ermitteln
-        lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.MATCH }}" | head -n 1`
+        lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
         # lastTag=`git tag --sort=-creatordate | head -n 1`
         echo "Last Tag : ${lastTag}"
         # hashcode fuer das vorherige release (i.e. lastTag)
