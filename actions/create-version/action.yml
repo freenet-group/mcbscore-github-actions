@@ -1,0 +1,122 @@
+name: 'createVersion'
+description: 'Auswertung der Issues eines Repositories seit dem letzten Tag, Bereitstellen von Issue-Infos für eventuelle Release-Notes, Erzeugen einer neuen Version für ein nachfolgendes Releasebuild'
+inputs:
+  JIRA_URL:  
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  JIRA_CREDENTIALS:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  COMPONENT:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: true
+  MATCH:
+    description: das zu erfüllende Muster für die Suche nach einem Tag im Repository (e.g "*" , "ms-bm.*" ,"[0-9]*") ( Regex )
+    required: true
+  ATLASSIAN_DEVELOPER_TOOLS:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  LOGLEVEL:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: true
+    default: 'info'
+  BRANCH_NAME:
+    description: Der Branchname zur Steuerung des Versions-Suffix '-SNAPSHOT'
+    required: true
+outputs:
+  newVersion:
+    description: die Versionskennung für das nachfolgende Releasebuild
+    value: ${{ steps.createVersion.outputs.nV }}
+  issueList:
+    description: Liste der beinhalteten Issues durch Leerzeichen getrennt
+    value: ${{ steps.createVersion.outputs.iL }}
+runs:
+  using: "composite"
+  steps: 
+    - id: createVersion
+      shell: bash
+      run: |
+        echo Checked out ...
+        # chmod -R 777 .
+        # pwd
+        ls -l
+        # git checkout ${{ inputs.BRANCH_NAME }}
+        # letztes Tag ermitteln
+        lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.MATCH }}" | head -n 1`
+        # lastTag=`git tag --sort=-creatordate | head -n 1`
+        echo "Last Tag : ${lastTag}"
+        # hashcode fuer das vorherige release (i.e. lastTag)
+        tag=`git rev-list -n 1 $lastTag`
+        echo "Tag-Addresse ($lastTag) : $tag"
+        # merges
+        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "Merge" | grep "from" | cut -d '/' -f 3 | grep -Eo '^ABRMS-[0-9]{4}'  | cut -d '-' -f 1,2 | sort | uniq > a.txt ; then
+          echo "kein ABRMS-Merge"
+        fi
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "Merge" | grep "from" | cut -d '/' -f 3 | grep -Eo '^MCBS-[0-9]{4}'  | cut -d '-' -f 1,2 | sort | uniq >> a.txt ; then
+          echo "kein MCBS-Merge"
+        fi
+        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "Merge" | grep "from" | cut -d '/' -f 3 | grep -Eo '^HOMER-[0-9]{4}'  | cut -d '-' -f 1,2 | sort | uniq > a.txt ; then
+          echo "kein HOMER-Merge"
+        fi
+        # commits
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^\[ABRMS*" | cut -d ' ' -f 1 | sed s'/.$//' | sed s'/^.//' | sort | uniq >> a.txt ; then
+          echo "kein [ABRMS-Commit"
+        fi
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^\[MCBS*" | cut -d ' ' -f 1 | sed s'/.$//' | sed s'/^.//' | sort | uniq >> a.txt ; then
+          echo "kein [MCBS-Commit"
+        fi
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^\[HOMER*" | cut -d ' ' -f 1 | sed s'/.$//' | sed s'/^.//' | sort | uniq >> a.txt ; then
+          echo "kein [HOMER-Commit"
+        fi
+        # commits
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^ABRMS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
+          echo "kein ABRMS-Commit"
+        fi
+        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "^MCBS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 | sort | uniq  >> a.txt ; then
+          echo "kein MCBS-Commit"
+        fi
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^HOMER*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
+          echo "kein HOMER-Commit"
+        fi
+        
+        # sortieren und unique ausgeben in die Zieldatei
+        cat a.txt
+        cat a.txt | sort | uniq >> branch_issues.txt
+        rm -f a.txt
+        # Kontrollausgabe
+        cat branch_issues.txt | while read line
+        do
+          printf $line" " 
+          printf $line" " >> issue_list.txt
+        done
+        
+        if [ ! -e issue_list.txt ];
+        then
+          printf "MCBS-3408 " >> issue_list.txt
+        fi
+        
+        # Ermitteln der nächsten Version basierend auf dem letztem Tag , der Komponente und der zuvor erzeugten Datei mit den beinhalteten Issues 
+        cp -r ./devtools/apps/atltools/AtlassianDeveloperTools/jiraResources .
+        # java -Dlog4j.configuration=./devtools/apps/atltools/log4j_${{inputs.LOGLEVEL}}.properties -cp ./devtools/apps/atltools/AtlassianDeveloperTools-all-${{inputs.ATLASSIAN_DEVELOPER_TOOLS}}.jar:.:./devtools/apps/atltools/AtlassianDeveloperTools branch_info.CreateNewVersionKt $lastTag "${{inputs.COMPONENT}}" "branch_issues.txt" "${{inputs.JIRA_URL}}" "${{inputs.JIRA_CREDENTIALS}}"
+        java -Dlog4j2.configurationFile=./devtools/apps/atltools/log4j2-info.xml -cp ./devtools/apps/atltools/AtlassianDeveloperTools-all-${{inputs.ATLASSIAN_DEVELOPER_TOOLS}}.jar:.:./devtools/apps/atltools/AtlassianDeveloperTools mcbs_info.CreateNewMCBSComponentVersionKt $lastTag "${{inputs.COMPONENT}}" "branch_issues.txt" "${{inputs.JIRA_URL}}" "${{inputs.JIRA_CREDENTIALS}}"
+        
+        # Output-Variablen belegen
+        outVarVersion=`cat newVersion.txt`
+        
+        outVarList=`cat issue_list.txt | xargs echo -n`
+                        
+        echo "###########################################"
+        echo "New Version : "
+        echo "###########################################"
+        echo "$outVarVersion"
+        echo "###########################################"
+        echo "###########################################"
+        echo "Issue-List : "
+        echo "###########################################"
+        echo "$outVarList"
+        echo "###########################################"
+                
+                  
+        # Version und Liste als Variable bereitstellen
+        echo "##[set-output name=nV;]$outVarVersion"
+        echo "##[set-output name=iL;]$outVarList"

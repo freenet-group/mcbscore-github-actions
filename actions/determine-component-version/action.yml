@@ -8,7 +8,7 @@ runs:
     - name: Determine component version
       id: componentVersion
       if: ${{ env.COMPONENT != '' }}
-      uses: ./mcbscore/actions/createVersion
+      uses: ./mcbscore-actions/actions/create-version
       with:
         JIRA_URL: ${{ env.JIRA_URL }}
         JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
