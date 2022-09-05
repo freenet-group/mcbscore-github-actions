@@ -1,0 +1,41 @@
+name: Get Build Type And Branch Name
+description: Ermittelt den Namen des Branches und die Art des Builds (DEVELOP/RELEASE/FEATURE/BUGFIX)
+
+runs:
+  using: "composite"
+  steps:
+    # Branch name ermitteln (wenn kein Pull Request)
+    - name: Get branch name (no pull_request)
+      if: github.event_name != 'pull_request'
+      shell: bash
+      run: |
+        echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+    # Branch name ermitteln (wenn Pull Request)
+    - name: Get branch name (pull request)
+      if: github.event_name == 'pull_request'
+      shell: bash
+      run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
+    # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
+    - name: Determine build type
+      shell: bash
+      run: |
+        if  [[ $BRANCH_NAME == release* ]] ;
+        then
+          echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
+          echo "DRAFT=false" >> $GITHUB_ENV
+        elif  [[ $BRANCH_NAME == develop ]] ;
+        then
+          echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
+          echo "DRAFT=true" >> $GITHUB_ENV
+        elif  [[ $BRANCH_NAME == feature* ]] ;
+        then
+          echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+        elif  [[ $BRANCH_NAME == bugfix* ]] ;
+        then
+          echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
+        else
+          # default ist feature
+          echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+        fi

@@ -1,0 +1,25 @@
+name: Check UTF-8
+
+# Kontrolliert, welche Events die Action auslösen
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Prüfen auf korrektes UTF-8 Encoding
+      - name: Check for correct UTF-8 encoding
+        shell: bash
+        run: |
+          if find "$GITHUB_WORKSPACE" -type f -not '(' -iname '*.properties' -o -iname '*.xml' ')' -exec file --mime '{}' ';' \
+              | grep --invert-match --perl-regexp '\bcharset=(binary|us-ascii|utf-8)$'; then
+            echo "Non-UTF-8 file(s) found"
+            exit 1
+          fi

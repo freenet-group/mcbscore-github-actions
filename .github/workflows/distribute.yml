@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       group:
-        description: 'Zu aktualisierende Gruppe'
+        description: 'Die zu aktualisierende Gruppe. Per default werden "ALL (alle Workflows)" aktualisiert'
         type: choice
         required: true
         default: ALL
@@ -30,11 +30,12 @@ jobs:
 
       - name: Distribute Workflows
         id: distributeWorkflows
-        uses: ./.github/actions/distribute-workflows-action
+        uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
-          actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+          workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -44,7 +45,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-github-test-repo, branch: main, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-github-test-repo, branch: main, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -52,10 +53,11 @@ jobs:
 
       - name: Distribute Workflows
         id: distributeWorkflows
-        uses: ./.github/actions/distribute-workflows-action
+        uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
-          actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+          workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

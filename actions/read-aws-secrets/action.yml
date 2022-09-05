@@ -1,0 +1,30 @@
+name: Read AWS Secrets
+description: Liest Parameter aus dem AWS Parameter Store ein
+
+inputs:
+  awsAccessKeyId:
+    description: AWS Access Key Id
+    required: true
+  awsSecretAccessKey:
+    description: AWS Secret Access Key
+    required: true
+  awsParameterPairs:
+    description: |
+      Kommaseparierte Liste von Key/Value Paaren einzulesender Parameter. Format '<key> = <value>'. Der Key ist der 
+      Schlüssel im AWS Parameter Store. Der Value ist der Name der Umgebungsvariable, in die der Wert übertragen werden soll.
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Read and set AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.awsAccessKeyId }}
+        aws-secret-access-key: ${{ inputs.awsSecretAccessKey }}
+        aws-region: 'eu-central-1'
+
+    - name: Read AWS Parameters
+      uses: dkershner6/aws-ssm-getparameters-action@v1
+      with:
+        parameterPairs: ${{ inputs.awsParameterPairs }}

@@ -1,0 +1,29 @@
+name: Initialize Workflow
+description: Generische Action, die zur Initialisierung aller Workflows verwendet werden kann
+
+inputs:
+  installJava:
+    description: JDK installieren?
+    type: boolean
+    default: false
+
+runs:
+  using: "composite"
+  steps:
+    # Workflow Properties einlesen
+    - name: Read workflow.properties
+      shell: bash
+      run: |
+        # Einlesen beider Dateien, da build.properties in workflow.properties umbenannt werden sollte. Somit bleibt es
+        # abwärtskompatibel
+        if [ -f ./.github/workflow.properties ]; then cat ./.github/workflow.properties >> $GITHUB_ENV; fi
+        if [ -f ./.github/build.properties ]; then cat ./.github/build.properties >> $GITHUB_ENV; fi
+
+    # JAVA installieren
+    - name: Set up JDK
+      if: ${{ inputs.installJava }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: zulu
+        java-version: ${{ env.JAVA_VERSION }}
+
