@@ -25,6 +25,7 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore-actions
+      PUBLISH_COMMAND: publish
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -100,6 +101,7 @@ jobs:
         with:
           artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
+          publishCommand: ${{ env.PUBLISH_COMMAND }}
 
       # Existierende Draft Releases löschen
       - name: Delete draft releases
