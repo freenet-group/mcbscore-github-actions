@@ -1,10 +1,10 @@
 name: Prepare Environment
-description: Bereitet die Umgebung vor (Owner setzen und Verzeichnis aufräumen).
+description: Bereitet die Umgebung vor (Owner setzen und Verzeichnis aufrÃ¤umen).
 
 runs:
   using: "composite"
   steps:
-    # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+    # Owner fÃ¼r alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
     - name: Change Owner to Runner User
       if: ${{ always() }}
       run: |
