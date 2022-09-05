@@ -1,11 +1,11 @@
 name: Gradle Build
 description: Composite Action zur Durchführung eines Gradle Builds
+env:
+  GRADLE_COMMAND: clean build
+  PUBLISH_COMMAND: publish
 
 runs:
   using: "composite"
-  env:
-    GRADLE_COMMAND: clean build
-    PUBLISH_COMMAND: publish
   steps:
     - name: Add Sonarqube Gradle Task
       if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
