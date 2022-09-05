@@ -24,7 +24,7 @@ jobs:
     runs-on: [self-hosted, vm]
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
-      ACTIONS_PATH: mcbscore-actions
+      ACTIONS_PATH: mcbscore/github
       PUBLISH_COMMAND: publish
 
     steps:
@@ -75,7 +75,7 @@ jobs:
 
       - id: init-workflow
         name: Initialize Workflow
-        uses: ./mcbscore-actions/actions/init-workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
 
@@ -85,11 +85,11 @@ jobs:
 
       - id: determine-build-type-and-branch-name
         name: Determine Build Type And Branch Name
-        uses: ./mcbscore-actions/actions/build-type-and-branch-name
+        uses: ./mcbscore/github/actions/build-type-and-branch-name
 
       - id: determine-component-version
         name: Determine Component Version
-        uses: ./mcbscore-actions/actions/determine-component-version
+        uses: ./mcbscore/github/actions/determine-component-version
 
       # ##################################################################################
       # Release bauen
@@ -97,7 +97,7 @@ jobs:
 
       - id: gradle-build
         name: Gradle Build
-        uses: ./mcbscore-actions/actions/gradle-build
+        uses: ./mcbscore/github/actions/gradle-build
         with:
           artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}

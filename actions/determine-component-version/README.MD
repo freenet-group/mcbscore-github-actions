@@ -12,4 +12,4 @@ TODO: actions/create-version ist in diese Action zu integrieren
 
       - id: determine-component-version
         name: Determine Component Version
-        uses: ./mcbscore-actions/actions/determine-component-version
+        uses: ./mcbscore/github/actions/determine-component-version

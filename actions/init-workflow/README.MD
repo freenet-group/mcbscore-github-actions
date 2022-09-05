@@ -26,6 +26,6 @@ AWS Secrets wurden eingelesen.
 
       - id: init-workflow
         name: Initialize Workflow
-        uses: ./mcbscore-actions/actions/init-workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true

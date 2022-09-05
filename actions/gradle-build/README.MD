@@ -47,7 +47,7 @@ JAVA muﬂ installiert sein.
 
       - id: gradle-build
         name: Gradle Build
-        uses: ./mcbscore-actions/actions/gradle-build
+        uses: ./mcbscore/github/actions/gradle-build
         with:
           artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
