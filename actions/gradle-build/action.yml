@@ -30,7 +30,7 @@ runs:
   steps:
     - name: Set Gradle Command
       shell: bash
-      run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} >> $GITHUB_ENV
+      run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }}" >> $GITHUB_ENV
 
     - name: Add Sonarqube Gradle Task
       if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
