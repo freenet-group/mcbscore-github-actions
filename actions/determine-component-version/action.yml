@@ -10,8 +10,8 @@ runs:
       if: ${{ env.COMPONENT != '' }}
       uses: ./mcbscore-actions/actions/create-version
       with:
-        JIRA_URL: ${{ env.JIRA_URL }}
-        JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
+        jiraUrl: ${{ env.JIRA_URL }}
+        jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
         tagPattern: ${{ env.TAG_PATTERN }}
         atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
         component: ${{ env.COMPONENT }}
@@ -29,7 +29,7 @@ runs:
           echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
         fi
         echo "RAW_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
-        echo "issueList=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+        echo "ISSUE_LIST=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
 
     - name: Determine Version
       if: ${{ env.COMPONENT == '' }}

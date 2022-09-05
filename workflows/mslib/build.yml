@@ -80,6 +80,10 @@ jobs:
         with:
           installJava: true
 
+      # ##################################################################################
+      # Version ermitteln
+      # ##################################################################################
+
       - id: determine-build-type-and-branch-name
         name: Determine Build Type And Branch Name
         uses: ./mcbscore-actions/actions/build-type-and-branch-name
@@ -87,6 +91,10 @@ jobs:
       - id: determine-component-version
         name: Determine Component Version
         uses: ./mcbscore-actions/actions/determine-component-version
+
+      # ##################################################################################
+      # Release bauen
+      # ##################################################################################
 
       - name: Add Sonarqube Gradle Task
         if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
@@ -152,4 +160,4 @@ jobs:
         with:
           workflow: PostBuild
           token: ${{ env.TOKEN }}
-          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.issueList }}" }'
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.ISSUE_LIST }}" }'

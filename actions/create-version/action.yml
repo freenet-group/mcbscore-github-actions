@@ -1,10 +1,10 @@
-name: 'createVersion'
+name: Create Version
 description: 'Auswertung der Issues eines Repositories seit dem letzten Tag, Bereitstellen von Issue-Infos für eventuelle Release-Notes, Erzeugen einer neuen Version für ein nachfolgendes Releasebuild'
 inputs:
-  JIRA_URL:  
+  jiraUrl:
     description: Organisationsinterne URL des angebundenen JIRA-Systems
     required: true
-  JIRA_CREDENTIALS:
+  jiraCredentials:
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
     required: true
   component:
@@ -22,28 +22,27 @@ inputs:
 outputs:
   newVersion:
     description: die Versionskennung für das nachfolgende Releasebuild
-    value: ${{ steps.createVersion.outputs.nV }}
+    value: ${{ steps.create-version.outputs.version }}
   issueList:
     description: Liste der beinhalteten Issues durch Leerzeichen getrennt
-    value: ${{ steps.createVersion.outputs.iL }}
+    value: ${{ steps.create-version.outputs.issueList }}
 runs:
   using: "composite"
   steps: 
-    - id: createVersion
+    - id: create-version
       shell: bash
       run: |
         echo Checked out ...
-        # chmod -R 777 .
-        # pwd
         ls -l
-        # git checkout ${{ inputs.branchName }}
+
         # letztes Tag ermitteln
         lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
-        # lastTag=`git tag --sort=-creatordate | head -n 1`
         echo "Last Tag : ${lastTag}"
+
         # hashcode fuer das vorherige release (i.e. lastTag)
         tag=`git rev-list -n 1 $lastTag`
         echo "Tag-Addresse ($lastTag) : $tag"
+
         # merges
         if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "Merge" | grep "from" | cut -d '/' -f 3 | grep -Eo '^ABRMS-[0-9]{4}'  | cut -d '-' -f 1,2 | sort | uniq > a.txt ; then
           echo "kein ABRMS-Merge"
@@ -54,6 +53,7 @@ runs:
         if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "Merge" | grep "from" | cut -d '/' -f 3 | grep -Eo '^HOMER-[0-9]{4}'  | cut -d '-' -f 1,2 | sort | uniq > a.txt ; then
           echo "kein HOMER-Merge"
         fi
+
         # commits
         if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^\[ABRMS*" | cut -d ' ' -f 1 | sed s'/.$//' | sed s'/^.//' | sort | uniq >> a.txt ; then
           echo "kein [ABRMS-Commit"
@@ -64,6 +64,7 @@ runs:
         if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^\[HOMER*" | cut -d ' ' -f 1 | sed s'/.$//' | sed s'/^.//' | sort | uniq >> a.txt ; then
           echo "kein [HOMER-Commit"
         fi
+
         # commits
         if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^ABRMS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
           echo "kein ABRMS-Commit"
@@ -79,6 +80,7 @@ runs:
         cat a.txt
         cat a.txt | sort | uniq >> branch_issues.txt
         rm -f a.txt
+
         # Kontrollausgabe
         cat branch_issues.txt | while read line
         do
@@ -92,8 +94,9 @@ runs:
         fi
         
         # Ermitteln der nächsten Version basierend auf dem letztem Tag , der Komponente und der zuvor erzeugten Datei mit den beinhalteten Issues 
-        cp -r ./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools/jiraResources .
-        java -Dlog4j2.configurationFile=./mcbscore-actions/atlassian-tools/log4j2-info.xml -cp ./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools mcbs_info.CreateNewMCBSComponentVersionKt $lastTag "${{inputs.component}}" "branch_issues.txt" "${{inputs.JIRA_URL}}" "${{inputs.JIRA_CREDENTIALS}}"
+        # cp -r ./mcbscore-actions/atlassian-tools/AtlassianDeveloperTools/jiraResources .
+        atlassianToolsDir=./mcbscore-actions/atlassian-tools
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:"$atlassianToolsDir"/AtlassianDeveloperTools/jiraResources:"$atlassianToolsDir"/AtlassianDeveloperTools mcbs_info.CreateNewMCBSComponentVersionKt $lastTag "${{inputs.component}}" "branch_issues.txt" "${{inputs.jiraUrl}}" "${{inputs.jiraCredentials}}"
         
         # Output-Variablen belegen
         outVarVersion=`cat newVersion.txt`
@@ -110,8 +113,7 @@ runs:
         echo "###########################################"
         echo "$outVarList"
         echo "###########################################"
-                
                   
         # Version und Liste als Variable bereitstellen
-        echo "##[set-output name=nV;]$outVarVersion"
-        echo "##[set-output name=iL;]$outVarList"
+        echo "##[set-output name=version;]$outVarVersion"
+        echo "##[set-output name=issueList;]$outVarList"
