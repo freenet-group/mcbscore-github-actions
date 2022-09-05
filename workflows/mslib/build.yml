@@ -23,8 +23,6 @@ jobs:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, vm]
     env:
-      GRADLE_COMMAND: clean build
-      PUBLISH_COMMAND: publish artifactoryPublish
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore-actions
 
@@ -96,17 +94,9 @@ jobs:
       # Release bauen
       # ##################################################################################
 
-      - name: Add Sonarqube Gradle Task
-        if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
-        run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} sonarqube -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }}" >> $GITHUB_ENV
-
-      - name: Add Publish Gradle Task
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{env.PUBLISH_COMMAND}}" >> $GITHUB_ENV
-
-      # Gradle Build
-      - name: Build with Gradle
-        run: sh ./gradlew -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ secrets.MD_ARTIFACTORY_USER }} -PartifactoryPassword=${{ secrets.MD_ARTIFACTORY_PW }} ${{ env.GRADLE_COMMAND }} ${{ github.event.inputs.gradleOptions }}
+      - id: gradle-build
+        name: Gradle Build
+        uses: ./mcbscore-actions/actions/gradle-build
 
       # Existierende Draft Releases löschen
       - name: Delete draft releases
