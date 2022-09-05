@@ -20,17 +20,21 @@ runs:
   using: "composite"
   steps:
     - name: Set Gradle Command
+      shell: bash
       run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} >> $GITHUB_ENV
 
     - name: Add Sonarqube Gradle Task
       if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
+      shell: bash
       run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} sonarqube -Dsonar.login=${{ inputs.sonarqubeToken }} -Dsonar.host.url=${{ inputs.sonarqubeUrl }}" >> $GITHUB_ENV
 
     - name: Add Publish Gradle Task
       if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+      shell: bash
       run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{ inputs.publishCommand }}" >> $GITHUB_ENV
 
     # Gradle Build
     - name: Build with Gradle
+      shell: bash
       run: sh ./gradlew -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ secrets.MD_ARTIFACTORY_USER }} -PartifactoryPassword=${{ secrets.MD_ARTIFACTORY_PW }} ${{ env.GRADLE_COMMAND }} ${{ github.event.inputs.gradleOptions }}
 
