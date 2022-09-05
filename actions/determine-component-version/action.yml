@@ -12,7 +12,7 @@ runs:
       with:
         JIRA_URL: ${{ env.JIRA_URL }}
         JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-        MATCH: ${{ env.TAG_PATTERN }}
+        tagPattern: ${{ env.TAG_PATTERN }}
         ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
         COMPONENT: ${{ env.COMPONENT }}
         BRANCH_NAME: ${{ env.BRANCH_NAME }}
