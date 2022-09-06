@@ -39,7 +39,10 @@ runs:
 
         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-debug.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
-          jira_config.CreateVersionKt "${{ inputs.jiraUrl }}" "${{ inputs.jiraUrl2 }}" "${{ inputs.jiraCredentials }}" \
+          jira_config.CreateVersionKt \
+          "${{ inputs.jiraUrl }}" \
+          "${{ inputs.jiraUrl2 }}" \
+          "${{ inputs.jiraCredentials }}" \
           "${{ inputs.component }}"_"${{ inputs.componentVersion }}" \
           "${{ inputs.jiraProject }}" \
           "${{ inputs.componentList }}"
