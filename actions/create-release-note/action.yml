@@ -140,7 +140,9 @@ runs:
         
         # Coverage auswerten
         cp -r "$atlassianToolsDir"/jiraResources .
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools sonar_info.SonarCoverage1CompKt \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          sonar_info.SonarCoverage1CompKt \
           "${{ inputs.sonarUrl }}" \
           "${{ inputs.component }}"
         
