@@ -1,4 +1,4 @@
-# branchNameAndBuildType
+# build-type-and-branch-name
 
 Github Action zur Ermittlung des Build Types und des Branch Namens.
 

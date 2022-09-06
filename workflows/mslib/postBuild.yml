@@ -133,28 +133,24 @@ jobs:
       # set Issues "done"
       # ##################################################################################
       - name: setIssueListDone
-        id: sD
-        uses: ./mcbscore/actions/setIssueListDone
+        uses: ./mcbscore/github/actions/set-issue-list-done
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          ISSUES: ${{ github.event.inputs.issueList }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
       # Setzen eines Build-Kommentars an den Issues
       # ##################################################################################
-      - name: setIssueComments
-        id: sC
-        uses: ./mcbscore/actions/setIssueComments
+      - name: setIssueComment
+        uses: ./mcbscore/github/actions/set-issue-comment
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          COMMENT: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
-          ISSUES: ${{ github.event.inputs.issueList }}  
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
       # Erzeugen einer Releasenote im WIKI

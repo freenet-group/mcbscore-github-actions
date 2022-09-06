@@ -1,4 +1,4 @@
-# createVersion
+# create-version
 
 GitHub-Action zur Auswertung des Repositories, um im Anschluss eine Jira-Issue-Liste für Releasenotes  
 sowie eine neu zu erzeugende Release-Version zu ermitteln ...

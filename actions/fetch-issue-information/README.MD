@@ -1,4 +1,4 @@
-# fetchIssueInfos
+# fetch-issue-information
 GitHub-Action zur Erzeugung einer CSV-Datei mit Informationen über JIRA-Issues.
 Aktuell : "issue;summary;status;components;semanticVersion;keywords;priority;fixVersions;affectedVersions;dependency;"
 

@@ -1,0 +1,34 @@
+name: Set Issue Comment
+description: 'Setzen eines Kommentars an gelisteten JIRA-Issues'
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  comment:
+    description: der anzuhängende Kommentar
+    required: true
+  issueList:
+    description: Liste der JIRA-Issues
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+
+runs:
+  using: "composite"
+  steps: 
+    - id: setIssueComment
+      shell: bash
+      run: |
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+        
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          jira_issue.SetCommentsKt \
+          "${{inputs.jiraUrl}}" \
+          "${{inputs.jiraCredentials}}" \
+          "${{ inputs.comment }}" \
+          "${{ inputs.issueList }}"

@@ -1,4 +1,4 @@
-# gradleBuild
+# gradle-build
 
 Github Action zur Durchführung eines Gradle Builds. Wenn das Property COVERAGE_APP gesetzt ist, wird der Sonarqube Task gerufen.
 Das Default Gradle Kommando ist: clean build
