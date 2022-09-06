@@ -28,10 +28,8 @@ sowie eine neu zu erzeugende Release-Version zu ermitteln ...
 ## Outputs:  
   ### newVersion:  
     description: die Versionskennung für das nachfolgende Releasebuild  (x.y.z ohne Prefix)
-    value: ${{ steps.createVersion.outputs.nV }} 
   ### issueList:
     description: Liste der beinhalteten Issues durch Leerzeichen getrennt
-    value: ${{ steps.createVersion.outputs.iL }}
 
 ---
 
