@@ -1,7 +1,7 @@
 # determine-component-version
 
-Github Action zur Bestimmung der Version einer Komponente. Es werden 2 Arten der Ermittlung unterstützt.
-- basierend auf einer JIRA Komponente
+Github-Action zur Bestimmung der Version einer Komponente. Es werden 2 Arten der Ermittlung unterstützt.
+- basierend auf einer JIRA-Komponente
 - basierend auf dem last Tag
 
 TODO: actions/create-version ist in diese Action zu integrieren

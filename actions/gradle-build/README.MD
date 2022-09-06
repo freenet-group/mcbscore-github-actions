@@ -1,12 +1,12 @@
 # gradle-build
 
-Github Action zur Durchführung eines Gradle Builds. Wenn das Property COVERAGE_APP gesetzt ist, wird der Sonarqube Task gerufen.
-Das Default Gradle Kommando ist: clean build
+Github-Action zur Durchführung eines Gradle-Builds. Wenn das Property COVERAGE_APP gesetzt ist, wird der Sonarqube-Task gerufen.
+Das Default Gradle-Kommando ist: clean build
 Für die Branches release und develop wird zusätzlich der publish Task gerufen.
 
 ## Parameter:
 ### gradleCommand
-    description: Das Gradle Kommando
+    description: Das Gradle-Kommando
     required: false
     default: clean build
 ### publishCommand
