@@ -163,23 +163,22 @@ jobs:
           path: markdown
 
       # Aufruf der Action
-      - name: createReleasenote
-        id: cR
-        uses: ./mcbscore/actions/createReleasenote
+      - name: Create Release Note
+        id: create-release-note
+        uses: ./mcbscore/github/actions/create-release-note
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          SONAR_URL: 'https://sonar.mobilcom.de/api/measures/component'
-          ISSUES: ${{ github.event.inputs.issueList }}  
-          COMPONENT:  ${{ env.COMPONENT }}
-          REPO: ${{ github.REPOSITORY }}
-          RELEASE: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
-          JUNIT: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
-          CUCUMBER: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
-          VERSION: ${{ github.event.inputs.releaseVersion }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
-          EPIC: "epic"
+          jiraUrl: ${{ env.JIRA_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          sonarUrl: 'https://sonar.mobilcom.de/api/measures/component'
+          issueList: ${{ github.event.inputs.issueList }}
+          component:  ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          repositoryName: ${{ github.REPOSITORY }}
+          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
+          junitResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
+          cucumberResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          epic: "epic"
 
       # ###################################################################################
       # Mail-Notification
@@ -193,9 +192,9 @@ jobs:
           IBN: "unbestimmt"
           # ISSUES: ${{ github.event.inputs.issueList }}
           ISSUES: issue_info.csv
-          SQL: ${{ steps.cR.outputs.sql }}
-          CONFIG: ${{ steps.cR.outputs.config }}
-          DEPENDENCIES: ${{ steps.cR.outputs.dependency }}
+          SQL: ${{ steps.create-release-note.outputs.sql }}
+          CONFIG: ${{ steps.create-release-note.outputs.config }}
+          DEPENDENCIES: ${{ steps.create-release-note.outputs.dependency }}
           EXTRA: "extra"
           EPIC: "epic"
           WEBHOOK_URI: ${{ env.TEAMS_MAIL }}

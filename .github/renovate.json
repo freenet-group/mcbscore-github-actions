@@ -1,0 +1,10 @@
+{
+  "extends": [
+    "config:base",
+    ":prHourlyLimitNone"
+  ],
+  "github-actions": {
+    "fileMatch": ["workflows\\/[^/]+\\.ya?ml$", "actions\\/[^/]+\\.ya?ml$"]
+  },
+  "assignees": ["frasch1712", "ChristophS-md", "bmoeller-md"]
+}
