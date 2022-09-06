@@ -34,8 +34,8 @@ sowie eine neu zu erzeugende Release-Version zu ermitteln ...
 ---
 
 ## Ergebnisse:
-1. Die neu zu erzeugende Versionskennung ist zugreifbar unter : ${{ steps.createVersion.outputs.nV }}
-2. Die IssueListe ist zugreifbar unter : ${{ steps.createVersion.outputs.iL }}
+1. Die neu zu erzeugende Versionskennung ist zugreifbar unter : ${{ steps.create-version.outputs.newVersion }}
+2. Die IssueListe ist zugreifbar unter : ${{ steps.create-version.outputs.issueList }}
 
 ---
 
@@ -44,7 +44,6 @@ Vor dem Aufruf der Action müssen folgende Rahmenbedingungen geschaffen werden:
 1. Checkout des Repository der zu bearbeitenden Komponente mit History und Tags (fetch-depth=0)
 2. Checkout der organisationsinternen Actions in das Unterverzeichnis "mcbscore/github"
 3. JDK-Setup
-4. Der Aufruf der Action sollte in einem Job mit der Id "cV" (createVersion) erfolgen (um die Rückgabewerte eindeutig zuordnen zu können)
 
 ---
 
@@ -83,7 +82,7 @@ Vor dem Aufruf der Action müssen folgende Rahmenbedingungen geschaffen werden:
       # Aufruf der Action
       # ##################################################################################
       - name: createVersion
-        id: cV
+        id: create-version
         uses: ./mcbscore/createVersion
         with:
           JIRA_URL: $JIRA_URL
@@ -96,7 +95,7 @@ Vor dem Aufruf der Action müssen folgende Rahmenbedingungen geschaffen werden:
       
       # Simple Kontrollausgabe
       - run: |
-          echo ${{ steps.cV.outputs.newVersion }}
-          echo "newVersion=${{ steps.cV.outputs.newVersion }}" >> $GITHUB_ENV
-          echo ${{ steps.cV.outputs.issueList }}
-          echo "issueList=${{ steps.cV.outputs.issueList }}" >> $GITHUB_ENV
+          echo ${{ steps.create-version.outputs.newVersion }}
+          echo "newVersion=${{ steps.create-version.outputs.newVersion }}" >> $GITHUB_ENV
+          echo ${{ steps.create-version.outputs.issueList }}
+          echo "issueList=${{ steps.create-version.outputs.issueList }}" >> $GITHUB_ENV
