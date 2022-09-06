@@ -184,21 +184,18 @@ jobs:
       # Mail-Notification
       # ###################################################################################
       - name: Send notification as mail
-        id: mail_notification
-        uses: ./mcbscore/actions/sendMail2
+        uses: ./mcbscore/github/actions/releasebuild-notification
         with:
-          COMPONENT:  ${{ env.COMPONENT }}
-          VERSION: ${{ github.event.inputs.releaseVersion }}
-          IBN: "unbestimmt"
-          # ISSUES: ${{ github.event.inputs.issueList }}
-          ISSUES: issue_info.csv
-          SQL: ${{ steps.create-release-note.outputs.sql }}
-          CONFIG: ${{ steps.create-release-note.outputs.config }}
-          DEPENDENCIES: ${{ steps.create-release-note.outputs.dependency }}
-          EXTRA: "extra"
-          EPIC: "epic"
-          WEBHOOK_URI: ${{ env.TEAMS_MAIL }}
-          TEMPLATE: ${{ env.MAIL_TEMPLATE }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
-          REPO: ${{ github.REPOSITORY }}
+          component:  ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          goingLiveDate: "unbestimmt"
+          issueList: issue_info.csv
+          hasSql: ${{ steps.create-release-note.outputs.sql }}
+          hasConfiguration: ${{ steps.create-release-note.outputs.config }}
+          hasDependencies: ${{ steps.create-release-note.outputs.dependency }}
+          additionalText: "extra"
+          epic: "epic"
+          webhookUri: ${{ env.TEAMS_MAIL }}
+          mailTemplate: ${{ env.MAIL_TEMPLATE }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          repositoryName: ${{ github.REPOSITORY }}

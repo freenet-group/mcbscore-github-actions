@@ -1,0 +1,67 @@
+name: Release-Build Benachrichtigung
+description: 'Versenden einer Release-Build-Notification (an MS-Teams)'
+inputs:
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: true
+  componentVersion:
+    description: Die Version der erzeugten Kompponente
+    required: true
+  goingLiveDate:
+    description: Das Inbetriebnahmedatum der Komponente (Klartext)
+    required: true
+  issueList:
+    description: Die Liste der integrierten Issues
+    required: true  
+  hasSql:
+    description:
+    required: true
+  hasConfiguration:
+    description: Config-Anpassungen (true|false)
+    required: true
+  hasDependencies:
+    description: Abhängigkeiten (true|false)
+    required: true
+  additionalText:
+    description: Extra-Text
+    required: true
+  epic:
+    description: Das EPIC der Komponente
+    required: true
+  webhookUri:
+    description: Die MS-Teams-Zieladresse
+    required: true
+  mailTemplate:
+    description: Das Mail-Template-File
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  repositoryName:
+    description: Das Repository e.g. freenet-group/mcbscore-xyz
+    required: true  
+    
+  
+runs:
+  using: "composite"
+  steps: 
+    - id: sendMail
+      shell: bash
+      run: |
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          mail_info.SendMailInfo2Kt \
+          '${{ inputs.component }}' \
+          ${{ inputs.componentVersion }} \
+          ${{ inputs.goingLiveDate }} \
+          ${{ inputs.hasSql }} \
+          ${{ inputs.hasConfiguration }} \
+          ${{ inputs.hasDependencies }} \
+          ${{ inputs.additionalText }} \
+          ${{ inputs.epic }} \
+          ${{ inputs.issueList }} \
+          ${{ inputs.webhookUri }} \
+          ${{ inputs.mailTemplate }} \
+          ${{ inputs.repositoryName }}
