@@ -1,5 +1,5 @@
 name: Gradle Build
-description: Composite Action zur Durchführung eines Gradle-Builds
+description: Composite-Action zur Durchführung eines Gradle-Builds
 inputs:
   gradleCommand:
     description: Das Gradle-Kommando

@@ -1,6 +1,6 @@
 # init-workflow
 
-Github Action zum Initialisieren von Workflows. Dazu gehören:
+Github-Action zum Initialisieren von Workflows. Dazu gehören:
 - Einlesen von build.properties/workflow.properties
 - Installation von JAVA
 
