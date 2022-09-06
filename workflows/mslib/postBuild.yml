@@ -108,7 +108,6 @@ jobs:
       # Erzeugen einer CSV-Datei mit ergänzenden Issue-Infos
       # ##################################################################################
       - name: fetchIssueInfos
-        id: fI
         uses: ./mcbscore/github/actions/fetch-issue-information
         with:
           jiraUrl: ${{ env.JIRA_URL }}
@@ -120,16 +119,15 @@ jobs:
       # Eintrag der fixVersion
       # ##################################################################################
       - name: setFixVersions
-        id: sF
-        uses: ./mcbscore/actions/setFixVersion
+        uses: ./mcbscore/github/actions/set-fix-version
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          COMPONENT:  ${{ env.COMPONENT }}
-          VERSION: ${{ github.event.inputs.releaseVersion }}
-          ISSUES: ${{ github.event.inputs.issueList }}  
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          component: ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          logLevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
 
       # ##################################################################################
       # set Issues "done"
