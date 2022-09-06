@@ -29,18 +29,22 @@ GitHub-Action zur Erzeugung einer JIRA-Version und einer JIRA-Component-Version 
     required: true  
 
 ---
+
 ## Outputs:  
-  ### keine 
----
-## Ergebnisse :
   ### keine
+
 ---
-## Voraussetzungen :
-1. Vor dem Aufruf der Action müssen foilgende Rahmenbedingungen geschaffen werden:
-2. Checkout des Repository der zu bearbeitenden Komponente
-3. Checkout der DeveloperTools in das Unterverzeichnis "devtools"
-4. Checkout der organisationsinternen Actions in das Unterverzeichnis "mcbscore"
-5. JDK-Setup
+
+## Ergebnisse:
+  ### keine
+
+---
+
+## Voraussetzungen:
+Vor dem Aufruf der Action müssen folgende Rahmenbedingungen geschaffen werden:
+1. Checkout des Repository der zu bearbeitenden Komponente
+2. Checkout der organisationsinternen Actions in das Unterverzeichnis "mcbscore/github"
+3. JDK-Setup
    
    
 

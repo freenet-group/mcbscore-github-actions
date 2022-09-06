@@ -36,117 +36,82 @@ jobs:
           echo "Cleaning up previous run"
           rm -rf *
 
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
-
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - id: checkout-repository
+        name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
+          fetch-depth: 0
 
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/JIRA_URL = JIRA_URL, 
             /github/common/JIRA_URL2 = JIRA_URL2 
 
-      # ##################################################################################
-      # Repository, DevTools und Actions auschecken
-      # ##################################################################################
-
-      # Repository auschecken unter $GITHUB_WORKSPACE
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      # Checkout atldevtools (main) in ./devtools
-      - name: checkout atldevtools
-        uses: actions/checkout@v3
-        with:
-          repository: freenet-group/atldevtools
-          token: ${{ env.TOKEN }}
-          path: devtools
-
       # Die internen Actions auschecken
-      - name: checkout mcbscore actions
+      - name: checkout mcbscore-github-actions
         uses: actions/checkout@v3
         with:
-          repository: freenet-group/mcbscore_actions
+          repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
-          path: mcbscore/actions
+          path: ${{ env.ACTIONS_PATH }}
           ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
-      # Properties
+      # Initialize Workflow
       # ##################################################################################
-
-      # Build Properties einlesen
-      - name: Read build.properties
-        shell: bash
-        run: |
-          cat ./.github/build.properties >> $GITHUB_ENV
-
-      # ##################################################################################
-      # JAVA
-      # ##################################################################################
-
-      # Java / JDK initialisieren
-      - name: Setup Java JDK
-        uses: actions/setup-java@v3
+      - id: init-workflow
+        name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
-          distribution: zulu
-          java-version: ${{ env.JAVA_VERSION }}
+          installJava: true
 
       # ##################################################################################
       # Erzeugen von Version / ComponentVersion in JIRA
       # ##################################################################################
+      # TODO: Frage an Bernd: Müssen die getrennt ausgeführt werden? Oder könnte man das so umbauen und nur einmal starten? jiraProject: ABRMS,MCBS
       - name: jiraConfig-MCBS
-        id: jC-MCBS
-        uses: ./mcbscore/actions/jiraConfig
+        uses: ./mcbscore/github/actions/jira-configuration
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_URL2: ${{ env.JIRA_URL2 }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          JIRA_PROJECT: MCBS
-          JIRA_COMPONENT: ${{ env.COMPONENT }}
-          JIRA_VERSION: ${{ github.event.inputs.releaseVersion }}
-          COMPONENT_LIST: ${{ env.COMPONENT }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
-          
+          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl2: ${{ env.JIRA_URL2 }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraProject: MCBS
+          component: ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentList: ${{ env.COMPONENT }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+
       - name: jiraConfig-ABRMS
-        id: jC-ABRMS
-        uses: ./mcbscore/actions/jiraConfig
+        uses: ./mcbscore/github/actions/jira-configuration
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_URL2: ${{ env.JIRA_URL2 }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          JIRA_PROJECT: ABRMS
-          JIRA_COMPONENT: ${{ env.COMPONENT }}
-          JIRA_VERSION: ${{ github.event.inputs.releaseVersion }}
-          COMPONENT_LIST: ${{ env.COMPONENT }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}    
+          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl2: ${{ env.JIRA_URL2 }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraProject: ABRMS
+          component: ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentList: ${{ env.COMPONENT }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
       # Erzeugen einer CSV-Datei mit ergänzenden Issue-Infos
       # ##################################################################################
       - name: fetchIssueInfos
         id: fI
-        uses: ./mcbscore/actions/fetchIssueInfos
+        uses: ./mcbscore/github/actions/fetch-issue-information
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          ISSUES: ${{ github.event.inputs.issueList }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
       # Eintrag der fixVersion

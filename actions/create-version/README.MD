@@ -4,50 +4,52 @@ GitHub-Action zur Auswertung des Repositories, um im Anschluss eine Jira-Issue-L
 sowie eine neu zu erzeugende Release-Version zu ermitteln ...
 
 ## Parameter :
-  ### JIRA_URL:  
+  ### jiraUrl:  
     description: Organisationsinterne URL des angebundenen JIRA-Systems (hinterlegt in secrets) 
     required: true
-    
-  ### JIRA_CREDENTIALS:  
+  ### jiraCredentials:  
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems (hinterlegt in secrets)   
     required: true  
-  ### COMPONENT:    
+  ### component:    
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)  
     required: true  
-  ### MATCH:  
+  ### tagPattern:  
     description: das zu erfüllende Muster für die Suche nach einem Tag im Repository (e.g "*" , "ms-bm.*" ,"[0-9]*") ( glob(7) )
     required: true 
-  ### BRANCH_NAME:
+  ### branchName:
     description: Der Name des bearbeiteten Branch, um ggf. -SNAPSHOT als Suffix zu setzen
     required: true
-  ### ATLASSIAN_DEVELOPER_TOOLS:  
+  ### atlassianToolsVersion:  
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)  
     required: true  
- ### LOGLEVEL:  
-    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools  
-    required: false  
-    default: info 
+
 ---
+
 ## Outputs:  
   ### newVersion:  
     description: die Versionskennung für das nachfolgende Releasebuild  (x.y.z ohne Prefix)
     value: ${{ steps.createVersion.outputs.nV }} 
   ### issueList:
     description: Liste der beinhalteten Issues durch Leerzeichen getrennt
-    value: ${{ steps.createVersion.outputs.iL }}  
+    value: ${{ steps.createVersion.outputs.iL }}
+
 ---
-## Ergebnisse :
+
+## Ergebnisse:
 1. Die neu zu erzeugende Versionskennung ist zugreifbar unter : ${{ steps.createVersion.outputs.nV }}
 2. Die IssueListe ist zugreifbar unter : ${{ steps.createVersion.outputs.iL }}
+
 ---
-## Voraussetzungen :
-1. Vor dem Aufruf der Action müssen folgende Rahmenbedingungen geschaffen werden:
-2. Checkout des Repository der zu bearbeitenden Komponente mit History und Tags (fetch-depth=0)
-3. Checkout der DeveloperTools in das Unterverzeichnis "devtools"
-4. Checkout der organisationsinternen Actions in das Unterverzeichnis "mcbscore"
-5. JDK-Setup
-6. Der Aufruf der Action sollte in einem Job mit der Id "cV" (createVersion) erfolgen (um die Rückgabewerte eindeutig zuordnen zu können)
+
+## Voraussetzungen:
+Vor dem Aufruf der Action müssen folgende Rahmenbedingungen geschaffen werden:
+1. Checkout des Repository der zu bearbeitenden Komponente mit History und Tags (fetch-depth=0)
+2. Checkout der organisationsinternen Actions in das Unterverzeichnis "mcbscore/github"
+3. JDK-Setup
+4. Der Aufruf der Action sollte in einem Job mit der Id "cV" (createVersion) erfolgen (um die Rückgabewerte eindeutig zuordnen zu können)
+
 ---
+
 ## Aufruf
       # Repository auschecken unter $GITHUB_WORKSPACE
       - name: checkout Repo
