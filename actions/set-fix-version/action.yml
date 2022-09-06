@@ -1,0 +1,43 @@
+name: Set Fix Version
+description: Setzen der FixVersion an den am letzten Releasebuild beteiligten JIRA-Issues
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: true
+  componentVersion:
+    description: die zur Komponente gehörende Version
+    required: true
+  issueList:
+    description: Liste der beteiligten JIRA-Issues
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: true
+
+runs:
+  using: "composite"
+  steps: 
+    - id: setFixVersion
+      shell: bash
+      run: |
+        echo Checked out ...
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+        cp -r "$atlassianToolsDir"/AtlassianDeveloperTools/jiraResources .
+        
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          jira_issue.SetFixVersionsKt \
+          "${{inputs.jiraUrl}}" \
+          "${{inputs.jiraCredentials}}" \
+          "${{ inputs.component }}_${{ inputs.componentVersion }}" \
+          "${{ inputs.component}}" \
+          "${{ inputs.issueList }}"

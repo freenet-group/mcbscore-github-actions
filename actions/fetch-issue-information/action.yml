@@ -1,0 +1,33 @@
+name: Fetch Issue Information
+description: 'Bereitstellen von Issue-Infos für eventuelle Release-Notes'
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  issueList:
+    description: Liste der beteiligten Issues 
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+
+runs:
+  using: "composite"
+  steps: 
+    - id: fetchInfos
+      shell: bash
+      run: |
+        echo fetch Infos ...
+        echo "*${{ inputs.ISSUES }}*"
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+        
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          jira_issue.GetIssueInfosKt \
+          ${{ inputs.jiraUrl }} \
+          "${{ inputs.jiraCredentials }}" \
+          "${{ inputs.issueList }}" \
+          issue_info.csv

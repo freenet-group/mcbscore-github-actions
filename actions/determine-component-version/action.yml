@@ -1,0 +1,51 @@
+name: Determine Component Version
+description: Ermittelt die Version der Komponente basierend auf den Commits und dem Branch
+
+runs:
+  using: "composite"
+  steps:
+    # Komponenten Version ermitteln
+    - name: Determine component version
+      id: componentVersion
+      if: ${{ env.COMPONENT != '' }}
+      uses: ./mcbscore/github/actions/create-version
+      with:
+        jiraUrl: ${{ env.JIRA_URL }}
+        jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+        tagPattern: ${{ env.TAG_PATTERN }}
+        atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+        component: ${{ env.COMPONENT }}
+        branchName: ${{ env.BRANCH_NAME }}
+
+    # COMPONENT_VERSION Umgebungsvariable setzen
+    - name: Set component version
+      if: ${{ env.COMPONENT != '' }}
+      shell: bash
+      run: |
+        if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+        then
+          echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+        else
+          echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
+        fi
+        echo "RAW_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+        echo "ISSUE_LIST=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+
+    - name: Determine Version
+      if: ${{ env.COMPONENT == '' }}
+      shell: bash
+      run: |
+        # letztes Tag ermitteln
+        LAST_VERSION=`git describe --abbrev=0 --tags --match "[0-9]*"`
+        echo "last version : ${LAST_VERSION}"
+        echo "RAW_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')" >> $GITHUB_ENV
+        
+        if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+        then
+          echo "COMPONENT_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')" >> $GITHUB_ENV
+        else
+          echo "COMPONENT_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')-SNAPSHOT" >> $GITHUB_ENV
+        fi
+        
+        echo "version : ${{ env.COMPONENT_VERSION }}"
+

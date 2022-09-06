@@ -1,0 +1,49 @@
+name: Gradle Build
+description: Composite-Action zur Durchführung eines Gradle-Builds
+inputs:
+  gradleCommand:
+    description: Das Gradle-Kommando
+    required: false
+    default: clean build
+  publishCommand:
+    description: Das Gradle-Kommando zur Veröffentlichung/Bereitstellung des Artefakts
+    required: false
+    default: publish
+  gradleOptions:
+    description: Zusätzliche optionale Gradle-Parameter
+    required: false
+  sonarqubeUrl:
+    description: Die Sonarqube-URL
+    required: false
+  sonarqubeToken:
+    description: Das Sonarqube-Token
+    required: false
+  artifactoryUserName:
+    description: Login für das Artifactory
+    required: true
+  artifactoryPassword:
+    description: Passwort für das Artifactory
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set Gradle Command
+      shell: bash
+      run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }}" >> $GITHUB_ENV
+
+    - name: Add Sonarqube Gradle Task
+      if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
+      shell: bash
+      run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} sonarqube -Dsonar.login=${{ inputs.sonarqubeToken }} -Dsonar.host.url=${{ inputs.sonarqubeUrl }}" >> $GITHUB_ENV
+
+    - name: Add Publish Gradle Task
+      if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+      shell: bash
+      run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{ inputs.publishCommand }}" >> $GITHUB_ENV
+
+    # Gradle Build
+    - name: Build with Gradle
+      shell: bash
+      run: sh ./gradlew -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ inputs.artifactoryUserName }} -PartifactoryPassword=${{ inputs.artifactoryPassword }} ${{ env.GRADLE_COMMAND }} ${{ inputs.gradleOptions }}
+
