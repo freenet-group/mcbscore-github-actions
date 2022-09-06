@@ -18,7 +18,7 @@ Github Action zum Initialisieren von Workflows. Dazu gehören:
 
 ## Voraussetzungen:
 
-AWS Secrets wurden eingelesen.
+AWS-Secrets wurden eingelesen.
 
 ---
 

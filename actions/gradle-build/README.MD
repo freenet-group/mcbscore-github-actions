@@ -10,11 +10,11 @@ Für die Branches release und develop wird zusätzlich der publish Task gerufen.
     required: false
     default: clean build
 ### publishCommand
-    description: Das Gradle publish Kommando
+    description: Das Gradle-Kommando zur Veröffentlichung/Bereitstellung des Artefakts
     required: false
     default: publish
 ### gradleOptions
-    description: 'Zusätzliche optionale Gradle Parameter'
+    description: Zusätzliche optionale Gradle-Parameter
     required: false
 ### sonarqubeUrl
     description: Die Sonarqube URL

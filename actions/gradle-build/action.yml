@@ -1,16 +1,16 @@
 name: Gradle Build
-description: Composite Action zur Durchführung eines Gradle Builds
+description: Composite Action zur Durchführung eines Gradle-Builds
 inputs:
   gradleCommand:
-    description: Das Gradle Kommando
+    description: Das Gradle-Kommando
     required: false
     default: clean build
   publishCommand:
-    description: Das Gradle publish Kommando
+    description: Das Gradle-Kommando zur Veröffentlichung/Bereitstellung des Artefakts
     required: false
     default: publish
   gradleOptions:
-    description: 'Zusätzliche optionale Gradle Parameter'
+    description: Zusätzliche optionale Gradle-Parameter
     required: false
   sonarqubeUrl:
     description: Die Sonarqube URL
