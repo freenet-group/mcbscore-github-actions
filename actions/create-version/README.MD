@@ -3,23 +3,23 @@
 GitHub-Action zur Auswertung des Repositories, um im Anschluss eine Jira-Issue-Liste für Releasenotes  
 sowie eine neu zu erzeugende Release-Version zu ermitteln ...
 
-## Parameter :
-  ### jiraUrl:  
+## Parameter:
+  ### jiraUrl
     description: Organisationsinterne URL des angebundenen JIRA-Systems (hinterlegt in secrets) 
     required: true
-  ### jiraCredentials:  
+  ### jiraCredentials
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems (hinterlegt in secrets)   
     required: true  
-  ### component:    
+  ### component
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)  
     required: true  
-  ### tagPattern:  
+  ### tagPattern
     description: das zu erfüllende Muster für die Suche nach einem Tag im Repository (e.g "*" , "ms-bm.*" ,"[0-9]*") ( glob(7) )
     required: true 
-  ### branchName:
+  ### branchName
     description: Der Name des bearbeiteten Branch, um ggf. -SNAPSHOT als Suffix zu setzen
     required: true
-  ### atlassianToolsVersion:  
+  ### atlassianToolsVersion
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)  
     required: true  
 
@@ -102,5 +102,3 @@ Vor dem Aufruf der Action müssen folgende Rahmenbedingungen geschaffen werden:
           echo "newVersion=${{ steps.cV.outputs.newVersion }}" >> $GITHUB_ENV
           echo ${{ steps.cV.outputs.issueList }}
           echo "issueList=${{ steps.cV.outputs.issueList }}" >> $GITHUB_ENV
-      
-   

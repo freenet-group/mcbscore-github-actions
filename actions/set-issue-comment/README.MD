@@ -3,19 +3,19 @@
 GitHub-Action zur Erzeugung einer JIRA-Version und einer JIRA-Component-Version auf Basis einer zuvor ermittelten Versionskennung und einer Komponente ...
 
 ## Parameter:
-  ### jiraUrl:  
+  ### jiraUrl
     description: Organisationsinterne URL des angebundenen JIRA-Systems  
     required: true
-  ### jiraCredentials:  
+  ### jiraCredentials
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems  
     required: true  
-  ### comment:
+  ### comment
     description: der zu erzeugenden Kommentar
     required: true
-  ### issueList:
+  ### issueList
     description: Liste der Issues , an denen der Kommentar zu setzen ist
     required: true
-  ### atlassianToolsVersion:  
+  ### atlassianToolsVersion
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)  
     required: true  
 

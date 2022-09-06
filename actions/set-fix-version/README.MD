@@ -3,25 +3,25 @@
 GitHub-Action zum Setzen der FixVersion an den am Releasebuild beteiligten JIRA-Issues
 
 ## Parameter:
-  ### jiraUrl:  
+  ### jiraUrl
     description: Organisationsinterne URL des angebundenen JIRA-Systems  
     required: true
-  ### jiraCredentials:  
+  ### jiraCredentials
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems  
     required: true  
-  ### component:    
+  ### component
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)  
     required: true  
-  ### componentVersion:  
+  ### componentVersion
     description: die mit $COMPONENT zusammen zu setzende Versionskennung (zuvor ermittelt mit "createVersion"
     required: true  
-  ### issueList:
+  ### issueList
     description: Liste der beteiligten JIRA-Issues als String (blank-sep.)
     required: true
-  ### atlassianToolsVersion:  
+  ### atlassianToolsVersion
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)  
     required: false  
-  ### logLevel:  
+  ### logLevel
     description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools  
     required: true  
 

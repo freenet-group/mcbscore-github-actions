@@ -2,29 +2,29 @@
 
 GitHub-Action zur Erzeugung einer JIRA-Version und einer JIRA-Component-Version auf Basis einer zuvor ermittelten Versionskennung und einer Komponente ...
 
-## Parameter :
-  ### jiraUrl:  
+## Parameter:
+  ### jiraUrl
     description: Organisationsinterne URL des angebundenen JIRA-Systems  
     required: true
-  ### jiraUrl2:  
+  ### jiraUrl2
     description: Organisationsinterne URL des angebundenen JIRA-Systems  
     required: true
-  ### jiraCredentials:  
+  ### jiraCredentials
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems  
     required: true  
-  ### jiraProject:
+  ### jiraProject
     description: der Name des zu bedienenden JIRA-Projekts
     required: true
-  ### component:
+  ### component
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
     required: true
-  ### componentVersion:
+  ### componentVersion
     description: die neu einzurichtende Version
     required: true
-  ### componentList:
+  ### componentList
     description: Liste der Komponenten, für die eine Component-Version erzeugt weerden soll
     required: true
-  ### atlassianToolsVersion:  
+  ### atlassianToolsVersion
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)  
     required: true  
 

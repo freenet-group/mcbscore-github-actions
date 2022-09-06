@@ -3,16 +3,16 @@ GitHub-Action zur Erzeugung einer CSV-Datei mit Informationen über JIRA-Issues.
 Aktuell : "issue;summary;status;components;semanticVersion;keywords;priority;fixVersions;affectedVersions;dependency;"
 
 ## Parameter:
-  ### jiraUrl:  
+  ### jiraUrl
     description: Organisationsinterne URL des angebundenen JIRA-Systems  
     required: true
-  ### jiraCredentials:  
+  ### jiraCredentials
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems  
     required: true  
-  ### issueList:
+  ### issueList
     description: Liste der Issues, für die die Infos bereitzustellen sind
     required: true
-  ### atlassianToolsVersion:  
+  ### atlassianToolsVersion
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)  
     required: true  
 
