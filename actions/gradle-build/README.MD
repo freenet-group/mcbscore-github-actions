@@ -17,10 +17,10 @@ Für die Branches release und develop wird zusätzlich der publish Task gerufen.
     description: Zusätzliche optionale Gradle-Parameter
     required: false
 ### sonarqubeUrl
-    description: Die Sonarqube URL
+    description: Die Sonarqube-URL
     required: false
 ### sonarqubeToken
-    description: Das Sonarqube Token
+    description: Das Sonarqube-Token
     required: false
 ### artifactoryUserName
     description: Login für das Artifactory
