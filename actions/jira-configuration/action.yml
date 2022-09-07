@@ -33,16 +33,16 @@ runs:
       shell: bash
       run: |
         echo "Erzeugen der Versionen in Jira"
-        echo "${{inputs.component}}"
-        echo "${{inputs.componentVersion}}"
+        echo "${{ inputs.component }}"
+        echo "${{ inputs.componentVersion }}"
         atlassianToolsDir=./mcbscore/github/atlassian-tools
 
         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
-          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
-          jira_config.CreateVersionKt \ 
-          ${{inputs.jiraUrl}} \
-          ${{inputs.jiraUrl2}} \
-          ${{inputs.jiraCredentials}} \
-          "${{inputs.component}}"_"${{inputs.componentVersion}}" \
-          "${{inputs.jiraProject}}" \
-          "${{inputs.componentList}}"
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          jira_config.CreateVersionKt \
+          "${{ inputs.jiraUrl }}" \
+          "${{ inputs.jiraUrl2 }}" \
+          "${{ inputs.jiraCredentials }}" \
+          "${{ inputs.component }}"_"${{ inputs.componentVersion }}" \
+          "${{ inputs.jiraProject }}" \
+          "${{ inputs.componentList }}"
