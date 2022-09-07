@@ -20,8 +20,8 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mslib-aws, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mslib-rest, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mslib-aws, branch: develop, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mslib-rest, branch: develop, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v3
         with:
