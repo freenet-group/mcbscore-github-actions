@@ -102,6 +102,9 @@ jobs:
           artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           publishCommand: ${{ env.PUBLISH_COMMAND }}
+          sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
+          sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
+          gradleOptions: ${{ github.event.inputs.gradleOptions }}
 
       # Existierende Draft Releases löschen
       - name: Delete draft releases
