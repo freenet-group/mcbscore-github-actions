@@ -20,9 +20,8 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-github-test-repo, branch: main, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-#          - { name: mslib-aws, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-#          - { name: mslib-rest, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mslib-aws, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mslib-rest, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v3
         with:
