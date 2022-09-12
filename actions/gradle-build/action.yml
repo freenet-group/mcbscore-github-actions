@@ -5,10 +5,6 @@ inputs:
     description: Das Gradle-Kommando
     required: false
     default: clean build
-  publishCommand:
-    description: Das Gradle-Kommando zur Veröffentlichung/Bereitstellung des Artefakts
-    required: false
-    default: publish
   gradleOptions:
     description: Zusätzliche optionale Gradle-Parameter
     required: false
@@ -40,7 +36,7 @@ runs:
     - name: Add Publish Gradle Task
       if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
       shell: bash
-      run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{ inputs.publishCommand }}" >> $GITHUB_ENV
+      run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} publish" >> $GITHUB_ENV
 
     # Gradle Build
     - name: Build with Gradle
