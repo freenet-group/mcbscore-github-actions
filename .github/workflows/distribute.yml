@@ -34,7 +34,7 @@ jobs:
           repositoryName: ${{ matrix.repository.name }}
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
-          actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+          workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -58,7 +58,7 @@ jobs:
           repositoryName: ${{ matrix.repository.name }}
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
-          actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+          workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
