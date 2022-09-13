@@ -47,11 +47,6 @@ runs:
       shell: bash
       run: |
         workingDirectory=$(pwd)
-        
-        if  [[ "${{ inputs.gradleDirectory }}" != "." ]] ;
-        then
-          cd ${{ inputs.gradleDirectory }}
-        fi
-        
+        cd ${{ inputs.gradleDirectory }}
         sh ./gradlew -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ inputs.artifactoryUserName }} -PartifactoryPassword=${{ inputs.artifactoryPassword }} ${{ env.GRADLE_COMMAND }} ${{ inputs.gradleOptions }}
         cd $workingDirectory
