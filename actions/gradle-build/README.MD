@@ -9,10 +9,10 @@ Für die Branches release und develop wird zusätzlich der publish Task gerufen.
     description: Das Gradle-Kommando
     required: false
     default: clean build
-### publishCommand
-    description: Das Gradle-Kommando zur Veröffentlichung/Bereitstellung des Artefakts
+### gradleDirectory
+    description: Das Verzeichnis, in dem der Build erfolgen soll
     required: false
-    default: publish
+    default: .
 ### gradleOptions
     description: Zusätzliche optionale Gradle-Parameter
     required: false

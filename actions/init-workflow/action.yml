@@ -6,6 +6,10 @@ inputs:
     description: JDK installieren?
     type: boolean
     default: false
+  installNodeJs:
+    description: Node.js installieren?
+    type: boolean
+    default: false
 
 runs:
   using: "composite"
@@ -27,3 +31,9 @@ runs:
         distribution: zulu
         java-version: ${{ env.JAVA_VERSION }}
 
+    # Node.js installieren
+    - name: Set up Node.js
+      if: ${{ inputs.installNodeJs }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ env.NODEJS_VERSION }}

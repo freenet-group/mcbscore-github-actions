@@ -9,6 +9,10 @@ Github-Action zum Initialisieren von Workflows. Dazu gehören:
     description: JDK installieren?
     type: boolean
     default: false
+### installNodeJs
+    description: Node.js installieren?
+    type: boolean
+    default: false
 
 ---
 
@@ -19,6 +23,10 @@ Github-Action zum Initialisieren von Workflows. Dazu gehören:
 ## Voraussetzungen:
 
 AWS-Secrets wurden eingelesen.
+
+Folgende Properties müssen in der Datei workflow.properties enthalten sein:
+- JAVA_VERSION, wenn Java installiert werden soll
+- NODEJS_VERSION, wenn Node.js installiert werden soll
 
 ---
 
