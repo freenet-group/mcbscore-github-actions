@@ -122,6 +122,10 @@ jobs:
         name: Determine Component Version
         uses: ./mcbscore/github/actions/determine-component-version
 
+      # ##################################################################################
+      # Release bauen
+      # ##################################################################################
+
       - name: Run Test
         run: mocha app/test/validate.js
 
@@ -131,10 +135,6 @@ jobs:
       - name: Copy Sources
         run: |
           cp ./generated/mcbs-java/RestErrorCode.java ./generated/md-error-codes/src/main/java/de/md/ms/exception/rest/errorcodes
-
-      # ##################################################################################
-      # Release bauen
-      # ##################################################################################
 
       - id: gradle-build
         name: Gradle Build
