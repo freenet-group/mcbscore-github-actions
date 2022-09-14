@@ -38,6 +38,10 @@ inputs:
     description: Das EPIC als Releaseklammer
     required: false 
     default: META-170
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
 outputs:
   config:
     description: Indikator für ms-configuration
@@ -54,6 +58,7 @@ outputs:
   coverage:
     description: Testabdeckung in Prozent
     value: ${{ steps.fetchAdditionalInfo.outputs.coverage }}  
+
 env:
   CONFIG: "true"  
   SQL: "true"
@@ -70,7 +75,7 @@ runs:
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
         # Dependencies auswerten      
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           dev_config.GetDependencyKt \
           ${{ inputs.jiraUrl }} \
@@ -101,7 +106,7 @@ runs:
         echo "##[set-output name=dependency;]$dependency"
         
         # DB-Changes auswerten
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           dev_config.GetSQLUpdateKt \
           ${{ inputs.jiraUrl }} \
@@ -120,7 +125,7 @@ runs:
         echo "##[set-output name=sql;]$sql"
         
         # Config auswerten
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           dev_config.GetConfigKt \
           ${{ inputs.jiraUrl }} \
@@ -140,7 +145,7 @@ runs:
         
         # Coverage auswerten
         cp -r "$atlassianToolsDir"/jiraResources .
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           sonar_info.SonarCoverage1CompKt \
           "${{ inputs.sonarUrl }}" \

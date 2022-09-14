@@ -19,6 +19,10 @@ inputs:
   branchName:
     description: Der Branchname zur Steuerung des Versions-Suffix '-SNAPSHOT'
     required: true
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
 outputs:
   newVersion:
     description: die Versionskennung für das nachfolgende Releasebuild
@@ -97,7 +101,7 @@ runs:
         cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           mcbs_info.CreateNewMCBSComponentVersionKt \
           $lastTag \

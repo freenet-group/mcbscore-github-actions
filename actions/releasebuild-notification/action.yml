@@ -40,7 +40,10 @@ inputs:
   repositoryName:
     description: Das Repository e.g. freenet-group/mcbscore-xyz
     required: true  
-    
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
   
 runs:
   using: "composite"
@@ -50,7 +53,7 @@ runs:
       run: |
         atlassianToolsDir=./mcbscore/github/atlassian-tools
 
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-info.xml \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           mail_info.SendMailInfo2Kt \
           '${{ inputs.component }}' \

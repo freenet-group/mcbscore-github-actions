@@ -127,7 +127,6 @@ jobs:
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          logLevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
 
       # ##################################################################################
       # set Issues "done"
