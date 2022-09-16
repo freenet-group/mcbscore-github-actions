@@ -11,7 +11,7 @@ on:
         description: 'Die Liste der integrierten JIRA-Issues'
         required: true
       actionsRepositoryBranch:
-        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
 
@@ -164,7 +164,7 @@ jobs:
       # Aufruf der Action
       - name: Create Release Note
         id: create-release-note
-        uses: ./mcbscore/github/actions/create-release-note
+        uses: ./mcbscore/github/actions/create-release-note-old
         with:
           jiraUrl: ${{ env.JIRA_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
@@ -189,9 +189,9 @@ jobs:
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           goingLiveDate: "unbestimmt"
           issueList: issue_info.csv
-          hasSql: ${{ steps.create-release-note.outputs.sql }}
-          hasConfiguration: ${{ steps.create-release-note.outputs.config }}
-          hasDependencies: ${{ steps.create-release-note.outputs.dependency }}
+          hasSql: ${{ steps.create-release-note-old.outputs.sql }}
+          hasConfiguration: ${{ steps.create-release-note-old.outputs.config }}
+          hasDependencies: ${{ steps.create-release-note-old.outputs.dependency }}
           additionalText: "extra"
           epic: "epic"
           webhookUri: ${{ env.TEAMS_MAIL }}

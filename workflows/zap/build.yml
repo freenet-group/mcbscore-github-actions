@@ -1,0 +1,213 @@
+name: Build
+
+on:
+  push:
+    branches-ignore:
+      - release
+  pull_request:
+    branches-ignore:
+      - release
+      - develop
+  workflow_dispatch:
+    inputs:
+      gradleOptions:
+        description: 'Zusätzliche optionale Gradle Parameter'
+        required: false
+      mcbsServicesVersion:
+        description: Die relevante Version der MCBS-Services
+        required: false
+        default: latest.integration
+      frameworkVersion:
+        description: Die relevante Framework-Version
+        required: false
+        default: latest.integration
+      epic:
+        description: EPIC als eventuelle Releaseklammer (META-170 = keine / unbestimmt)
+        required: false
+        default: META-170
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        required: false
+        default: main
+
+jobs:
+  build:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted, vm]
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - id: checkout-repository
+        name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER, 
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/JIRA_URL = JIRA_URL
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - id: init-workflow
+        name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJava: true
+
+      # ##################################################################################
+      # Version ermitteln
+      # ##################################################################################
+
+      - id: determine-build-type-and-branch-name
+        name: Determine Build Type And Branch Name
+        uses: ./mcbscore/github/actions/build-type-and-branch-name
+
+      - id: determine-component-version
+        name: Determine Component Version
+        uses: ./mcbscore/github/actions/determine-component-version
+
+      # Komponenten Version ermitteln
+      - name: Determine component version
+        id: componentVersion
+        uses: ./mcbscore/actions/createVersion
+        with:
+          JIRA_URL: ${{ env.JIRA_URL }}
+          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
+          MATCH: ${{ env.TAG_PATTERN }}
+          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          COMPONENT: ${{ env.COMPONENT }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+
+      # ##################################################################################
+      # Release bauen
+      # ##################################################################################
+
+      - name: Inject library-versions
+        shell: bash
+        if: env.BUILD_TYPE == 'RELEASE'
+        run: |
+          sed -i 's/^mcbsServicesVersion=.*/mcbsServicesVersion=${{ github.event.inputs.mcbsServicesVersion }}/g' gradle.properties
+          sed -i 's/^mobilcomFrameworkVersion=.*/mobilcomFrameworkVersion=${{ github.event.inputs.frameworkVersion }}/g' gradle.properties
+          cat gradle.properties
+          git diff-index --quiet HEAD || git commit -am "Releasebuild : ${{steps.componentVersion.outputs.newVersion}}"
+          git push -f
+
+      - id: gradle-build
+        name: Gradle Build
+        uses: ./mcbscore/github/actions/gradle-build
+        with:
+          artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
+          artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
+          sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
+          sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
+          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+
+      # JUnit Ergebnisse publizieren
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: '**/test-results/**/*.xml'
+
+      # Existierende Draft Releases löschen
+      - name: Delete draft releases
+        if: env.BUILD_TYPE == 'DEVELOP'
+        uses: hugo19941994/delete-draft-releases@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+
+      # Release erstellen
+      - name: Create Release
+        id: create-release
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          release_name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
+          prerelease: false
+
+      # Release EAR hinzufügen
+      - name: Upload Release EAR
+        id: upload-release-ear
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./${{ env.COMPONENT }}-ear/build/libs/${{ env.COMPONENT }}-ear-${{ env.COMPONENT_VERSION }}.ear
+          asset_name: ${{ env.COMPONENT }}-ear-${{ env.COMPONENT_VERSION }}.ear
+          asset_content_type: application/java-archive
+
+      # Release API hinzufügen
+      - name: Upload Release API
+        id: upload-release-api
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./${{ env.COMPONENT }}-api/build/libs/${{ env.COMPONENT }}-api-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.COMPONENT }}-api-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      # ##################################################################################
+      # Re-Merge
+      # ##################################################################################
+      # - name: Merge development -> staging
+      #   if: env.BUILD_TYPE == 'RELEASE'
+      #   shell: bash
+      #   run: |
+      #    git checkout ${{ github.event.repository.default_branch }}
+      #    git merge --no-ff --no-commit release
+      #    git reset ${{ github.event.repository.default_branch }} -- gradle.properties
+      #    git checkout gradle.properties
+
+      #    git commit -am "Merge release -> ${{ github.event.repository.default_branch }}"
+      #    git push
+
+      # Starte postBuild auf RELEASE
+      - name: Invoke postBuild workflow
+        if: env.BUILD_TYPE == 'RELEASE'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PostBuild
+          token: ${{ env.TOKEN }}
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.ISSUE_LIST }}", "epic": "${{ github.event.inputs.epic }}"}'

@@ -1,0 +1,53 @@
+name: Create Backend Issue
+description: 'Erzeugen eines Jira-Issue zur Integration von ZAP-Komponenten in ein Backend'
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: true
+  componentVersion:
+    description: Die erzeugte / zu integrierende Version
+    required: true
+  epic:
+    description: Das META-Ticket als Releaseklammer
+    required: true
+  hasDbChanges:
+    description: Gibt es DB-Changes (Ja/Nein)
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+
+runs:
+  using: "composite"
+  steps: 
+    - id: createBE-Issue
+      shell: bash
+      run: |
+        echo Create BE-Issue
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+               
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          be_issue.BE_IssueKt \
+          ${{ inputs.jiraUrl }} \
+          ${{ inputs.jiraCredentials }} \
+          ABRMS \
+          Aufgabe \
+          ${{ github.ACTOR }} \
+          ${{ github.ACTOR }} \
+          ${{ inputs.componentVersion }} \
+          ${{ inputs.component }} \
+          ${{ inputs.epic }} \
+          ${{ inputs.hasDbChanges }} \
+          ${{ inputs.epic }} \
+          ${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/wiki/${{ inputs.component }}_${{ inputs.componentVersion }}

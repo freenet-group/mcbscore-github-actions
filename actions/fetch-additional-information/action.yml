@@ -1,0 +1,117 @@
+name: Fetch Additional Information
+description: 'Auswertung der Issues eines Release bzgl. dependencies , sql , config und Bereitstellung nach aussen'
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  issueList:
+    description: Liste der beteiligten Issues
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+  
+outputs:
+  config:
+    description: Indikator für ms-configuration
+    value: ${{ steps.fetchAdditionalInfo.outputs.config }}
+  dependency:
+    description: Indikator für dependency-Einträge
+    value: ${{ steps.fetchAdditionalInfo.outputs.dependency }}  
+  dependentIssues:
+    description: konkrete Abhängigkeiten
+    value: ${{ steps.fetchAdditionalInfo.outputs.dependent_issues }}
+  sql:
+    description: Indikator für db-changes
+    value: ${{ steps.fetchAdditionalInfo.outputs.sql }}  
+
+env:
+  CONFIG: "true"
+  SQL: "true"
+  DEPENDENCY: "true"
+  DEPENDENT_ISSUES: "none"
+
+runs:
+  using: "composite"
+  steps: 
+    - id: fetchAdditionalInfo
+      shell: bash
+      run: |
+        echo fetchAdditionalInfo ...
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+        
+        # Dependencies auswerten      
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          dev_config.GetDependencyKt \
+          ${{ inputs.JIRA_URL }} \
+          ${{ inputs.JIRA_CREDENTIALS }} \
+          "${{ inputs.ISSUES }}"
+        
+        # Liste / Property-File der Abhängigkeiten auslesen
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < dependendIssues.properties
+        echo "Dependency       = " ${dependendIssueList}
+        echo "DEPENDENT_ISSUES=$(echo $dependendIssueList)" >> $GITHUB_ENV
+
+        # Liste als Variable bereitstellen
+        echo "##[set-output name=dependent_issues;]$dependendIssueList"
+
+        # Dependencies TRUE || FALSE
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < dependency.properties
+        if [ "$dependency" = "true" ]; then dependency="JA"; else dependency="NEIN"; fi 
+        echo "Dependency       = " ${dependency}
+        echo "DEPENDENCY=$(echo $dependency)" >> $GITHUB_ENV
+
+        # Variable bereitstellen
+        echo "##[set-output name=dependency;]$dependency"
+        
+        # DB-Changes auswerten
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          dev_config.GetSQLUpdateKt \
+          ${{ inputs.JIRA_URL }} \
+          ${{ inputs.JIRA_CREDENTIALS }} \
+          "${{ inputs.ISSUES }}" 
+
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < sql.properties
+        if [ "$sql" = "true" ]; then sql="JA"; else sql="NEIN"; fi 
+        echo "SQL       = " ${sql}
+        echo "SQL=$(echo $sql)" >> $GITHUB_ENV
+
+        # Variable bereitstellen
+        echo "##[set-output name=sql;]$sql"
+        
+        # Config auswerten
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"s/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          dev_config.GetConfigKt \
+          ${{ inputs.JIRA_URL }} \
+          ${{ inputs.JIRA_CREDENTIALS }} \
+          "${{ inputs.ISSUES }}"  
+
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < config.properties
+        if [ "$config" = "true" ]; then config="JA"; else config="NEIN"; fi 
+        echo "Configuration       = " ${config}
+        echo "CONFIG=$(echo $config)" >> $GITHUB_ENV
+
+        # Version als Variable bereitstellen
+        echo "##[set-output name=config;]$config"
