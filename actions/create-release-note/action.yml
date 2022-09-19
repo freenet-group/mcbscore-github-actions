@@ -102,6 +102,7 @@ runs:
         echo "| ----- | ------------ | ------ | ----------- | ----------- | -------------- | ------------- |" >> $release.md
         while IFS= read -r line; do
           echo "| [$(echo $line | cut -d";" -f1 )]($JIRA_TICKET_URL$(echo $line | cut -d";" -f1 ) )  | $(echo $line | cut -d";" -f2 ) | $(echo $line | cut -d";" -f3 ) | $(echo $line | cut -d";" -f6 ) | $(echo $line | cut -d";" -f4 ) | $(echo $line | cut -d";" -f8 ) | $(echo $line | cut -d";" -f9 )" >> $release.md
+          issueList=echo "$issueList $(echo $line | cut -d";" -f1 )"
         done < ../$ISSUE_FILE
           
         echo "## Downloads" >> $release.md
@@ -109,7 +110,7 @@ runs:
 
         echo "##  " >> $release.md
         issues=`cat ../$ISSUE_FILE`
-        echo "ImplementedIssues: $issues" >> $release.md
+        echo "ImplementedIssues: $issueList" >> $release.md
         
         # cat $release.md
         
