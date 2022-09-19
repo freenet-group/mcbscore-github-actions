@@ -71,7 +71,7 @@ runs:
         # Releasepage
         echo "## Release" > $release.md
         # EPIC ?
-        if [ "${{ inputs.epic }}" = "META-170" ]; then echo "- [x] keine umfassende Releasezuordnung" >>  $release.md; else echo "- ${{ env.JIRA_URL }}${{ inputs.epic }}" >> $release.md; fi
+        if [ "${{ inputs.epic }}" = "META-170" ]; then echo "- [x] keine umfassende Releasezuordnung" >>  $release.md; else echo "- https://jira.freenet-group.de/browse/${{ inputs.epic }}" >> $release.md; fi
         
         echo "## Java" >> $release.md
         echo "Java : ${{ inputs.javaVersion }}" >> $release.md
