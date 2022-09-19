@@ -1,0 +1,48 @@
+name: Determine Going Live Date
+description: 'Ermittelt das Datum der geplanten Inbetriebnahme'
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  epic:
+    description: Das EPIC als Releaseklammer
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+  
+outputs:
+  goingLiveDate:
+    description: Datum der geplanten Inbetriebnahme
+    value: ${{ steps.goingLiveDate.outputs.goingLiveDate }}
+
+runs:
+  using: "composite"
+  steps: 
+    - id: goingLiveDate
+      shell: bash
+      run: |
+        
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+
+        if [ "${{ inputs.epic }}" == "META-170" ];
+        then
+          # Version als Variable bereitstellen
+          echo "##[set-output name=goingLiveDate;]unbestimmt"
+        else
+          java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+            -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+            meta_issue.GetIBNDateKt \
+            "${{ inputs.jiraUrl }}" \
+            "${{ inputs.jiraCredentials }}" \
+            "${{ inputs.epic }}"
+          cat ./ibn.properties >> $GITHUB_ENV
+          echo "##[set-output name=goingLiveDate;]${{ env.IBN-Date }}"
+        fi

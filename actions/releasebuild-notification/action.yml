@@ -14,7 +14,7 @@ inputs:
     description: Die Liste der integrierten Issues
     required: true  
   hasSql:
-    description:
+    description: Datenbankänderungen (true|false)
     required: true
   hasConfiguration:
     description: Config-Anpassungen (true|false)

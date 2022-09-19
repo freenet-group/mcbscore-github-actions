@@ -1,0 +1,56 @@
+name: sonar-check
+description: Auswertung der Coverage der benannten Komponente in SONAR
+inputs:
+  sonarUrl:
+    description: Organisationsinterne URL des angebundenen SONAR-Systems
+    required: true
+  sonarCredentials:
+    description: Credentials zur richtigen (neuen) Sonar-Abfrage
+    required: true
+  projectKeyPath:
+    description: der "Pfad" der Komponente in Sonar
+    required: true
+  projectKeyName:
+    description: der Name der Komponente in Sonar (Application)
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+outputs:
+  coverage:
+    description: Testabdeckung in Prozent
+    value: ${{ steps.fetchCoverage.outputs.coverage }}  
+
+runs:
+  using: "composite"
+  steps: 
+    - id: fetchCoverage
+      shell: bash
+      run: |
+        echo fetchCoverage ...
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+        
+        # Dateisystem aufräumen
+        rm -f coverage.properties
+        
+        # Coverage auslesen  
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          sonar_info.GetComponentsCoverageNewKt \
+          ${{ inputs.sonarUrl }} \
+          ${{ inputs.projectKeyPath }} \
+          ${{ inputs.projectKeyName }} \
+          ${{ inputs.sonarCredentials }} 
+
+        # ermittelte Coverage auslesen
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < coverage.properties
+        
+        # ermittelte Coverage als Output bereitstellen
+        echo "##[set-output name=coverage;]$coverage"

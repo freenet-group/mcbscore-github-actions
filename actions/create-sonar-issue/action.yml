@@ -1,0 +1,70 @@
+name: Create Sonar-Issue
+description: Erstellt ein JIRA-Ticket, wenn die Testabdeckung zu niedrig ist
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  jiraProject:
+    description: Das JIRA Projekt, in dem das Ticket erstellt werden soll
+    required: true
+  issueType:
+    description: Die Art des Tickets
+    required: false
+    default: Fehler
+  assignee:
+    description: Der Bearbeiter des Tickets (MCBS Core)
+    required: false
+    default: jiraitababen
+  watchers:
+    description: Benutzer, die bei Änderungen am Ticket benachrichtigt werden sollen
+    required: false 
+    default: "bmoeller,maiyya"
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: true
+  componentVersion:
+    description: die zur Komponente gehörende Version
+    required: true
+  coverageLimit:
+    description: der Sonar-Schwellwert
+    required: true
+  coverage:
+    description: die tatsächliche Abdeckung
+    required: true  
+  requirementId:
+    description: die Anforderungs-Id
+    required: true 
+    default: PRIOMD-7046
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+    
+runs:
+  using: "composite"
+  steps: 
+    - id: createSonarIssue
+      shell: bash
+      run: |
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          sonar_issue.SonarIssueKt \
+          "${{ inputs.jiraUrl }}" \
+          "${{ inputs.jiraCredentials }}" \
+          ${{ inputs.jiraProject }} \
+          ${{ inputs.issueType }} \
+          ${{ inputs.assignee }} \
+          ${{ inputs.watchers }} \
+          ${{ inputs.componentVersion }} \
+          ${{ inputs.component }} \
+          ${{ inputs.coverageLimit }} \
+          ${{ inputs.coverage }} \
+          ${{ inputs.requirementId }}

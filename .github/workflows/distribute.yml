@@ -90,6 +90,35 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+  zap:
+    if: ${{ github.event.inputs.group == 'zap' || github.event.inputs.group == 'ALL' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: mcbscore-business-transaction-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-contract-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-fee-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-invoice-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-mark-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-network-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-party-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        id: distributeWorkflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
   test:
     if: ${{ github.event.inputs.group == 'test' || github.event.inputs.group == 'ALL' }}
     runs-on: ubuntu-latest

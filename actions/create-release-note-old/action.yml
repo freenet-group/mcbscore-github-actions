@@ -1,0 +1,221 @@
+name: Create Releasenote
+description: 'Auswertung der Issues eines Repositories seit dem letzten Tag, Bereitstellen von Issue-Infos für eventuelle Release-Notes, Erzeugen einer neuen Version für ein nachfolgendes Releasebuild'
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  issueList:
+    description: Liste der beteiligten JIRA-Issues
+    required: true
+  sonarUrl:
+    description: Organisationsinterne URL des angebundenen SONAR-Systems
+    required: true
+  repositoryName:
+    description: der Name des zugehörigen Repositories
+    required: true
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: true
+  componentVersion:
+    description: die zur Komponente gehörende Version
+    required: true
+  releaseUrl:
+    description: Die Downloadadresse für das Release
+    required: true
+  junitResultUrl:
+    description: Die Downloadadresse für das JUnit-Testergebnis
+    required: true
+  cucumberResultUrl:
+    description: Die Downloadadresse für das Cucumber-Testergebnis
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  epic:
+    description: Das EPIC als Releaseklammer
+    required: false 
+    default: META-170
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+outputs:
+  config:
+    description: Indikator für ms-configuration
+    value: ${{ steps.fetchAdditionalInfo.outputs.config }}
+  dependency:
+    description: Indikator für dependency-Einträge
+    value: ${{ steps.fetchAdditionalInfo.outputs.dependency }}  
+  dependent_issues:
+    description: konkrete Abhängigkeiten
+    value: ${{ steps.fetchAdditionalInfo.outputs.dependent_issues }}  
+  sql:
+    description: Indikator für db-changes
+    value: ${{ steps.fetchAdditionalInfo.outputs.sql }}  
+  coverage:
+    description: Testabdeckung in Prozent
+    value: ${{ steps.fetchAdditionalInfo.outputs.coverage }}  
+
+env:
+  CONFIG: "true"  
+  SQL: "true"
+  DEPENDENCY: "true"
+  DEPENDENT_ISSUES: "none"
+
+runs:
+  using: "composite"
+  steps: 
+    - id: fetchAdditionalInfo
+      shell: bash
+      run: |
+        echo fetchAdditionalInfo ...
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+        
+        # Dependencies auswerten      
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          dev_config.GetDependencyKt \
+          ${{ inputs.jiraUrl }} \
+          ${{ inputs.jiraCredentials }} \
+          "${{ inputs.issueList }}"
+        
+        # Liste / Property-File der Abhängigkeiten auslesen
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < dependendIssues.properties
+        echo "Dependency       = " ${dependendIssueList}
+        echo "DEPENDENT_ISSUES=$(echo $dependendIssueList)" >> $GITHUB_ENV
+        
+        # Liste als Variable bereitstellen
+        echo "##[set-output name=dependent_issues;]$dependendIssueList"
+        
+        # Dependencies TRUE || FALSE
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < dependency.properties
+        if [ "$dependency" = "true" ]; then dependency="JA"; else dependency="NEIN"; fi 
+        echo "Dependency       = " ${dependency}
+        echo "DEPENDENCY=$(echo $dependency)" >> $GITHUB_ENV
+        
+        # Variable bereitstellen
+        echo "##[set-output name=dependency;]$dependency"
+        
+        # DB-Changes auswerten
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          dev_config.GetSQLUpdateKt \
+          ${{ inputs.jiraUrl }} \
+          ${{ inputs.jiraCredentials }} \
+          "${{ inputs.issueList }}"
+        
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < sql.properties
+        if [ "$sql" = "true" ]; then sql="JA"; else sql="NEIN"; fi 
+        echo "SQL       = " ${sql}
+        echo "SQL=$(echo $sql)" >> $GITHUB_ENV
+        
+        # Variable bereitstellen
+        echo "##[set-output name=sql;]$sql"
+        
+        # Config auswerten
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          dev_config.GetConfigKt \
+          ${{ inputs.jiraUrl }} \
+          ${{ inputs.jiraCredentials }} \
+          "${{ inputs.issueList }}"
+        
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < config.properties
+        if [ "$config" = "true" ]; then config="JA"; else config="NEIN"; fi 
+        echo "Configuration       = " ${config}
+        echo "CONFIG=$(echo $config)" >> $GITHUB_ENV
+        
+        # Version als Variable bereitstellen
+        echo "##[set-output name=config;]$config"
+        
+        # Coverage auswerten
+        cp -r "$atlassianToolsDir"/jiraResources .
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          sonar_info.SonarCoverage1CompKt \
+          "${{ inputs.sonarUrl }}" \
+          "${{ inputs.component }}"
+        
+        # cat coverage.properties
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < coverage.properties
+        if [ "$coverage" = "" ]; then coverage="0"; fi 
+        echo "Coverage       = ${coverage} %"
+        echo "COVERAGE=$(echo $coverage)" >> $GITHUB_ENV
+        
+        # Version als Variable bereitstellen
+        echo "##[set-output name=coverage;]$coverage"
+        
+        # Releasenote schreiben
+        # Setzen des Releasenote-Namens
+        release="${{ inputs.component }}_${{ inputs.componentVersion }}"
+        echo "${release}"
+      
+        # Sprung ins Arbeitsverzeichnis für die Releasenotes
+        cd markdown
+        # Übersicht
+        today=`date +%d-%m-%Y`
+        echo -e "| $today |[$release](https://github.com/${{ inputs.repositoryName }}/wiki/$release)| |" >> ${{ inputs.component }}-Releases.md
+          # echo -e "\n|A|AA|" >> ${{ inputs.component }}-Releases.md
+        # cat ${{ inputs.component }}-Releases.md
+        # Releasepage
+        echo "## Release" > $release.md
+        # EPIC ?
+        if [ "${{ inputs.epic }}" = "META-170" ]; then echo "- [x] keine umfassende Releasezuordnung" >>  $release.md; else echo "- https://jira.freenet-group.de/browse/${{ inputs.epic }}" >> $release.md; fi
+        echo "## Konfiguration" >> $release.md
+        if [ "$config" = "JA" ]; then echo "- [x] ms-configuration" >>  $release.md; else echo "- [ ] ms-configuration" >> $release.md; fi
+        
+        echo "## DB-Changes" >> $release.md
+        if [ "$sql" = "JA" ]; then echo "- [x] DB-Changes" >>  $release.md; else echo "- [ ] DB-Changes" >> $release.md; fi
+        
+        echo "## Dependencies" >> $release.md
+        if [ "$dependency" = "JA" ]; then echo "- [x] Dependencies  " >>  $release.md; echo "  $dependendIssueList" >>  $release.md; else echo "- [ ] Dependencies" >> $release.md; fi
+        echo "## Testergebnisse" >> $release.md
+        echo "### JUnit-Result : "  >> $release.md
+        echo "${{ inputs.junitResultUrl }}"  >> $release.md
+        echo "### CUCUMBER-Result : "  >> $release.md
+        echo "${{ inputs.cucumberResultUrl }}"  >> $release.md
+        echo "### Coverage" >> $release.md
+        echo "$coverage %" >> $release.md
+        
+        echo "## Implementierte Inhalte" >> $release.md
+        echo "| Issue | Beschreibung | Status | Stichwörter | Komponenten | Lösungsversion | betr. Version |" >> $release.md
+        echo "| ----- | ------------ | ------ | ----------- | ----------- | -------------- | ------------- |" >> $release.md
+        while IFS= read -r line; do
+          echo "| [$(echo $line | cut -d";" -f1 )](https://jira.freenet-group.de/browse/$(echo $line | cut -d";" -f1 ) )  | $(echo $line | cut -d";" -f2 ) | $(echo $line | cut -d";" -f3 ) | $(echo $line | cut -d";" -f6 ) | $(echo $line | cut -d";" -f4 ) | $(echo $line | cut -d";" -f8 ) | $(echo $line | cut -d";" -f9 )" >> $release.md
+        done < ../issue_info.csv
+          
+        echo "## Downloads" >> $release.md
+        echo " ${{ inputs.releaseUrl }}" >> $release.md
+        
+        echo "##  " >> $release.md
+        echo "ImplementedIssues: ${{ inputs.issueList }}" >> $release.md
+        
+        # cat $release.md
+        
+        # Check-In
+        git pull
+        git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add "$release.md"
+          git add "${{ inputs.component }}-Releases.md"
+          git diff-index --quiet HEAD || git commit -m "Add changes"
+          git push
+        cd ..
