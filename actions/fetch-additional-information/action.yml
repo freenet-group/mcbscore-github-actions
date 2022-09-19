@@ -51,9 +51,9 @@ runs:
         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           dev_config.GetDependencyKt \
-          ${{ inputs.JIRA_URL }} \
-          ${{ inputs.JIRA_CREDENTIALS }} \
-          "${{ inputs.ISSUES }}"
+          ${{ inputs.jiraUrl }} \
+          ${{ inputs.jiraCredentials }} \
+          "${{ inputs.issueList }}"
         
         # Liste / Property-File der Abhängigkeiten auslesen
         while IFS='=' read -r key value
@@ -82,9 +82,9 @@ runs:
         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           dev_config.GetSQLUpdateKt \
-          ${{ inputs.JIRA_URL }} \
-          ${{ inputs.JIRA_CREDENTIALS }} \
-          "${{ inputs.ISSUES }}" 
+          ${{ inputs.jiraUrl }} \
+          ${{ inputs.jiraCredentials }} \
+          "${{ inputs.issueList }}" 
 
         while IFS='=' read -r key value
         do
@@ -101,9 +101,9 @@ runs:
         java -Dlog4j2.configurationFile="$atlassianToolsDir"s/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           dev_config.GetConfigKt \
-          ${{ inputs.JIRA_URL }} \
-          ${{ inputs.JIRA_CREDENTIALS }} \
-          "${{ inputs.ISSUES }}"  
+          ${{ inputs.jiraUrl }} \
+          ${{ inputs.jiraCredentials }} \
+          "${{ inputs.issueList }}"  
 
         while IFS='=' read -r key value
         do
