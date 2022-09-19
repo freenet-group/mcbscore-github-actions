@@ -13,6 +13,7 @@ on:
           - errorcodes
           - mslib
           - simple
+          - zap
           - test
 
 jobs:
