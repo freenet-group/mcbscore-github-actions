@@ -61,7 +61,6 @@ runs:
         release="${{ inputs.component }}_${{inputs.componentVersion}}"
         echo "${release}"
         echo "${{ env.JIRA_URL }}"
-        exit 1
       
         # Sprung ins Arbeitsverzeichnis für die Releasenotes
         cd markdown
@@ -73,7 +72,7 @@ runs:
         # Releasepage
         echo "## Release" > $release.md
         # EPIC ?
-        if [ "${{ inputs.epic }}" = "META-170" ]; then echo "- [x] keine umfassende Releasezuordnung" >>  $release.md; else echo "- https://jira.freenet-group.de/browse/${{ inputs.epic }}" >> $release.md; fi
+        if [ "${{ inputs.epic }}" = "META-170" ]; then echo "- [x] keine umfassende Releasezuordnung" >>  $release.md; else echo "- ${{ env.JIRA_URL }}${{ inputs.epic }}" >> $release.md; fi
         
         echo "## Java" >> $release.md
         echo "Java : ${{ inputs.javaVersion }}" >> $release.md
@@ -103,8 +102,8 @@ runs:
         echo "| Issue | Beschreibung | Status | Stichwörter | Komponenten | Lösungsversion | betr. Version |" >> $release.md
         echo "| ----- | ------------ | ------ | ----------- | ----------- | -------------- | ------------- |" >> $release.md
         while IFS= read -r line; do
-          echo "| [$(echo $line | cut -d";" -f1 )](https://jira.freenet-group.de/browse/$(echo $line | cut -d";" -f1 ) )  | $(echo $line | cut -d";" -f2 ) | $(echo $line | cut -d";" -f3 ) | $(echo $line | cut -d";" -f6 ) | $(echo $line | cut -d";" -f4 ) | $(echo $line | cut -d";" -f8 ) | $(echo $line | cut -d";" -f9 )" >> $release.md
-        done < ../issue_info.csv
+          echo "| [$(echo $line | cut -d";" -f1 )](${{ env.JIRA_URL }}$(echo $line | cut -d";" -f1 ) )  | $(echo $line | cut -d";" -f2 ) | $(echo $line | cut -d";" -f3 ) | $(echo $line | cut -d";" -f6 ) | $(echo $line | cut -d";" -f4 ) | $(echo $line | cut -d";" -f8 ) | $(echo $line | cut -d";" -f9 )" >> $release.md
+        done < ../${{ env.ISSUE_FILE }}
           
         echo "## Downloads" >> $release.md
         echo " ${{ inputs.releaseUrl }}" >> $release.md
