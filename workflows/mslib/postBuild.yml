@@ -59,6 +59,9 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/jira/api_url = JIRA_API_URL, 
+            /github/common/jira/url = JIRA_WEB_URL,
+            /github/common/sonar/api_url = SONAR_API_URL,
             /github/common/JIRA_URL = JIRA_URL, 
             /github/common/JIRA_URL2 = JIRA_URL2 
 
@@ -87,7 +90,7 @@ jobs:
       - name: jiraConfig-MCBS
         uses: ./mcbscore/github/actions/jira-configuration
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraUrl2: ${{ env.JIRA_URL2 }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           jiraProject: MCBS
@@ -99,7 +102,7 @@ jobs:
       - name: jiraConfig-ABRMS
         uses: ./mcbscore/github/actions/jira-configuration
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraUrl2: ${{ env.JIRA_URL2 }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           jiraProject: ABRMS
@@ -114,7 +117,7 @@ jobs:
       - name: fetchIssueInfos
         uses: ./mcbscore/github/actions/fetch-issue-information
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -125,7 +128,7 @@ jobs:
       - name: setFixVersions
         uses: ./mcbscore/github/actions/set-fix-version
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           component: ${{ env.COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
@@ -138,7 +141,7 @@ jobs:
       - name: setIssueListDone
         uses: ./mcbscore/github/actions/set-issue-list-done
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -149,7 +152,7 @@ jobs:
       - name: setIssueComment
         uses: ./mcbscore/github/actions/set-issue-comment
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
           issueList: ${{ github.event.inputs.issueList }}
@@ -163,6 +166,7 @@ jobs:
         if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
         uses: ./mcbscore/github/actions/sonar-check
         with:
+          sonarUrl: ${{ env.SONAR_API_URL }}
           sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           projectKeyPath: ${{ env.COVERAGE_PATH }}
           projectKeyName: ${{ env.COVERAGE_APP }}
@@ -172,7 +176,7 @@ jobs:
         if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
         uses: ./mcbscore/github/actions/create-sonar-issue
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
           component: ${{ env.COMPONENT }}
@@ -188,7 +192,7 @@ jobs:
         id: fetch-additional-information
         uses: ./mcbscore/github/actions/fetch-additional-information
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -208,6 +212,7 @@ jobs:
         with:
           component: ${{ env.COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
+          jiraWebUrl: ${{ env.JIRA_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
@@ -226,7 +231,7 @@ jobs:
         id: determine-going-live-date
         uses: ./mcbscore/github/actions/determine-going-live-date
         with:
-          jiraUrl: ${{ env.JIRA_URL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           epic: ${{ github.event.inputs.epic }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}

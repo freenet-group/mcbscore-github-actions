@@ -10,7 +10,7 @@ runs:
       if: ${{ env.COMPONENT != '' }}
       uses: ./mcbscore/github/actions/create-version
       with:
-        jiraUrl: ${{ env.JIRA_URL }}
+        jiraUrl: ${{ env.JIRA_API_URL }}
         jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
         tagPattern: ${{ env.TAG_PATTERN }}
         atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
