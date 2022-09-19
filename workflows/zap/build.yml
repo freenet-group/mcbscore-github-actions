@@ -105,7 +105,7 @@ jobs:
       # Komponenten Version ermitteln
       - name: Determine component version
         id: componentVersion
-        uses: ./mcbscore/actions/createVersion
+        uses: ./mcbscore/github/actions/createVersion
         with:
           JIRA_URL: ${{ env.JIRA_URL }}
           JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
