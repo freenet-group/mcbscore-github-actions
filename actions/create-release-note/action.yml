@@ -109,7 +109,6 @@ runs:
         echo " ${{ inputs.releaseUrl }}" >> $release.md
 
         echo "##  " >> $release.md
-        issues=`cat ../$ISSUE_FILE`
         echo "ImplementedIssues: $issueList" >> $release.md
         
         # cat $release.md
