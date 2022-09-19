@@ -43,6 +43,8 @@ runs:
             "${{ inputs.jiraUrl }}" \
             "${{ inputs.jiraCredentials }}" \
             "${{ inputs.epic }}"
+          cat ./ibn.properties
           cat ./ibn.properties >> $GITHUB_ENV
+          echo "${{ env.IBN-Date }}"
           echo "##[set-output name=goingLiveDate;]${{ env.IBN-Date }}"
         fi
