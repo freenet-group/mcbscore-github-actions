@@ -151,7 +151,6 @@ jobs:
         if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
         uses: ./mcbscore/github/actions/sonar-check
         with:
-          sonarUrl: ${{ env.SONAR_URL }}
           sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           projectKeyPath: ${{ env.COVERAGE_PATH }}
           projectKeyName: ${{ env.COVERAGE_APP }}

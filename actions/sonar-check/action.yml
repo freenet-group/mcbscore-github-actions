@@ -3,7 +3,8 @@ description: Auswertung der Coverage der benannten Komponente in SONAR
 inputs:
   sonarUrl:
     description: Organisationsinterne URL des angebundenen SONAR-Systems
-    required: true
+    required: false
+    default: 'https://sonarqube.freenet-group.de/api/measures/component'
   sonarCredentials:
     description: Credentials zur richtigen (neuen) Sonar-Abfrage
     required: true
