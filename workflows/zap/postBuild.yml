@@ -148,7 +148,7 @@ jobs:
       # ##################################################################################
       - name: Fetch Sonar-Coverage
         id: fetch-coverage
-        if: ${{ (env.COVERAGE_APP != '') }}
+        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
         uses: ./mcbscore/github/actions/sonar-check
         with:
           sonarUrl: ${{ env.SONAR_URL }}
@@ -158,7 +158,7 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Evaluate Sonar-Coverage
-        if: ${{ (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
+        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
         uses: ./mcbscore/github/actions/create-sonar-issue
         with:
           jiraUrl: ${{ env.JIRA_URL }}
