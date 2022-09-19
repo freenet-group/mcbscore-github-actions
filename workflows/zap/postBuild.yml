@@ -27,7 +27,8 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       MAIL_TEMPLATE: B_MS.ftl
-      TEAMS_MAIL: b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms
+      TEAMS_MAIL: 3e0e2102.freenetgroup.onmicrosoft.com@emea.teams.ms
+      JIRA_PROJECT: MCBS
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -83,26 +84,13 @@ jobs:
       # ##################################################################################
       # Erzeugen von Version / ComponentVersion in JIRA
       # ##################################################################################
-      # TODO: Frage an Bernd: Müssen die getrennt ausgeführt werden? Oder könnte man das so umbauen und nur einmal starten? jiraProject: ABRMS,MCBS
       - name: jiraConfig-MCBS
         uses: ./mcbscore/github/actions/jira-configuration
         with:
           jiraUrl: ${{ env.JIRA_URL }}
           jiraUrl2: ${{ env.JIRA_URL2 }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          jiraProject: MCBS
-          component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
-          componentList: ${{ env.COMPONENT }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-
-      - name: jiraConfig-ABRMS
-        uses: ./mcbscore/github/actions/jira-configuration
-        with:
-          jiraUrl: ${{ env.JIRA_URL }}
-          jiraUrl2: ${{ env.JIRA_URL2 }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          jiraProject: ABRMS
+          jiraProject: ${{ env.JIRA_PROJECT }}
           component: ${{ env.COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           componentList: ${{ env.COMPONENT }}
@@ -252,3 +240,17 @@ jobs:
           mailTemplate: ${{ env.MAIL_TEMPLATE }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}
+
+      # ##################################################################################
+      # Issue zur BE-Integration
+      # ##################################################################################
+      - name: Create BE-Issue
+        uses: ./mcbscore/github/actions/create-backend-issue
+        with:
+          jiraUrl: ${{ env.JIRA_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          component: ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          epic: ${{ github.event.inputs.epic }}
+          hasDbChanges: ${{ steps.fetch-additional-information.outputs.sql }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
