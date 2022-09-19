@@ -44,6 +44,9 @@ runs:
             "${{ inputs.jiraCredentials }}" \
             "${{ inputs.epic }}"
           cat ./ibn.properties
+        
+          ibnDate=`cat $PROPERTY_FILE | grep "IBN-Date" | cut -d'=' -f2`
+          echo "$ibnDate"
           cat ./ibn.properties >> $GITHUB_ENV
           echo "${{ env.IBN-Date }}"
           echo "##[set-output name=goingLiveDate;]${{ env.IBN-Date }}"
