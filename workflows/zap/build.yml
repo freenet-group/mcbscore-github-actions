@@ -102,18 +102,6 @@ jobs:
         name: Determine Component Version
         uses: ./mcbscore/github/actions/determine-component-version
 
-      # Komponenten Version ermitteln
-      - name: Determine component version
-        id: componentVersion
-        uses: ./mcbscore/github/actions/createVersion
-        with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          MATCH: ${{ env.TAG_PATTERN }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          COMPONENT: ${{ env.COMPONENT }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
-
       # ##################################################################################
       # Release bauen
       # ##################################################################################
