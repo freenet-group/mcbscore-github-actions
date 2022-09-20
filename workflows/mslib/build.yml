@@ -57,8 +57,7 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER, 
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
-            /github/common/jira/api_url = JIRA_API_URL, 
-            /github/common/JIRA_URL = JIRA_URL
+            /github/common/jira/api_url = JIRA_API_URL
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions

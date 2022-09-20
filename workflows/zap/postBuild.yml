@@ -62,8 +62,7 @@ jobs:
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/jira/api_url = JIRA_API_URL, 
             /github/common/jira/url = JIRA_WEB_URL,
-            /github/common/sonar/api_url = SONAR_API_URL,
-            /github/common/JIRA_URL = JIRA_URL, 
+            /github/common/sonar/api_url = SONAR_API_URL, 
             /github/common/JIRA_URL2 = JIRA_URL2 
 
       # Die internen Actions auschecken
