@@ -13,6 +13,7 @@ on:
           - errorcodes
           - mslib
           - simple
+          - standard
           - zap
           - test
 
@@ -75,6 +76,39 @@ jobs:
           - { name: mcbscore-billing-performance-monitor, branch: main, group: simple, workflows: "../encoding" }
           - { name: mcbscore-gatling-compare, branch: main, group: simple, workflows: "../encoding" }
           - { name: mcbscore-yaml-transform-plugin, branch: develop, group: simple, workflows: "../check, build, ../encoding" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        id: distributeWorkflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  standard:
+    if: ${{ github.event.inputs.group == 'standard' || github.event.inputs.group == 'ALL' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-bot, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-compare-cp-contract-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-contentprovider-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-customerproduct-and-contract-service-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-customer-search-index, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v3
         with:

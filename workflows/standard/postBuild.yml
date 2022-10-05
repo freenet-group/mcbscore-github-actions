@@ -27,7 +27,6 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       MAIL_TEMPLATE: B_MS.ftl
-      TEAMS_MAIL: 3e0e2102.freenetgroup.onmicrosoft.com@emea.teams.ms
       JIRA_PROJECT: MCBS
 
     steps:
@@ -242,17 +241,3 @@ jobs:
           mailTemplate: ${{ env.MAIL_TEMPLATE }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}
-
-      # ##################################################################################
-      # Issue zur BE-Integration
-      # ##################################################################################
-      - name: Create BE-Issue
-        uses: ./mcbscore/github/actions/create-backend-issue
-        with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
-          epic: ${{ github.event.inputs.epic }}
-          hasDbChanges: ${{ steps.fetch-additional-information.outputs.sql }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
