@@ -7,7 +7,7 @@ on:
   pull_request:
     branches-ignore:
       - release
-      - master
+      - main
   workflow_dispatch:
     inputs:
       gradleOptions:
@@ -84,7 +84,7 @@ jobs:
         name: Determine Build Type And Branch Name
         uses: ./mcbscore/github/actions/build-type-and-branch-name
         with:
-          developBranch: master
+          developBranch: main
 
       - name: Determine Version
         shell: bash
