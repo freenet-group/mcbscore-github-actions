@@ -1,5 +1,10 @@
 name: Get Build Type And Branch Name
 description: Ermittelt den Namen des Branches und die Art des Builds (DEVELOP/RELEASE/FEATURE/BUGFIX)
+inputs:
+  developBranch:
+    description: Der Default (develop) Branch Name
+    required: false
+    default: develop
 
 runs:
   using: "composite"
@@ -25,7 +30,7 @@ runs:
         then
           echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
           echo "DRAFT=false" >> $GITHUB_ENV
-        elif  [[ $BRANCH_NAME == develop ]] ;
+        elif  [[ $BRANCH_NAME == ${{ inputs.developBranch }} ]] ;
         then
           echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
           echo "DRAFT=true" >> $GITHUB_ENV
