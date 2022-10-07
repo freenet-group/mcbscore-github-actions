@@ -12,6 +12,7 @@ on:
           - ALL
           - errorcodes
           - mslib
+          - restclient
           - simple
           - standard
           - zap
@@ -49,6 +50,44 @@ jobs:
         repository:
           - { name: mslib-aws, branch: develop, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mslib-rest, branch: develop, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        id: distributeWorkflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  restclient:
+    if: ${{ github.event.inputs.group == 'restclient' || github.event.inputs.group == 'ALL' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: mcbscore-analyserservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-billingaccount-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-businesstransaction-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-contentprovider-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-contractservice-resttemplate, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-contractservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-cuba-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-customer-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-customerchange-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-customerproduct-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-documents-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-invoiceservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-ms-user-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-notes-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-notes-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v3
         with:
