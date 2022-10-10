@@ -7,7 +7,7 @@ Github Action zum Deployment eines Releases eines Proxies.
     description: 'Der Name des Proxies'
     required: true
 ### company
-    description: 'Die Zielumgebung (md-km)'
+    description: 'Die Zielumgebung (md, fm, km)'
     required: true
 ### componentName
     description: 'Der Name der Komponente'

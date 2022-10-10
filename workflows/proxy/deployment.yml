@@ -8,7 +8,7 @@ on:
         type: string
         required: true
       company:
-        description: Die Organisation (MD oder KM)
+        description: Die Organisation (md, fm, km)
         type: string
         required: true
       stage:

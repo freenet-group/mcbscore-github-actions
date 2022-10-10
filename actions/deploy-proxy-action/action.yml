@@ -6,7 +6,7 @@ inputs:
     description: 'Der Name des Proxies'
     required: true
   company:
-    description: 'Die Zielumgebung (md-km)'
+    description: 'Die Zielumgebung (md, fm, km)'
     required: true
   component:
     description: 'Der Name der Komponente'
