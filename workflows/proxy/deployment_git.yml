@@ -63,3 +63,21 @@ jobs:
           workflow: GIT KM Deployment Extern
           token: ${{ env.TOKEN }}
           inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+
+      # Starte FM Deployment auf GIT
+      - name: Invoke deployment workflow GIT FM
+        if: hashFiles('**/deployment_git_fm.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: GIT FM Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+
+      # Starte FM Extern Deployment auf GIT
+      - name: Invoke deployment workflow GIT FM Extern
+        if: hashFiles('**/deployment_git_fm_extern.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: GIT FM Deployment Extern
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'

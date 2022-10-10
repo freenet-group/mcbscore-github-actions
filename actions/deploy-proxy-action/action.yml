@@ -24,7 +24,7 @@ inputs:
     description: Flag für externes Deployment
     type: boolean
     required: true
-  tarAddition:
+  additionalTarParams:
     description: 'Ermöglicht die Angabe zusätzlicher Parameter für den tar Befehl'
     required: false
 
@@ -60,7 +60,7 @@ runs:
           cd '/etc/nginx/$proxyPath/${{ env.PROXY_BASE_PATH }}'
           sudo rm -rf -- '${{ inputs.proxyName }}' || echo "Kein Proxy vorhanden"
           sudo mkdir '/var/log/proxies/${{ inputs.proxyName }}' || echo "Logverzeichnis existiert"
-          tar xfvz '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz' '${{ inputs.tarAddition }}' --no-same-owner
+          tar xfvz '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz' '${{ inputs.additionalTarParams }}' --no-same-owner
           $replaceCmd
           sudo service nginx configtest
           sudo service nginx reload

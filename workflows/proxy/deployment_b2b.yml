@@ -45,3 +45,12 @@ jobs:
           workflow: B2B KM Deployment
           token: ${{ env.TOKEN }}
           inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+
+      # Starte FM Deployment auf B2B
+      - name: Invoke deployment workflow B2B FM
+        if: hashFiles('**/deployment_b2b_fm.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: B2B FM Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'

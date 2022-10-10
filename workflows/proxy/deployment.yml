@@ -196,6 +196,18 @@ jobs:
           tar cfzv ../${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz *
           cd -- "$WORKING_DIRECTORY"
 
+      # Spezialbehandlung für OIDC
+      - name: OIDC special handling
+        shell: bash
+        run: |
+          if  [[ ${{ env.PROXY_NAME }} == oidc && ${{ inputs.externalProxy }} == 'true' ]] ;
+          then
+            echo "TAR_SUB_COMMAND=--exclude='http.conf'" >> $GITHUB_ENV
+          else
+            # default ist leer
+            echo "TAR_SUB_COMMAND=" >> $GITHUB_ENV
+          fi
+
       # Deployment
       - name: Deployment
         id: deploy-release-server-1
@@ -208,6 +220,7 @@ jobs:
           host: ${{ inputs.deploymentTarget }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
           externalProxy: ${{ inputs.externalProxy }}
+          additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
       # Deployment
       - name: Deployment
@@ -222,6 +235,7 @@ jobs:
           host: ${{ inputs.additionalDeploymentTarget }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
           externalProxy: ${{ inputs.externalProxy }}
+          additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
       # Deployment als erfolgreich markieren
       - name: Update deployment status (success)

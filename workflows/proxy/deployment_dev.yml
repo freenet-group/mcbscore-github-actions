@@ -49,3 +49,12 @@ jobs:
           workflow: DEV KM Deployment
           token: ${{ env.TOKEN }}
           inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}" }'
+
+      # Starte FM Deployment auf DEV
+      - name: Invoke deployment workflow DEV FM
+        if: hashFiles('**/deployment_dev_fm.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: DEV FM Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}" }'
