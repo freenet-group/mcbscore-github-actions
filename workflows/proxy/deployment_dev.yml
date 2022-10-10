@@ -1,0 +1,51 @@
+name: DEV Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        required: false
+        default: main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - id: checkout-repository
+        name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      # Starte MD Deployment auf DEV
+      - name: Invoke deployment workflow DEV MD
+        if: hashFiles('**/deployment_dev_md.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: DEV MD Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}" }'
+
+      # Starte KM Deployment auf DEV
+      - name: Invoke deployment workflow DEV KM
+        if: hashFiles('**/deployment_dev_km.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: DEV KM Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}" }'

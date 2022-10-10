@@ -1,0 +1,23 @@
+name: DEV KM Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        required: false
+        default: main
+
+jobs:
+  deployment:
+    uses: ./.github/workflows/deployment.yml
+    secrets: inherit
+    with:
+      componentVersion: ${{ github.event.inputs.componentVersion }}
+      stage: dev
+      company: km
+      deploymentTarget: apigw-d1.mobilcom.de
+      actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
