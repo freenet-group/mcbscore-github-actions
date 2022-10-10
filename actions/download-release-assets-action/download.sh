@@ -39,18 +39,13 @@ function gh_curl() {
 
 assetParser=". | map(select(.tag_name == \"$VERSION\"))[0].assets"
 assetsJson=$(gh_curl -s $GITHUB/repos/$REPOSITORY/releases?per_page=100 | jq "$assetParser")
-echo "3 '$assetsJson'"
 
 if [ "$assetsJson" == "null" ]; then
   assetCount=0
 else
-  echo "4"
   assetPatternParser="map(select(.name|test(\"$PATTERN\")))"
-  echo "5"
   filteredAssets=$(jq -c "$assetPatternParser" <<< "$assetsJson")
-  echo "6"
   assetCount=$(jq -c "[. | length] | max" <<< "$filteredAssets")
-  echo "7"
 
   if [ -z "$assetCount" ]; then
     assetCount=0
