@@ -44,10 +44,12 @@ filteredAssets=$(jq -c "$assetPatternParser" <<< "$assetsJson")
 echo "filteredAssets $filteredAssets"
 assetCount=$(jq -c "[. | length] | max" <<< "$filteredAssets")
 echo "assets $assetCount"
-#assetCount1=$(jq -c "[. | length] | max" <<< "$filteredAssets")
-#'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
-assetCount1=$(jq -c 'if . != null then ("[. | length] | max") else 0 end' <<< "$filteredAssets")
-echo "assets1 $assetCount1"
+
+if [ -z "$assetCount" ]; then
+  $assetCount=0
+fi
+
+echo "assets $assetCount"
 
 mkdir -p $TARGET_PATH
 
