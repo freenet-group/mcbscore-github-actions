@@ -1,0 +1,70 @@
+name: 'Deploy Proxy'
+description: 'Action zum Deployment von Proxies'
+
+inputs:
+  proxyName:
+    description: 'Der Name des Proxies'
+    required: true
+  proxyPath:
+    description: 'Basis Zielpfad des Proxies'
+    required: false
+    default: proxies
+  company:
+    description: 'Die Zielumgebung (md-km)'
+    required: true
+  component:
+    description: 'Der Name der Komponente'
+    required: true
+  componentVersion:
+    description: 'Die Version der Komponente'
+    required: true
+  host:
+    description: 'Der Zielhost'
+    required: true
+  deploymentUser:
+    description: 'Der Benutzer für das Deployment'
+    required: true
+  tarAddition:
+    description: 'Ermöglicht die Angabe zusätzlicher Parameter für den tar Befehl'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+
+    # Proxy ROOT Pfad ermitteln
+    - name: Determine proxy root path
+      shell: bash
+      run: |
+        if  [[ ${{ inputs.company }} == md ]] ;
+        then
+          echo "PROXY_BASE_PATH=md" >> $GITHUB_ENV
+        elif [[ ${{ inputs.company }} == fm ]] ;
+        then
+          echo "PROXY_BASE_PATH=fm" >> $GITHUB_ENV
+        else
+          echo "PROXY_BASE_PATH=klarmobil" >> $GITHUB_ENV
+        fi
+
+    - name: Copy Proxy
+      shell: bash
+      run: |
+        scp -r ./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz ${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-${{ inputs.proxyPath }}.tar.gz
+
+    - name: Deploy Proxy
+      shell: bash
+      run: |
+        replaceCmd=''
+        if [[ '${{ inputs.proxyPath }}' == *extern ]]; then
+          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-extern/g' '{}' +"
+        fi
+        ssh 'zxrestapi@${{ inputs.host }}' bash -e -s <<-SSH
+          cd '/etc/nginx/${{ inputs.proxyPath }}/${{ env.PROXY_BASE_PATH }}'
+          sudo rm -rf -- '${{ inputs.proxyName }}' || echo "Kein Proxy vorhanden"
+          sudo mkdir '/var/log/proxies/${{ inputs.proxyName }}' || echo "Logverzeichnis existiert"
+          tar xfvz '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-${{ inputs.proxyPath }}.tar.gz' '${{ inputs.tarAddition }}' --no-same-owner
+          $replaceCmd
+          sudo service nginx configtest
+          sudo service nginx reload
+          rm '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-${{ inputs.proxyPath }}.tar.gz'
+        SSH
