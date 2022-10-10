@@ -36,14 +36,11 @@ runs:
     - name: Determine proxy root path
       shell: bash
       run: |
-        if  [[ ${{ inputs.company }} == md ]] ;
+        if  [[ ${{ inputs.company }} == km ]] ;
         then
-          echo "PROXY_BASE_PATH=md" >> $GITHUB_ENV
-        elif [[ ${{ inputs.company }} == fm ]] ;
-        then
-          echo "PROXY_BASE_PATH=fm" >> $GITHUB_ENV
-        else
           echo "PROXY_BASE_PATH=klarmobil" >> $GITHUB_ENV
+        else
+          echo "PROXY_BASE_PATH=${{ inputs.company }}" >> $GITHUB_ENV
         fi
 
     - name: Copy Proxy
