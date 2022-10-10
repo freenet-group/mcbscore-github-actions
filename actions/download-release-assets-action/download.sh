@@ -37,11 +37,9 @@ function gh_curl() {
        $@
 }
 
-echo "1"
 assetParser=". | map(select(.tag_name == \"$VERSION\"))[0].assets"
-echo "2"
 assetsJson=$(gh_curl -s $GITHUB/repos/$REPOSITORY/releases?per_page=100 | jq "$assetParser")
-echo "3"
+echo "3 '$assetsJson'"
 
 if [ -z "$assetsJson" ]; then
   assetCount=0
