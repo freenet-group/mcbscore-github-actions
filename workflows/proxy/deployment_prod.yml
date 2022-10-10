@@ -63,3 +63,21 @@ jobs:
           workflow: PROD KM Deployment Extern
           token: ${{ env.TOKEN }}
           inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+
+      # Starte FM Deployment auf PROD
+      - name: Invoke deployment workflow PROD FM
+        if: hashFiles('**/deployment_prod_fm.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PROD FM Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+
+      # Starte FM Extern Deployment auf PROD
+      - name: Invoke deployment workflow PROD FM Extern
+        if: hashFiles('**/deployment_prod_fm_extern.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PROD FM Deployment Extern
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
