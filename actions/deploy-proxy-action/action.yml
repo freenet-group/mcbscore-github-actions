@@ -47,25 +47,25 @@ runs:
       shell: bash
       run: |
         if [[ '${{ inputs.externalProxy }}' == "true" ]]; then
-          proxyPath='proxies-extern'
+          proxyPath=proxies-extern
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-extern/g' '{}' +"
         else
-          proxyPath='proxies'
+          proxyPath=proxies
           replaceCmd=''
         fi
         
-        scp -r ./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz ${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz
+        scp -r ./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz ${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-"$proxyPath.tar".gz
 
     - name: Deploy Proxy
       shell: bash
       run: |
         ssh 'zxrestapi@${{ inputs.host }}' bash -e -s <<-SSH
-          cd '/etc/nginx/$proxyPath/${{ env.PROXY_BASE_PATH }}'
+          cd '/etc/nginx/"$proxyPath"/${{ env.PROXY_BASE_PATH }}'
           sudo rm -rf -- '${{ inputs.proxyName }}' || echo "Kein Proxy vorhanden"
           sudo mkdir '/var/log/proxies/${{ inputs.proxyName }}' || echo "Logverzeichnis existiert"
-          tar xfvz '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz' '${{ inputs.tarAddition }}' --no-same-owner
+          tar xfvz '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-"$proxyPath".tar.gz' '${{ inputs.tarAddition }}' --no-same-owner
           $replaceCmd
           sudo service nginx configtest
           sudo service nginx reload
-          rm '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz'
+          rm '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-"$proxyPath".tar.gz'
         SSH
