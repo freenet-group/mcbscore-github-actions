@@ -42,6 +42,11 @@ assetsJson=$(gh_curl -s $GITHUB/repos/$REPOSITORY/releases?per_page=100 | jq "$a
 assetPatternParser="map(select(.name|test(\"$PATTERN\")))"
 filteredAssets=$(jq -c "$assetPatternParser" <<< "$assetsJson")
 assetCount=$(jq -c "[. | length] | max" <<< "$filteredAssets")
+echo "assets $assetCount"
+#assetCount1=$(jq -c "[. | length] | max" <<< "$filteredAssets")
+#'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
+assetCount1=$(jq -c 'if . != null then ("[. | length] | max") else 0 end' <<< "$filteredAssets")
+echo "assets1 $assetCount1"
 
 mkdir -p $TARGET_PATH
 
