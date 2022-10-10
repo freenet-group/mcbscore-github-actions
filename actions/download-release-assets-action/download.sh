@@ -41,6 +41,7 @@ assetParser=". | map(select(.tag_name == \"$VERSION\"))[0].assets"
 assetsJson=$(gh_curl -s $GITHUB/repos/$REPOSITORY/releases?per_page=100 | jq "$assetParser")
 assetPatternParser="map(select(.name|test(\"$PATTERN\")))"
 filteredAssets=$(jq -c "$assetPatternParser" <<< "$assetsJson")
+echo "filteredAssets $filteredAssets"
 assetCount=$(jq -c "[. | length] | max" <<< "$filteredAssets")
 echo "assets $assetCount"
 #assetCount1=$(jq -c "[. | length] | max" <<< "$filteredAssets")
