@@ -21,6 +21,10 @@ Github Action zum Deployment eines Releases eines Proxies.
 ### deploymentUser
     description: 'Der Benutzer für das Deployment'
     required: true
+### externalProxy
+    description: Flag für externes Deployment
+    type: boolean
+    required: true
 
 ---
 

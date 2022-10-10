@@ -207,6 +207,7 @@ jobs:
           componentVersion: ${{ inputs.componentVersion }}
           host: ${{ inputs.deploymentTarget }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
+          externalProxy: ${{ inputs.externalProxy }}
 
       # Deployment
       - name: Deployment
@@ -220,6 +221,7 @@ jobs:
           componentVersion: ${{ inputs.componentVersion }}
           host: ${{ inputs.additionalDeploymentTarget }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
+          externalProxy: ${{ inputs.externalProxy }}
 
       # Deployment als erfolgreich markieren
       - name: Update deployment status (success)
