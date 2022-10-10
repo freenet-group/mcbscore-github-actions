@@ -28,8 +28,8 @@ runs:
       shell: bash
 
     - id: download_asset
-      run: ${{ github.action_path }}/download.sh
       shell: bash
+      run: ${{ github.action_path }}/download.sh
       env:
         REPOSITORY: ${{ github.repository }}
         VERSION: ${{ inputs.version }}
