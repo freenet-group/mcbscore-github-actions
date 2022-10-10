@@ -7,7 +7,7 @@ Github Action zum Download aller Release Assets, die dem Muster entsprechen. Die
     description: Die Version des Releases
     required: true
   ### assetPattern
-    description: Pattern für den Namen des Assets
+    description: Pattern fÃ¼r den Namen des Assets
     required: true
   ### targetPath
     description: Ein Zielverzeichnis
@@ -26,7 +26,7 @@ Die Asset Datei wird im angegebenen Verzeichnis hinterlegt.
 
 ## Voraussetzungen:
 
-JQ muß installiert sein
+JQ muÃŸ installiert sein
 
     # jq installieren
     - name: Setup jq
