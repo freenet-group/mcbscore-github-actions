@@ -9,17 +9,27 @@ on:
       - release
       - develop
   workflow_dispatch:
+    inputs:
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        required: false
+        default: main
+
 jobs:
   build:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
+    env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
         if: ${{ always() }}
         run: |
-          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
@@ -27,129 +37,66 @@ jobs:
           echo "Cleaning up previous run"
           rm -rf *
 
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
-
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - id: checkout-repository
+        name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
+          fetch-depth: 0
 
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER, 
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
-            /github/common/JIRA_URL = JIRA_URL 
-         
-      - name: Docker Login für Github Packages
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ env.USER }}
-          password: ${{ env.TOKEN }}
+            /github/common/jira/api_url = JIRA_API_URL
 
-      # Repository auschecken unter $GITHUB_WORKSPACE
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ env.TOKEN }}
-
-      # Branch name ermitteln (wenn kein Pull Request)
-      - name: Get branch name (no pull_request)
-        if: github.event_name != 'pull_request'
-        shell: bash
-        run: |
-          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      # Branch name ermitteln (wenn Pull Request)
-      - name: Get branch name (pull request)
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-
-      # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
-      - name: Determine build type
-        shell: bash
-        run: |
-          if  [[ $BRANCH_NAME == release* ]] ;
-          then
-            echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
-            echo "DRAFT=false" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == develop ]] ;
-          then
-            echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
-            echo "DRAFT=true" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == feature* ]] ;
-          then
-            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == bugfix* ]] ;
-          then
-            echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
-          else
-            # default ist feature
-            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
-          fi
-
-      # Build Properties einlesen
-      - name: Read build.properties
-        shell: bash
-        run: |
-          cat ./.github/build.properties >> $GITHUB_ENV
-
-      # Checkout developer-tools (master) in ./devtools
-      - name: checkout atldevtools
-        uses: actions/checkout@v3
-        with:
-          repository: 'freenet-group/atldevtools'
-          token: ${{ env.TOKEN }}
-          path: 'devtools'
+#      - name: Docker Login für Github Packages
+#        uses: docker/login-action@v1
+#        with:
+#          registry: ghcr.io
+#          username: ${{ env.USER }}
+#          password: ${{ env.TOKEN }}
 
       # Die internen Actions auschecken
-      - name: checkout mcbscore actions
+      - name: checkout mcbscore-github-actions
         uses: actions/checkout@v3
         with:
-          repository: 'freenet-group/mcbscore_actions'
+          repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
-          path: 'mcbscore/actions'
-          ref: main
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
-      # JAVA installieren
-      - name: Set up JDK
-        uses: actions/setup-java@v3
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - id: init-workflow
+        name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
-          distribution: zulu
-          java-version: ${{ env.JAVA_VERSION }}
+          installJava: true
 
-      # Komponenten Version ermitteln
-      - name: Determine component version
-        id: componentVersion
-        uses: ./mcbscore/actions/createVersion
-        with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          MATCH: ${{ env.TAG_PATTERN }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          COMPONENT: ${{ env.COMPONENT }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+      # ##################################################################################
+      # Version ermitteln
+      # ##################################################################################
 
-      # COMPONENT_VERSION Umgebungsvariable setzen
-      - name: Set component version
-        shell: bash
-        run: |
-          if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
-          then
-            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
-          else
-            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
-          fi
-          echo "issueList=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+      - id: determine-build-type-and-branch-name
+        name: Determine Build Type And Branch Name
+        uses: ./mcbscore/github/actions/build-type-and-branch-name
+
+      - id: determine-component-version
+        name: Determine Component Version
+        uses: ./mcbscore/github/actions/determine-component-version
+
+      # ##################################################################################
+      # Release bauen
+      # ##################################################################################
 
       - name: Inject Version
         shell: bash
@@ -185,9 +132,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          tag_name: '${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}'
-          release_name: '${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}'
-          draft: '${{ env.DRAFT }}'
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          release_name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
           prerelease: false
 
       # MD Release ZIP hinzufügen
@@ -198,7 +145,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ env.COMPONENT }}-md.tar.gz
           asset_name: ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}.tar.gz
           asset_content_type: application/gzip
@@ -211,9 +158,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ${{ env.COMPONENT }}-km.tar.gz
           asset_name: ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
+          asset_content_type: application/gzip
+
+      # FM Release ZIP hinzufügen
+      - name: Upload FM Proxy
+        id: upload-fm-proxy
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-fm.tar.gz', env.COMPONENT)) != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.COMPONENT }}-fm.tar.gz
+          asset_name: ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
           asset_content_type: application/gzip
 
       # Datei mit Secret Mappings hinzufügen
@@ -257,4 +217,4 @@ jobs:
         with:
           workflow: PostBuild
           token: ${{ env.TOKEN }}
-          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.issueList }}"} '
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.ISSUE_LIST }}" }'
