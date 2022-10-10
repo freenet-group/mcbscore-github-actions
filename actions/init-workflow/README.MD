@@ -13,6 +13,10 @@ Github-Action zum Initialisieren von Workflows. Dazu gehören:
     description: Node.js installieren?
     type: boolean
     default: false
+### installJq
+    description: jq installieren?
+    type: boolean
+    default: false
 
 ---
 
