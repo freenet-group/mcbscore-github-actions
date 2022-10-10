@@ -46,7 +46,7 @@ runs:
     - name: Copy Proxy
       shell: bash
       run: |
-        if [[ '${{ inputs.externalProxy }}' == "true" ]]; then
+        if [[ '${{ inputs.externalProxy }}' == 'true' ]]; then
           proxyPath=proxies-extern
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-extern/g' '{}' +"
         else
@@ -54,7 +54,9 @@ runs:
           replaceCmd=''
         fi
         
-        scp -r "./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz ${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz"
+        echo "ProxyPath $proxyPath"
+        
+        scp -r ./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz ${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-"$proxyPath".tar.gz
 
     - name: Deploy Proxy
       shell: bash
