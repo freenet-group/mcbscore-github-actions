@@ -81,7 +81,7 @@ jobs:
           fi
 
       - name: Create GitHub deployment
-        uses: chrnorm/deployment-action@releases/v1
+        uses: chrnorm/deployment-action@v2
         id: create-deployment
         with:
           token: ${{ env.TOKEN }}
@@ -98,7 +98,7 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-      NODE_VERSION: 12
+      NODEJS_VERSION: 16
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -240,20 +240,20 @@ jobs:
       # Deployment als erfolgreich markieren
       - name: Update deployment status (success)
         if: success()
-        uses: chrnorm/deployment-status@releases/v1
+        uses: chrnorm/deployment-status@v2
         with:
           token: ${{ env.TOKEN }}
           state: "success"
-          deployment_id: ${{ needs.create-deployment.outputs.deployment_id }}
+          deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
       # Deployment als fehlerhaft markieren
       - name: Update deployment status (failure)
         if: failure()
-        uses: chrnorm/deployment-status@releases/v1
+        uses: chrnorm/deployment-status@v2
         with:
           token: ${{ env.TOKEN }}
           state: "failure"
-          deployment_id: ${{ needs.create-deployment.outputs.deployment_id }}
+          deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
     outputs:
       componentName: ${{ env.COMPONENT }}
