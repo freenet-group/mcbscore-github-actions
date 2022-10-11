@@ -27,7 +27,6 @@ jobs:
       ACTIONS_PATH: mcbscore/github
       MAIL_TEMPLATE: B_MS.ftl
       TEAMS_MAIL: d802e989.freenetgroup.onmicrosoft.com@emea.teams.ms
-      TEAMS_WEBHOOK: https://freenetgroup.webhook.office.com/webhookb2/f8549d95-1549-442e-a3a6-2e35030173b4@7d95deb3-0bca-4c9d-a61e-1fd6c47ed60c/IncomingWebhook/3173e226403c4fb58231ce63e9a41246/ca24e4e3-cb4c-4259-a58d-fca357c5e7cf
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -81,15 +80,6 @@ jobs:
         with:
           installJava: true
 
-      # ###################################################################################
-      # Releasebuild-Ergebnis
-      # ###################################################################################  
-      - uses: opsless/ms-teams-github-actions@main
-        if: always()
-        with:
-          github-token: ${{ env.TOKEN }}
-          webhook-uri: ${{ env.TEAMS_WEBHOOK }}
-          
       # ##################################################################################
       # Erzeugen von Version / ComponentVersion in JIRA
       # ##################################################################################
