@@ -1,0 +1,32 @@
+name: 'Replace AWS Parameters'
+description: 'Ersetzt Schlüssel in Dateien durch Werte aus dem AWS Parameter Store'
+
+inputs:
+  awsKey:
+    description: Der Key für den AWS Zugriff
+    required: true
+  awsSecret:
+    description: Das Secret für den AWS Zugriff
+    required: true
+  directory:
+    description: Das Verzeichnis, in dem die Ersetzungen erfolgen sollen
+    required: true
+  parameterFile:
+    description: Die Datei mit den Ersetzungsregeln
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # Make replace executable
+    - run: chmod +x ${{ github.action_path }}/replace.sh
+      shell: bash
+
+    - id: replace_parameters
+      shell: bash
+      run: ${{ github.action_path }}/replace.sh
+      env:
+        AWS_KEY: ${{ inputs.awsKey }}
+        AWS_SECRET: ${{ inputs.awsSecret }}
+        DIRECTORY: ${{ inputs.directory }}
+        PARAMETER_FILE: ${{ inputs.parameterFile }}

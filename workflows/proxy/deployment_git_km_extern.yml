@@ -1,0 +1,26 @@
+name: GIT KM Deployment Extern
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        required: false
+        default: main
+
+jobs:
+  deployment:
+    uses: ./.github/workflows/deployment.yml
+    secrets: inherit
+    with:
+      componentVersion: ${{ github.event.inputs.componentVersion }}
+      stage: git
+      company: km
+      externalProxy: true
+      deploymentTarget: apigw-g1.mobilcom.de
+      additionalDeploymentTarget: apigw-g2.mobilcom.de
+      bambiNotification: true
+      actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}

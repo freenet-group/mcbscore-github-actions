@@ -10,6 +10,10 @@ inputs:
     description: Node.js installieren?
     type: boolean
     default: false
+  installJq:
+    description: jq installieren?
+    type: boolean
+    default: false
 
 runs:
   using: "composite"
@@ -37,3 +41,8 @@ runs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ env.NODEJS_VERSION }}
+
+    # jq installieren
+    - name: Setup jq
+      if: ${{ inputs.installJq }}
+      uses: freenet-actions/setup-jq@v1

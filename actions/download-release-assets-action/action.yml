@@ -1,0 +1,38 @@
+name: 'Download Release Assets'
+description: 'Download eines GitHub Release Assets anhand der Version und eines regulären Ausdruckes für den Namen'
+
+inputs:
+  version:
+    description: Die Version des Releases
+    required: true
+  assetPattern:
+    description: Regulärer Ausdruck für den Namen des Assets
+    required: true
+  targetPath:
+    description: Ein Zielverzeichnis
+    required: true
+  token:
+    description: Ein Github Token
+    required: true
+
+outputs:
+  release:
+    value: ${{ steps.download_asset.outputs.assetName }}
+    description: Das Release Asset
+
+runs:
+  using: "composite"
+  steps:
+    # Make download executable
+    - run: chmod +x ${{ github.action_path }}/download.sh
+      shell: bash
+
+    - id: download_asset
+      shell: bash
+      run: ${{ github.action_path }}/download.sh
+      env:
+        REPOSITORY: ${{ github.repository }}
+        VERSION: ${{ inputs.version }}
+        PATTERN: ${{ inputs.assetPattern }}
+        TOKEN: ${{ inputs.token }}
+        TARGET_PATH: ${{ inputs.targetPath }}
