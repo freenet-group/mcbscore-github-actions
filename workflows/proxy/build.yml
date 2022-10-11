@@ -56,13 +56,6 @@ jobs:
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/jira/api_url = JIRA_API_URL
 
-#      - name: Docker Login für Github Packages
-#        uses: docker/login-action@v1
-#        with:
-#          registry: ghcr.io
-#          username: ${{ env.USER }}
-#          password: ${{ env.TOKEN }}
-
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
         uses: actions/checkout@v3
