@@ -45,4 +45,4 @@ runs:
     # jq installieren
     - name: Setup jq
       if: ${{ inputs.installJq }}
-      uses: freenet-actions/setup-jq@v1
+      uses: freenet-actions/setup-jq@v2
