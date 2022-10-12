@@ -12,16 +12,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Repository auschecken unter $GITHUB_WORKSPACE
-      - id: checkout-repository
-        name: Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           path: source
           ref: ${{ github.event.inputs.componentVersion }}
 
-      - id: read-aws-secrets
-        name: Read AWS Secrets
+      - name: Read AWS Secrets
         uses: ./source/.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -36,7 +33,6 @@ jobs:
           token: ${{ env.TOKEN }}
           path: target
 
-      # Workflow Properties einlesen
       - name: Read workflow.properties
         shell: bash
         run: |
