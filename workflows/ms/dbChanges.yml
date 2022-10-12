@@ -12,43 +12,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
-
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
-
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
-        with:
-          parameterPairs: |
-            /github/secrets/mcbs_token = TOKEN
-
-      - name: Repository auschecken
+      - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          token: ${{ env.TOKEN }}
           path: source
           ref: ${{ github.event.inputs.componentVersion }}
 
+      - name: Read AWS Secrets
+        uses: ./source/.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
       - name: DB Changes Repository auschecken
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: freenet-group/mcbscore_db-changes
           token: ${{ env.TOKEN }}
           path: target
 
-      # Build Properties einlesen
-      - name: Read build.properties
+      - name: Read workflow.properties
         shell: bash
         run: |
-          cat ./source/.github/build.properties >> $GITHUB_ENV
+          cat ./source/.github/workflow.properties >> $GITHUB_ENV
 
       - name: DB Changes kopieren
         shell: bash
@@ -59,9 +47,9 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
 
-          CHANGES_DETECTED=`git status --porcelain`
+          changesDetected=`git status --porcelain`
 
-          if [ -n "$CHANGES_DETECTED" ]
+          if [ -n "$changesDetected" ]
           then
             git add .
             git commit -m "[Releasebuild] db-changes ${{ env.COMPONENT }}-${{ github.event.inputs.componentVersion }}"
