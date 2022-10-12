@@ -14,6 +14,7 @@ on:
           - mandel
           - mslib
           - proxy
+          - rating
           - restclient
           - simple
           - standard
@@ -123,6 +124,29 @@ jobs:
           - { name: mcbscore-zap-mark-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
           - { name: mcbscore-zap-network-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
           - { name: mcbscore-zap-party-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        id: distributeWorkflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  rating:
+    if: ${{ github.event.inputs.group == 'rating' || github.event.inputs.group == 'ALL' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: mcbscore-rating, branch: develop, group: rating, workflows: "../check, build, dbChanges, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v3
         with:

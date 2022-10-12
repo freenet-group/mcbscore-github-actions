@@ -1,0 +1,64 @@
+name: DB Changes
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
+
+jobs:
+  copyChanges:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - id: checkout-repository
+        name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          path: source
+          ref: ${{ github.event.inputs.componentVersion }}
+
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./source/.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      - name: DB Changes Repository auschecken
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/mcbscore_db-changes
+          token: ${{ env.TOKEN }}
+          path: target
+
+      # Workflow Properties einlesen
+      - name: Read workflow.properties
+        shell: bash
+        run: |
+          cat ./source/.github/workflow.properties >> $GITHUB_ENV
+
+      - name: DB Changes kopieren
+        shell: bash
+        run: |
+          cp -Rv source/${{ env.DB_CHANGES_BASE_DIRECTORY }}${{ env.DB_CHANGES_DIRECTORY }}/* target/${{ env.COMPONENT }}/${{ env.DB_CHANGES_DIRECTORY }}
+          
+          cd target
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          changesDetected=`git status --porcelain`
+
+          if [ -n "$changesDetected" ]
+          then
+            git add .
+            git commit -m "[Releasebuild] db-changes ${{ env.COMPONENT }}-${{ github.event.inputs.componentVersion }}"
+            git push
+          fi
+
+          git tag -f -a ${{ env.COMPONENT }}-${{ github.event.inputs.componentVersion }} -m "tagging ${{ env.COMPONENT }}-${{ github.event.inputs.componentVersion }}"
+          git push --tags -f
