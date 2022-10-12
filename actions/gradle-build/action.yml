@@ -24,12 +24,14 @@ inputs:
   artifactoryPassword:
     description: Passwort für das Artifactory
     required: false
-env:
-  GRADLE_PROPERTIES: -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }}
 
 runs:
   using: "composite"
   steps:
+    - name: Init Gradle Properties
+      shell: bash
+      run: echo "GRADLE_PROPERTIES=-PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }}" >> $GITHUB_ENV
+
     - name: Set Gradle Command
       shell: bash
       run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }}" >> $GITHUB_ENV
