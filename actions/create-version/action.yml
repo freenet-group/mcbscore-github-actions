@@ -127,5 +127,5 @@ runs:
         echo "###########################################"
                   
         # Version und Liste als Variable bereitstellen
-        echo "##[set-output name=version;]$outVarVersion"
-        echo "##[set-output name=issueList;]$outVarList"
+        echo "version=$outVarVersion" >> $GITHUB_OUTPUT
+        echo "issueList=$outVarList" >> $GITHUB_OUTPUT
