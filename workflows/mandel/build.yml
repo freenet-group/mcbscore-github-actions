@@ -131,20 +131,6 @@ jobs:
           draft: ${{ env.DRAFT }}
           prerelease: false
 
-      # TODO: Mandel assets
-      # Release JAR hinzufügen
-      #- name: Upload Release JAR
-      #  id: upload-release-jar
-      #  if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-      #  uses: actions/upload-release-asset@v1
-      #  env:
-      #    GITHUB_TOKEN: ${{ env.TOKEN }}
-      #  with:
-      #    upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-      #    asset_path: ${{ steps.build_application_jar_path.outputs.value }}${{ steps.build_application_jar_name.outputs.value }}-${{ env.COMPONENT_VERSION }}.jar
-      #    asset_name: ${{ steps.build_application_jar_name.outputs.value }}-${{ env.COMPONENT_VERSION }}.jar
-      #    asset_content_type: application/java-archive
-
       # ##################################################################################
       # Re-Merge
       # ##################################################################################
