@@ -47,7 +47,7 @@ runs:
       run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} publish" >> $GITHUB_ENV
 
     - name: Add Artifactory Properties
-      if: ${{ inputs..artifactoryUserName != '' && inputs.artifactoryPassword != '' }}
+      if: ${{ inputs.artifactoryUserName != '' && inputs.artifactoryPassword != '' }}
       shell: bash
       run: echo "GRADLE_PROPERTIES=${{env.GRADLE_PROPERTIES}} -PartifactoryUsername=${{ inputs.artifactoryUserName }} -PartifactoryPassword=${{ inputs.artifactoryPassword }}" >> $GITHUB_ENV
 
