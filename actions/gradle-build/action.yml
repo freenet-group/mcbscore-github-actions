@@ -20,20 +20,22 @@ inputs:
     required: false
   artifactoryUserName:
     description: Login für das Artifactory
-    required: true
+    required: false
   artifactoryPassword:
     description: Passwort für das Artifactory
-    required: true
+    required: false
 
 runs:
   using: "composite"
+  env:
+    GRADLE_PROPERTIES: -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }}
   steps:
     - name: Set Gradle Command
       shell: bash
       run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }}" >> $GITHUB_ENV
 
     - name: Add Sonarqube Gradle Task
-      if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != '' }}
+      if: env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != ''
       shell: bash
       run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} sonarqube -Dsonar.login=${{ inputs.sonarqubeToken }} -Dsonar.host.url=${{ inputs.sonarqubeUrl }}" >> $GITHUB_ENV
 
@@ -42,11 +44,21 @@ runs:
       shell: bash
       run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} publish" >> $GITHUB_ENV
 
+    - name: Add Artifactory Properties
+      if: ${{ inputs..artifactoryUserName != '' && inputs.artifactoryPassword != '' }}
+      shell: bash
+      run: echo "GRADLE_PROPERTIES=${{env.GRADLE_PROPERTIES}} -PartifactoryUsername=${{ inputs.artifactoryUserName }} -PartifactoryPassword=${{ inputs.artifactoryPassword }}" >> $GITHUB_ENV
+
+    - name: Add Liquibase Properties
+      if: env.LIQUIBASE_USERNAME != '' && env.LIQUIBASE_PASSWORD != ''
+      shell: bash
+      run: echo "GRADLE_PROPERTIES=${{env.GRADLE_PROPERTIES}} -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }}" >> $GITHUB_ENV
+
     # Gradle Build
     - name: Build with Gradle
       shell: bash
       run: |
         workingDirectory=$(pwd)
         cd ${{ inputs.gradleDirectory }}
-        sh ./gradlew -PBUILD_TYPE=${{ env.BUILD_TYPE }} -PRAW_VERSION=${{ env.RAW_VERSION }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ inputs.artifactoryUserName }} -PartifactoryPassword=${{ inputs.artifactoryPassword }} ${{ env.GRADLE_COMMAND }} ${{ inputs.gradleOptions }}
+        sh ./gradlew ${{ env.GRADLE_PROPERTIES }} ${{ env.GRADLE_COMMAND }} ${{ inputs.gradleOptions }}
         cd $workingDirectory
