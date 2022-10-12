@@ -18,6 +18,10 @@ inputs:
   sonarqubeToken:
     description: Das Sonarqube-Token
     required: false
+  sonarAlways:
+    description: Soll Sonar auf allen Branches ausgeführt werden?
+    type: boolean
+    default: false
   artifactoryUserName:
     description: Login für das Artifactory
     required: false
@@ -37,7 +41,7 @@ runs:
       run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }}" >> $GITHUB_ENV
 
     - name: Add Sonarqube Gradle Task
-      if: env.BUILD_TYPE == 'DEVELOP' && env.COVERAGE_APP != ''
+      if: ${{ (inputs.sonarAlways == 'true' || env.BUILD_TYPE == 'DEVELOP') && env.COVERAGE_APP != '' }}
       shell: bash
       run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} sonarqube -Dsonar.login=${{ inputs.sonarqubeToken }} -Dsonar.host.url=${{ inputs.sonarqubeUrl }}" >> $GITHUB_ENV
 
