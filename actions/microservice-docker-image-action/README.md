@@ -1,6 +1,6 @@
 # microservice-docker-image-action
 
-Github Action zur Erstellung eines Docker Images f¸r einen Microservice. Zus‰tzlich wird das erstellte Image in Github Packages hinterlegt.
+Github Action zur Erstellung eines Docker Images f√ºr einen Microservice. Zus√§tzlich wird das erstellte Image in Github Packages hinterlegt.
 
 ## Parameter:
 ### componentName
@@ -28,7 +28,7 @@ Ein Docker Image wurde erstellt und in Github Packages hinterlegt
 
 ## Voraussetzungen:
 
-Das Release JAR muﬂ im Unterverzeichnis ./release der Action liegen.
+Das Release JAR mu√ü im Unterverzeichnis ./release der Action liegen.
 
 ---
 

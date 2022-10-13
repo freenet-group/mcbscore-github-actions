@@ -1,5 +1,5 @@
 name: 'Microservice Docker Image'
-description: 'Action zur Erstellung und zum Publish eines Docker Images für ein Microservice Release'
+description: 'Action zur Erstellung und zum Publish eines Docker Images fÃ¼r ein Microservice Release'
 
 inputs:
   componentName:
@@ -47,10 +47,10 @@ runs:
           printf 'Dockerfile in %s gefunden\n' "$PWD"
 
           # Docker erlaubt kein COPY von einem absoluten Pfad, selbst wenn der unter im erlaubten
-          # Build Kontext ist. => relativen ermitteln durch Kürzen um Präfix "$PWD/"
+          # Build Kontext ist. => relativen ermitteln durch KÃ¼rzen um PrÃ¤fix "$PWD/"
           homeDir=${actionDir#$PWD/}/home
 
-          # DOCKER_INCLUDE_DIR nicht berücksichtigen;
+          # DOCKER_INCLUDE_DIR nicht berÃ¼cksichtigen;
           # stattdessen leeres Verzeichnis als entsprechendes --build-arg:
           msCopyToHomeDir=$(mktemp --directory --tmpdir=. copy_to_docker_XXXXXX)
 
