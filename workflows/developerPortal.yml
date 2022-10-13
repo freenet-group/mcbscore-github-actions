@@ -1,0 +1,127 @@
+name: DeveloperPortal Upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'Der Name der Komponente'
+        required: true
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true
+      tagPrefix:
+        description: 'Der Präfix des Tags'
+        required: false
+      environment:
+        description: 'Die Zielumgebung'
+        required: true
+      javaVersion:
+        description: JAVA Version
+        required: false
+        default: '11'
+      actionsRepositoryBranch:
+        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        required: false
+        default: main
+      msdeploymentRepositoryBranch:
+        description: Welcher Branch von Repository ms-deployment benutzt werden soll
+        required: false
+        default: main
+
+jobs:
+  developerPortalUpload:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+    env:
+      NODE_VERSION: 12
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN, 
+            /github/secrets/mcbs_app.client_id = CLIENT_ID,
+            /github/secrets/mcbs_app.client_secret = CLIENT_SECRET
+
+      # Auschecken des Deployment Repositories
+      - name: Checkout Deployment Data / Scripts
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/ms-deployment
+          token: ${{ env.TOKEN }}
+          ref: ${{ github.event.inputs.msdeploymentRepositoryBranch }}
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/mcbscore_actions
+          token: ${{ env.TOKEN }}
+          path: mcbscore/actions
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # jq installieren
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v2
+
+      # Node JS installieren
+      - name: Setup Node JS
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm install
+
+      # JAVA installieren
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: ${{ github.event.inputs.javaVersion }}
+
+      # Open API Yaml Dateien aus Release extrahieren
+      - name: Download API documentation
+        id: downloadApiDoc
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
+          assetPattern: '.yaml'
+          targetPath: './apiDoc'
+          token: ${{ env.TOKEN }}
+
+      # Developer Portal Upload
+      - name: Developer Portal Upload
+        id: developer_portal_upload
+        uses: ./actions/developer-portal-upload-action
+        with:
+          component: ${{ github.event.inputs.component }}
+          stage: ${{ github.event.inputs.environment }}
+          componentVersion: ${{ github.event.inputs.componentVersion }}
+          tagPrefix: ${{ github.event.inputs.tagPrefix }}
+          token: ${{ env.TOKEN }}
+          clientId: ${{env.CLIENT_ID}}
+          clientSecret: ${{env.CLIENT_SECRET}}
