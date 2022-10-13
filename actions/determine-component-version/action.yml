@@ -1,5 +1,9 @@
 name: Determine Component Version
 description: Ermittelt die Version der Komponente basierend auf den Commits und dem Branch
+inputs:
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: false
 
 runs:
   using: "composite"
@@ -7,19 +11,19 @@ runs:
     # Komponenten Version ermitteln
     - name: Determine component version
       id: componentVersion
-      if: ${{ env.COMPONENT != '' }}
+      if: ${{ inputs.component != '' }}
       uses: ./mcbscore/github/actions/create-version
       with:
         jiraUrl: ${{ env.JIRA_API_URL }}
         jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
         tagPattern: ${{ env.TAG_PATTERN }}
         atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-        component: ${{ env.COMPONENT }}
+        component: ${{ inputs.component }}
         branchName: ${{ env.BRANCH_NAME }}
 
     # COMPONENT_VERSION Umgebungsvariable setzen
     - name: Set component version
-      if: ${{ env.COMPONENT != '' }}
+      if: ${{ inputs.component != '' }}
       shell: bash
       run: |
         if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
@@ -32,7 +36,7 @@ runs:
         echo "ISSUE_LIST=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
 
     - name: Determine Version
-      if: ${{ env.COMPONENT == '' }}
+      if: ${{ inputs.component == '' }}
       shell: bash
       run: |
         # letztes Tag ermitteln
