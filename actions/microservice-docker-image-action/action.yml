@@ -1,0 +1,109 @@
+name: 'Microservice Docker Image'
+description: 'Action zur Erstellung und zum Publish eines Docker Images für ein Microservice Release'
+
+inputs:
+  componentName:
+    description: Der Name der Komponente
+    required: true
+  componentVersion:
+    description: Die Version der Komponente
+    required: true
+  jar:
+    description: Das Jar
+    required: true
+  javaVersion:
+    description: Die JAVA Version
+    required: false
+    default: "11"
+  language:
+    description: Die Language Einstellung
+    required: false
+    default: de_DE.UTF-8
+
+runs:
+  using: "composite"
+  steps:
+
+    - id: create_docker_image
+      shell: bash
+      run: |
+        set -e
+
+        componentName='${{ inputs.componentName }}'
+        componentVersion='${{ inputs.componentVersion }}'
+        jar='${{ inputs.jar }}'
+        javaVersion='${{ inputs.javaVersion }}'
+        language='${{ inputs.language }}'
+        enabled='${{ env.DOCKER_ENABLED }}'	# aus .github/build.properties
+        msCopyToHomeDir='${{ env.DOCKER_INCLUDE_DIR }}'	# aus .github/build.properties
+        actionDir='${{ github.action_path }}'
+
+        if ! "${enabled:-true}"; then
+          printf 'DOCKER_ENABLED == %s => kein Docker build\n' "$dockerEnabled"
+          exit 0
+        fi
+
+        if [ -e Dockerfile ]; then	# custom Dockerfile im Service Repo
+          printf 'Dockerfile in %s gefunden\n' "$PWD"
+
+          # Docker erlaubt kein COPY von einem absoluten Pfad, selbst wenn der unter im erlaubten
+          # Build Kontext ist. => relativen ermitteln durch Kürzen um Präfix "$PWD/"
+          homeDir=${actionDir#$PWD/}/home
+
+          # DOCKER_INCLUDE_DIR nicht berücksichtigen;
+          # stattdessen leeres Verzeichnis als entsprechendes --build-arg:
+          msCopyToHomeDir=$(mktemp --directory --tmpdir=. copy_to_docker_XXXXXX)
+
+          # kein cd; bleibe im Repo Hauptverzeichnis
+
+        else	# Standard Dockerfile dieser Action
+          printf 'Kein Dockerfile in %s gefunden => benutze Standard in %s\n' "$PWD" "$actionDir"
+
+          # relative Dateinamen in absolute umwandeln (vor dem cd)
+          jar=$(realpath -- "$jar")
+          if [ -n "$msCopyToHomeDir" ]; then msCopyToHomeDir=$(realpath -- "$msCopyToHomeDir"); fi
+
+          cd -- "$actionDir"	# => docker build . benutzt Standard Dockerfile
+
+          homeDir=home
+
+          # $jar und DOCKER_INCLUDE_DIR in den Docker Build Kontext kopieren;
+          # Dateinamen dann wieder relativ machen, weil docker build es so braucht.
+          buildExtrasDir=$(mktemp --directory --tmpdir=. docker_build_XXXXXX)
+          cp --archive -- "$jar" "$buildExtrasDir"
+          jar=$buildExtrasDir/$(basename -- "$jar")
+          if [ -z "$msCopyToHomeDir" ]; then
+            msCopyToHomeDir=$(mktemp --directory --tmpdir="$buildExtrasDir" copy_to_docker_XXXXXX)
+          else
+            cp --archive -- "$msCopyToHomeDir" "$buildExtrasDir"
+            msCopyToHomeDir=$buildExtrasDir/$(basename -- "$msCopyToHomeDir")
+          fi
+        fi
+
+        # Build
+        dockerTag="ghcr.io/freenet-group/mcbs-core/${componentName}:${componentVersion}"
+        printf 'Baue %s in %s: ' "${dockerTag}" "$PWD" >&2
+        (set -x; docker build \
+          --build-arg SERVICE_NAME="${componentName}" \
+          --build-arg SERVICE_JAR="${jar}" \
+          --build-arg SERVICE_LANGUAGE="${language}" \
+          --build-arg COPY_TO_HOME_DIR="${homeDir}" \
+          --build-arg COPY_TO_HOME_DIR_2="${msCopyToHomeDir}" \
+          --build-arg JAVA_VERSION="${javaVersion}" \
+          --tag "${dockerTag}" .)
+
+    - id: publish_docker_image
+      shell: bash
+      run: |
+        componentName='${{ inputs.componentName }}'
+        componentVersion='${{ inputs.componentVersion }}'
+        username='${{ end.USER }}'
+        token='${{ env.TOKEN }}'
+        enabled='${{ env.DOCKER_ENABLED }}'	# DOCKER_ENABLED aus .github/build.properties
+
+        if "${enabled:-true}"; then
+          docker login ghcr.io --username "${username}" --password-stdin <<< "${token}"
+          docker push "ghcr.io/freenet-group/mcbs-core/${componentName}:${componentVersion}"
+        else
+          printf 'DOCKER_ENABLED == %s => kein Docker build\n' "$dockerEnabled"
+        fi
