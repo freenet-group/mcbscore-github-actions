@@ -2,7 +2,7 @@ name: Determine Component Version
 description: Ermittelt die Version der Komponente basierend auf den Commits und dem Branch
 inputs:
   component:
-    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    description: der Name der zu erzeugenden Komponente (erforderlich fÃ¼r Auswertung der Komponenten)
     required: false
 
 runs:
