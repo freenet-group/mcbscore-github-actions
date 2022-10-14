@@ -66,8 +66,8 @@ buildTimestamp=$RELEASE_CREATED_AT
 echo "buildTimestamp: $buildTimestamp"
 
 declare -A DEPLOYMENT_PROPS
-: ${GENERIC_DEPLOYMENT_FILE:=./properties/$COMPONENT/deployment.properties}
-: ${DEPLOYMENT_FILE:=./properties/$COMPONENT/deployment-$environment.properties}
+: ${GENERIC_DEPLOYMENT_FILE:=./$COMPONENT_CONFIG_PATH/properties/$COMPONENT/deployment.properties}
+: ${DEPLOYMENT_FILE:=./$COMPONENT_CONFIG_PATH/properties/$COMPONENT/deployment-$environment.properties}
 readPropertiesIntoMap DEPLOYMENT_PROPS "$GENERIC_DEPLOYMENT_FILE" "$DEPLOYMENT_FILE"
 
 # ${deployment.api.name}

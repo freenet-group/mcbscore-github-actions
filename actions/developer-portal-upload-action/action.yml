@@ -12,8 +12,11 @@ inputs:
     description: Die Stage für den Upload
     required: true
   tagPrefix:
-    description: 'Der Präfix des Tags'
+    description: Der Präfix des Tags
     required: false
+  componentConfigPath:
+    description: Pfad in dem die Konfiguration der Komponente liegt
+    required: true
 #  clientId:
 #    description: Die ClientId um sich zu authentifizieren
 #    required: true
@@ -48,6 +51,7 @@ runs:
       env:
         COMPONENT: ${{ inputs.component }}
         COMPONENT_VERSION: ${{ inputs.componentVersion }}
+        COMPONENT_CONFIG_PATH: ${{ inputs.componentConfigPath }}
         STAGE: ${{ inputs.stage }}
 #        CLIENT_ID: ${{ inputs.clientId }}
 #        CLIENT_SECRET: ${{ inputs.clientSecret }}
