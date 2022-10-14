@@ -32,17 +32,21 @@ runs:
     - shell: bash
       run: |
         authHeader="Authorization: token ${{ env.TOKEN }}"
-
+        echo "1"
         function gh_curl() {
           curl -H "${authHeader}" \
             -H "Accept: application/vnd.github.v3.raw" \
             $@
         }
 
+        echo "2"
         parser=". | map(select(.tag_name == \"${{ inputs.tagPrefix }}${{ inputs.componentVersion }}\"))[0].created_at"
+        echo "3"
         RELEASE_CREATED_AT=`gh_curl -s ${{ env.GITHUB_API_URL }}/repos/${{ github.repository }}/releases?per_page=100 | jq -r "$parser"`
+        echo "4"
 
         export RELEASE_CREATED_AT
+        echo "5"
 
         echo "Starte Developer Portal Upload"
         ${{ github.action_path }}/developerPortalUpload.sh
