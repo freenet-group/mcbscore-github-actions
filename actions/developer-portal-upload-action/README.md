@@ -10,7 +10,7 @@ Github Action zum Upload der YAML Dateien eines Releases einer Komponente in das
     description: Die Version des Releases
     required: true
 ### stage
-    description: Die Zielumgebung für das Deployment (dev/git/prod/pet)
+    description: Die Zielumgebung für das Deployment (dev/git/prod)
     required: true
 
 ---
