@@ -1,0 +1,61 @@
+name: 'Developer Portal Upload'
+description: 'Action zum Upload der API Dokumentation eines Services in das Developer Portal'
+
+inputs:
+  component:
+    description: Der Name der Komponente
+    required: true
+  stage:
+    description: Die Stage für den Upload
+    required: true
+  componentVersion:
+    description: Die Version der Komponente
+    required: true
+  tagPrefix:
+    description: 'Der Präfix des Tags'
+    required: false
+  token:
+    description: Ein Github Token
+    required: true
+  clientId:
+    description: Die ClientId um sich zu authentifizieren 
+    required: true
+  clientSecret:
+    description: Das ClientSecret um sich zu authentifizieren
+    required: true 
+
+runs:
+  using: "composite"
+  steps:
+
+    # Make developerPortalUpload.sh executable
+    - run: chmod +x ./scripts/microservice/developerPortalUpload.sh
+      shell: bash
+
+    - id: api_doc_upload
+      run: |
+        GITHUB="https://api.github.com"
+        AUTH_HEADER="Authorization: token ${{ inputs.token }}"
+
+        function gh_curl() {
+          curl -H "${AUTH_HEADER}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            $@
+        }
+
+        parser=". | map(select(.tag_name == \"${{ inputs.tagPrefix }}${{ inputs.componentVersion }}\"))[0].created_at"
+        RELEASE_CREATED_AT=`gh_curl -s $GITHUB/repos/${{ github.repository }}/releases?per_page=100 | jq -r "$parser"`
+
+        COMPONENT='${{ inputs.component }}'
+        STAGE='${{ inputs.stage }}'
+        COMPONENT_VERSION='${{ inputs.componentVersion }}'
+
+        CLIENT_ID='${{ inputs.clientId }}'
+        CLIENT_SECRET='${{ inputs.clientSecret }}'
+
+        export COMPONENT STAGE COMPONENT_VERSION RELEASE_CREATED_AT CLIENT_ID CLIENT_SECRET
+
+        echo "Starte Developer Portal Upload"
+        ./scripts/microservice/developerPortalUpload.sh
+
+      shell: bash
