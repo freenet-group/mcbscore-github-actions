@@ -1,7 +1,58 @@
 #!/bin/bash
 
 set -e
-source "$(dirname -- "$BASH_SOURCE")/../common/utils.sh"
+
+function evalValue() {
+  local value="$1"
+
+  # printf statt echo um zu verhindern, dass ein Teil von $value als echo-Option interpretiert wird
+  function echo-safe() { printf ' %s' "$@" | cut --characters=2-; }
+  eval echo-safe "$value"
+}
+
+# Liest Properties-Dateien und setzt ein assoziatives Array mit den Werten daraus.
+# Parameter:
+# - $1: Variablenname (z.B. DEPLOYMENT_PROPS); muss vorher vom Aufrufer als assoziatives Array deklariert werden
+# - $2, ...: Property-Datei-Name(n); spätere überschreiben ehere
+# => Setzt z.B.: DEPLOYMENT_PROPS['api.name']='customer'
+function readPropertiesIntoMap() {
+	local jsCode tmpFile
+	tmpFile=$(mktemp)
+	jsCode=$(cat <<'EOF'
+		argsList = new java.util.LinkedList(java.util.Arrays.asList(arguments));
+		varName = argsList.removeFirst();
+		p = new java.util.Properties();
+		argsList.forEach(function(filename) {
+			file = new java.io.File(filename);
+			if (!file.exists()) { return }
+
+			err.println("lese " + filename);
+			// Properties.load dokumentiert nicht die Überschreibe-Prio.
+			// => Sicherheitshalber in separate Properties laden
+			pTemp = new java.util.Properties();
+			inputStream = new java.io.FileInputStream(file);
+			try { pTemp.load(inputStream); } finally { inputStream.close(); }
+			p.putAll(pTemp); // ist eigentlich auch nicht sicher, weil pTemp's Defaults verloren gehen
+		});
+		p.forEach(function(k,v) {
+			// Bash-Code wird in dieser Form ausgegeben: z.B.
+			// DEPLOYMENT_PROPS['root.dir']='/home/xy'
+			// Quoting von einfachen Anführungszeichen (angenommen Key "root'dir", Wert "/ho'me/xy"):
+			// DEPLOYMENT_PROPS['root'\''dir']=['/ho'\''me/xy']
+			// (d.h. ein ' zum String beenden, ein \' für literalen ', ein ' zu String fortsetzen).
+			// Backslash doppeln für JavaScript-String und nochmal gegen replaceAll-Interpretation.
+			kq = k.replaceAll("'", "'\\\\''");
+			vq = v.replaceAll("'", "'\\\\''");
+
+			out.format("%s['%s']='%s'\n", varName, kq, vq);
+		});
+EOF
+	)
+	jrunscript -e "$jsCode" "$@" > "$tmpFile"
+	cat -- "$tmpFile"
+	source -- "$tmpFile"
+	rm -f -- "$tmpFile"
+}
 
 environment=$STAGE
 echo "environment: $environment"
@@ -66,7 +117,7 @@ echo "responseJson: $responseJson"
 if [[ "$statusCode" == "200" ]]; then
 	#accessToken speichern
 	accessToken=$(node -pe 'JSON.parse(process.argv[1]).access_token' "$responseJson")
-	echo "Authenzifizierung war erfolgreich"
+	echo "Authentifizierung war erfolgreich"
 	
 else
 	errorMessage=$(node -pe 'JSON.parse(process.argv[1]).message' "$responseJson")

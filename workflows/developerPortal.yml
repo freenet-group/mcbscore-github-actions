@@ -4,43 +4,40 @@ on:
   workflow_dispatch:
     inputs:
       component:
-        description: 'Der Name der Komponente'
+        description: Der Name der Komponente
         required: true
       componentVersion:
-        description: 'Die Version der Komponente'
+        description: Die Version der Komponente
         required: true
       tagPrefix:
-        description: 'Der Präfix des Tags'
+        description: Der Präfix des Tags
         required: false
       environment:
-        description: 'Die Zielumgebung'
+        description: Die Zielumgebung
         required: true
       javaVersion:
         description: JAVA Version
         required: false
-        default: '11'
+        default: 11
       actionsRepositoryBranch:
-        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
-        required: false
-        default: main
-      msdeploymentRepositoryBranch:
-        description: Welcher Branch von Repository ms-deployment benutzt werden soll
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
 
 jobs:
   developerPortalUpload:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
     env:
-      NODE_VERSION: 12
+      NODEJS_VERSION: 12
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
         if: ${{ always() }}
         run: |
-          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
@@ -48,65 +45,44 @@ jobs:
           echo "Cleaning up previous run"
           rm -rf *
 
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
-
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
+          fetch-depth: 0
 
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN, 
             /github/secrets/mcbs_app.client_id = CLIENT_ID,
             /github/secrets/mcbs_app.client_secret = CLIENT_SECRET
 
-      # Auschecken des Deployment Repositories
-      - name: Checkout Deployment Data / Scripts
-        uses: actions/checkout@v3
-        with:
-          repository: freenet-group/ms-deployment
-          token: ${{ env.TOKEN }}
-          ref: ${{ github.event.inputs.msdeploymentRepositoryBranch }}
-
       # Die internen Actions auschecken
-      - name: checkout mcbscore actions
+      - name: checkout mcbscore-github-actions
         uses: actions/checkout@v3
         with:
-          repository: freenet-group/mcbscore_actions
+          repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
-          path: mcbscore/actions
+          path: ${{ env.ACTIONS_PATH }}
           ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
-      # jq installieren
-      - name: Setup jq
-        uses: freenet-actions/setup-jq@v2
-
-      # Node JS installieren
-      - name: Setup Node JS
-        uses: actions/setup-node@v3
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+      - name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
-          node-version: ${{ env.NODE_VERSION }}
-      - run: npm install
-
-      # JAVA installieren
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: zulu
-          java-version: ${{ github.event.inputs.javaVersion }}
+          installJava: true
+          installJq: true
+          installNodeJs: true
 
       # Open API Yaml Dateien aus Release extrahieren
       - name: Download API documentation
-        id: downloadApiDoc
-        uses: ./mcbscore/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets-action
         with:
           version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
           assetPattern: '.yaml'
@@ -115,13 +91,11 @@ jobs:
 
       # Developer Portal Upload
       - name: Developer Portal Upload
-        id: developer_portal_upload
-        uses: ./actions/developer-portal-upload-action
+        uses: ./mcbscore/github/actions/developer-portal-upload-action
         with:
           component: ${{ github.event.inputs.component }}
-          stage: ${{ github.event.inputs.environment }}
           componentVersion: ${{ github.event.inputs.componentVersion }}
+          stage: ${{ github.event.inputs.environment }}
           tagPrefix: ${{ github.event.inputs.tagPrefix }}
-          token: ${{ env.TOKEN }}
-          clientId: ${{env.CLIENT_ID}}
-          clientSecret: ${{env.CLIENT_SECRET}}
+#          clientId: ${{env.CLIENT_ID}}
+#          clientSecret: ${{env.CLIENT_SECRET}}
