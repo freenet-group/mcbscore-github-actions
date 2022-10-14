@@ -23,12 +23,19 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+      deploymentRepositoryBranch:
+        description: Welcher Branch von Repository ms-deployment benutzt werden soll
+        required: false
+        default: main
 
 jobs:
   developerPortalUpload:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, vm]
     env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
+      DEPLOYMENT_PATH: mcbscore/deployment
       NODEJS_VERSION: 12
 
     steps:
@@ -60,6 +67,15 @@ jobs:
             /github/secrets/mcbs_token = TOKEN, 
             /github/secrets/mcbs_app.client_id = CLIENT_ID,
             /github/secrets/mcbs_app.client_secret = CLIENT_SECRET
+
+      # Auschecken des Deployment Repositories
+      - name: Checkout Deployment Data / Scripts
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/ms-deployment
+          token: ${{ env.TOKEN }}
+          path: ${{ env.DEPLOYMENT_PATH }}
+          ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -97,5 +113,4 @@ jobs:
           componentVersion: ${{ github.event.inputs.componentVersion }}
           stage: ${{ github.event.inputs.environment }}
           tagPrefix: ${{ github.event.inputs.tagPrefix }}
-#          clientId: ${{env.CLIENT_ID}}
-#          clientSecret: ${{env.CLIENT_SECRET}}
+          componentConfigPath: ${{ env.DEPLOYMENT_PATH }}

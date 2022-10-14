@@ -17,12 +17,6 @@ inputs:
   componentConfigPath:
     description: Pfad in dem die Konfiguration der Komponente liegt
     required: true
-#  clientId:
-#    description: Die ClientId um sich zu authentifizieren
-#    required: true
-#  clientSecret:
-#    description: Das ClientSecret um sich zu authentifizieren
-#    required: true
 
 runs:
   using: "composite"
@@ -53,5 +47,3 @@ runs:
         COMPONENT_VERSION: ${{ inputs.componentVersion }}
         COMPONENT_CONFIG_PATH: ${{ inputs.componentConfigPath }}
         STAGE: ${{ inputs.stage }}
-#        CLIENT_ID: ${{ inputs.clientId }}
-#        CLIENT_SECRET: ${{ inputs.clientSecret }}
