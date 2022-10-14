@@ -1,0 +1,63 @@
+name: 'Upload API Doc Assets'
+description: 'Action für den Upload von GitHub Release Assets für API Docs'
+
+inputs:
+  componentVersion:
+    description: Die Version des Releases
+    required: true
+  apiDocYmlPattern:
+    description: Kommaseparierte Liste von Mustern zum Auffinden der API Doc Dateien
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        authHeader="Authorization: token ${{ env.TOKEN }}"
+
+        alias errcho='>&2 echo'
+
+        function gh_curl() {
+          curl -H "${authHeader}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            $@
+        }
+
+        uploadAsset() {
+
+          contentLengthHeader="Content-Length: $(stat -c%s "$1")";
+          contentTypeHeader="Content-Type: text/plain";
+          assetName=${1##*/}
+          uploadUrl=${2/\"/}
+          uploadUrl=${uploadUrl/\{?name,label\}/?name=$assetName}
+
+          # Upload the file
+          curl \
+          -f \
+          -sSL \
+          -XPOST \
+          -H "${authHeader}" \
+          -H "${contentLengthHeader}" \
+          -H "${contentTypeHeader}" \
+          --upload-file "$1" \
+          "${uploadUrl}";
+        }
+
+        parser=". | map(select(.tag_name == \"${{ inputs.componentVersion }}\"))[0].upload_url"
+        asset_upload_url=`gh_curl -s ${{ env.GITHUB_API_URL }}/repos/${{ github.repository }}/releases | jq "$parser"`
+
+        IFS=', ' read -r -a apiDocPaths <<< "${{ inputs.apiDocYmlPattern }}"
+
+        for apiDocPath in "${apiDocPaths[@]}"
+        do
+          IFS=$'\n'
+
+          for asset in $(find . -type f -wholename "${apiDocPath}");
+          do
+            uploadAsset $asset $asset_upload_url
+          done
+
+          unset IFS
+        done
+
+      shell: bash

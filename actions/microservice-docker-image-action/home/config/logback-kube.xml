@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- For assistance related to logback-translator or configuration  -->
+<!-- files in general, please contact the logback user mailing list -->
+<!-- at http://www.qos.ch/mailman/listinfo/logback-user             -->
+<!--                                                                -->
+<!-- For professional support please see                            -->
+<!--    http://www.qos.ch/shop/products/professionalSupport         -->
+<!--                                                                -->
+
+<!-- Konfiguration für in kubernetes laufende Service -->
+<configuration scan="true">
+	<include resource="org/springframework/boot/logging/logback/defaults.xml" />
+	<include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+	<springProperty name="environment" source="md.environment"/>
+	<springProperty name="serviceName" source="spring.application.name"/>
+
+	<statusListener class="ch.qos.logback.core.status.OnConsoleStatusListener" />
+
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+			<providers>
+				<timestamp/>
+				<logLevel/>
+				<threadName/>
+				<message/>
+				<loggerName/>
+				<logstashMarkers/>
+				<version/>
+				<stackTrace>
+					<throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+						<maxDepthPerThrowable>256</maxDepthPerThrowable>
+						<shortenedClassNameLength>20</shortenedClassNameLength>
+						<exclude>io\.undertow\..*</exclude>
+						<exclude>org\.springframework\.web\.filter\..*</exclude>
+						<exclude>org\.springframework\.aop\..*</exclude>
+						<exclude>sun\.reflect\..*\.invoke.*</exclude>
+						<exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+						<rootCauseFirst>true</rootCauseFirst>
+					</throwableConverter>
+				</stackTrace>
+				<pattern>
+					<pattern>
+					{"serviceName":"${serviceName}",
+					 "environment":"${environment}"}
+					</pattern>
+				</pattern>
+			</providers>
+		</encoder>
+	</appender>
+
+	<root level="INFO">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>
