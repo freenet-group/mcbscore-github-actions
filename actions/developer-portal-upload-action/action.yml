@@ -39,8 +39,7 @@ runs:
             $@
         }
 
-        echo "2"
-        curl
+        echo "2 ${{ env.GITHUB_API_URL }}"
         echo "2.1"
         curl -H "${authHeader}"
         echo "2.2"
