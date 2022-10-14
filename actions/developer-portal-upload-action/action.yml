@@ -40,6 +40,10 @@ runs:
         }
 
         echo "2"
+        curl
+        echo "2.1"
+        curl -H "${authHeader}"
+        echo "2.2"
         parser=". | map(select(.tag_name == \"${{ inputs.tagPrefix }}${{ inputs.componentVersion }}\"))[0].created_at"
         echo "3"
         RELEASE_CREATED_AT=`gh_curl -s ${{ env.GITHUB_API_URL }}/repos/${{ github.repository }}/releases?per_page=100 | jq -r "$parser"`
