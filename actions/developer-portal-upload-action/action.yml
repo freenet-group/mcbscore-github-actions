@@ -1,5 +1,5 @@
 name: Developer Portal Upload
-description: Action zum Upload der API Dokumentation eines Services in das Developer Portal
+description: Action zum Upload der API Dokumentation eines Services in das Developer-Portal
 
 inputs:
   component:

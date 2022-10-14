@@ -1,6 +1,6 @@
 # developer-portal-upload-action
 
-Github Action zum Upload der YAML Dateien eines Releases einer Komponente in das Developer Portal.
+Github Action zum Upload der YAML Dateien eines Releases einer Komponente in das Developer-Portal.
 
 ## Parameter:
 ### component
