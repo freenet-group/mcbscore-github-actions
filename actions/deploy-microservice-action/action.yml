@@ -47,7 +47,7 @@ runs:
       run: |
         dockerRegistryToken='${{ inputs.dockerRegistryToken }}'
 
-        PROPERTY_FILE=./properties/${{ inputs.component }}/deployment-${{ inputs.stage }}.properties
+        PROPERTY_FILE=./${{ inputs.componentConfigPath }}/properties/${{ inputs.component }}/deployment-${{ inputs.stage }}.properties
         COMPONENT='${{ inputs.component }}'
         STAGE='${{ inputs.stage }}'
         DOCKER_IMAGE='${{ inputs.dockerImage }}'
