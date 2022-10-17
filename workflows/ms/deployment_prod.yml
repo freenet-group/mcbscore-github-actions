@@ -13,6 +13,10 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+      deploymentRepositoryBranch:
+        description: Branch von Repository ms-deployment, der benutzt werden soll
+        required: false
+        default: main
 
 jobs:
   deploy:
@@ -44,7 +48,16 @@ jobs:
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "component": "${{ env.COMPONENT }}", "environment": "prod", "componentVersion": "${{ github.event.inputs.componentVersion }}", "additionalDeploymentComponent": "${{ github.event.inputs.additionalDeploymentComponent }}" }'
+          inputs: >
+            {
+              "component": "${{ env.COMPONENT }}",
+              "environment": "prod",
+              "componentVersion": "${{ github.event.inputs.componentVersion }}",
+              "bambiNotification": true,
+              "additionalDeploymentComponent": "${{ github.event.inputs.additionalDeploymentComponent }}",
+              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}",
+              "deploymentRepositoryBranch": "${{ github.event.inputs.deploymentRepositoryBranch }}"
+            }
 
       # Starte Deployment auf K8S
       - name: Invoke kubernetes workflow

@@ -1,5 +1,5 @@
-name: 'Deploy Microservice'
-description: 'Action zum Deployment von Microservices'
+name: Deploy Microservice
+description: Action zum Deployment von Microservices
 
 inputs:
   component:
@@ -12,7 +12,7 @@ inputs:
     description: Pfad in dem die Konfiguration der Komponente liegt
     required: true
   dockerImage:
-    description: Docker Image Name[:Tag]; ob das benutzt wird, regeln aber die Deployment Properties des konkreten Services
+    description: Docker-Image Name[:Tag]; ob das benutzt wird, regeln aber die Deployment-Properties des konkreten Services
     required: false
   checkMkUser:
     description: Der Benutzer für den CheckMk Zugriff
@@ -25,8 +25,8 @@ inputs:
     required: true
   dockerRegistryToken:
     description: |
-      Ein Github Token zum Lesen (pull) des Docker Images aus der Github Container Registry; nur
-      notwendig, wenn überhaupt (gemäß den Deployment Properties) per Docker gestartet wird und das
+      Ein Github Token zum Lesen (pull) des Docker Images aus der Github-Container-Registry; nur
+      notwendig, wenn überhaupt (gemäß den Deployment-Properties) per Docker gestartet wird und das
       Image ein Login braucht.
     required: false
 

@@ -1,6 +1,6 @@
 # deploy-microservice-action
 
-Github Action zum Deployment eines Releases einer Komponente.
+Github-Action zum Deployment eines Releases einer Komponente.
 
 ## Parameter:
 ### component
