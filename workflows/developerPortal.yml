@@ -98,7 +98,7 @@ jobs:
 
       # Open API Yaml Dateien aus Release extrahieren
       - name: Download API documentation
-        uses: ./mcbscore/github/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
           assetPattern: '.yaml'
@@ -107,7 +107,7 @@ jobs:
 
       # Developer Portal Upload
       - name: Developer Portal Upload
-        uses: ./mcbscore/github/actions/developer-portal-upload-action
+        uses: ./mcbscore/github/actions/developer-portal-upload
         with:
           component: ${{ github.event.inputs.component }}
           componentVersion: ${{ github.event.inputs.componentVersion }}

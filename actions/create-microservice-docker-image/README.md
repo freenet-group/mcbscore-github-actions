@@ -1,4 +1,4 @@
-# microservice-docker-image-action
+# create-microservice-docker-image
 
 Github Action zur Erstellung eines Docker Images für einen Microservice. Zusätzlich wird das erstellte Image in Github Packages hinterlegt.
 
@@ -37,7 +37,7 @@ Das Release JAR muß im Unterverzeichnis ./release der Action liegen.
       # Docker Image erstellen
       - name: Create and publish docker image
         id: createDockerImage
-        uses: ./microservice-docker-image-action
+        uses: ./create-microservice-docker-image
         with:
           componentName: ms-contentprovider
           componentVersion: 1.0.0

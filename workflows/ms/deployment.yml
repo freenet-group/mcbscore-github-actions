@@ -145,7 +145,7 @@ jobs:
 
       - name: Download Release
         id: downloadRelease
-        uses: ./mcbscore/github/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ github.event.inputs.componentVersion }}
           assetPattern: '-${{ github.event.inputs.componentVersion }}.jar'
@@ -156,7 +156,7 @@ jobs:
       - name: Deployment
         id: deployRelease
         if: ${{ github.event.inputs.additionalDeploymentComponent == '' }}
-        uses: ./mcbscore/github/actions/deploy-microservice-action
+        uses: ./mcbscore/github/actions/deploy-microservice
         with:
           component: ${{ github.event.inputs.component }}
           stage: ${{ github.event.inputs.environment }}
@@ -171,7 +171,7 @@ jobs:
       - name: Deployment
         id: additionalDeployment
         if: ${{ github.event.inputs.additionalDeploymentComponent != '' }}
-        uses: ./mcbscore/github/actions/deploy-microservice-action
+        uses: ./mcbscore/github/actions/deploy-microservice
         with:
           component: ${{ github.event.inputs.additionalDeploymentComponent }}
           stage: ${{ github.event.inputs.environment }}

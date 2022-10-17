@@ -1,5 +1,5 @@
-name: 'Download Release Assets'
-description: 'Download eines GitHub Release Assets anhand der Version und eines regulären Ausdruckes für den Namen'
+name: Download Release Assets
+description: Download eines GitHub Release Assets anhand der Version und eines regulären Ausdruckes für den Namen
 
 inputs:
   version:

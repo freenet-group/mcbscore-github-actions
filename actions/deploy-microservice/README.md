@@ -1,4 +1,4 @@
-# deploy-microservice-action
+# deploy-microservice
 
 Github-Action zum Deployment eines Releases einer Komponente.
 

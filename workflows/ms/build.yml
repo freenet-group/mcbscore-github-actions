@@ -169,7 +169,7 @@ jobs:
       # Vorhandene Open API Yamls als Asset hinzufügen
       - name: Upload API Doc Assets
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/github/actions/upload-api-doc-assets-action
+        uses: ./mcbscore/github/actions/upload-api-doc-assets
         with:
           version: ${{ env.COMPONENT_VERSION }}
           apiDocYmlPattern: ${{ env.API_DOC_YAML_PATTERN }}
@@ -189,7 +189,7 @@ jobs:
       # Docker Image erzeugen
       - name: Docker Image erzeugen
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/github/actions/microservice-docker-image-action
+        uses: ./mcbscore/github/actions/create-microservice-docker-image
         with:
           componentName: ms-${{ env.COMPONENT }}
           componentVersion: ${{ env.COMPONENT_VERSION }}
