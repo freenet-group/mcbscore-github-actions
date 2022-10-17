@@ -45,9 +45,11 @@ runs:
     - id: standard_or_domain_deployment
       shell: bash
       run: |
+        workingDirectory=$(pwd)
+        cd ${{ inputs.componentConfigPath }}
         dockerRegistryToken='${{ inputs.dockerRegistryToken }}'
 
-        PROPERTY_FILE=./${{ inputs.componentConfigPath }}/properties/${{ inputs.component }}/deployment-${{ inputs.stage }}.properties
+        PROPERTY_FILE=./properties/${{ inputs.component }}/deployment-${{ inputs.stage }}.properties
         COMPONENT='${{ inputs.component }}'
         STAGE='${{ inputs.stage }}'
         DOCKER_IMAGE='${{ inputs.dockerImage }}'
@@ -60,7 +62,9 @@ runs:
 
         echo "Starte Deployment"
         if [ -n "$dockerRegistryToken" ]; then
-          ./${{ inputs.componentConfigPath }}/scripts/microservice/deployment.sh <<< "${dockerRegistryToken}"
+          ./scripts/microservice/deployment.sh <<< "${dockerRegistryToken}"
         else
-          ./${{ inputs.componentConfigPath }}/scripts/microservice/deployment.sh
+          ./scripts/microservice/deployment.sh
         fi
+        
+        cd -- "$workingDirectory"
