@@ -12,6 +12,9 @@ Github Action zum Upload der YAML Dateien eines Releases einer Komponente in das
 ### stage
     description: Die Zielumgebung für das Deployment (dev/git/prod)
     required: true
+### componentConfigPath
+    description: Pfad in dem die Konfiguration der Komponente liegt
+    required: true
 
 ---
 
