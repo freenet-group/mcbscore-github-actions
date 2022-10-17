@@ -1,6 +1,6 @@
 # developer-portal-upload-action
 
-Github Action zum Upload der YAML Dateien eines Releases einer Komponente in das Developer Portal.
+Github Action zum Upload der YAML Dateien eines Releases einer Komponente in das Developer-Portal.
 
 ## Parameter:
 ### component
@@ -10,10 +10,7 @@ Github Action zum Upload der YAML Dateien eines Releases einer Komponente in das
     description: Die Version des Releases
     required: true
 ### stage
-    description: Die Zielumgebung für das Deployment (dev/git/prod/pet)
-    required: true
-### token
-    description: Ein Github Token
+    description: Die Zielumgebung fÃ¼r das Deployment (dev/git/prod)
     required: true
 
 ---
@@ -34,4 +31,3 @@ Die API Doc wurde in das Developer Portal hochgeladen.
           component: contentprovider
           componentVersion: 1.0.0-SNAPSHOT
           stage: dev
-          token: ${{ secrets.GH_REPO_MCBS }}
