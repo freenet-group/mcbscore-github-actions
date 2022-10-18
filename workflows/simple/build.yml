@@ -151,7 +151,7 @@ jobs:
 
       # Starte postBuild auf RELEASE
       - name: Invoke postBuild workflow
-        if: env.BUILD_TYPE == 'RELEASE' && hashFiles('**/postBuild.yml') != ''
+        if: env.BUILD_TYPE == 'RELEASE' && hashFiles('.github/**/postBuild.yml') != ''
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PostBuild
