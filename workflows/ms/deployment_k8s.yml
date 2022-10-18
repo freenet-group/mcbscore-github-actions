@@ -30,6 +30,10 @@ on:
         required: false
         default: false
 
+#Nur ein k8s Workflow darf gleichzeitg gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
+concurrency:
+  group: ${{ github.workflow }}
+
 jobs:
   build-matrix:
     runs-on: ubuntu-latest
