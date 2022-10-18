@@ -104,7 +104,7 @@ jobs:
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild" }
           - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild" }
           - { name: ms-tools, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, ../encoding" }
-          - { name: ms-usage-importer, branch: develop, group: ms, workflows: "../check, build" }
+          - { name: ms-usage-importer, branch: develop, group: ms, workflows: "../check, build, deploymentDB" }
           - { name: ms-usageprices, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
           - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
           - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s, ../encoding, postBuild" }
