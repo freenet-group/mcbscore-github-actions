@@ -1,5 +1,5 @@
-name: 'Upload API Doc Assets'
-description: 'Action für den Upload von GitHub Release Assets für API Docs'
+name: Upload API Doc Assets
+description: Action für den Upload von GitHub Release Assets für API Docs
 
 inputs:
   componentVersion:

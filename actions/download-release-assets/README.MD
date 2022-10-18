@@ -1,4 +1,4 @@
-# download-release-assets-action
+# download-release-assets
 
 Github Action zum Download aller Release Assets, die dem Muster entsprechen. Die Assets werden in dem angegebenen Zielverzeichnis abgelegt.
 

@@ -1,4 +1,4 @@
-# upload-api-doc-asset-action
+# upload-api-doc-assets
 
 Github Action zum Hinzufügen von Open API Yaml Dateien als Release Assets.
 
@@ -32,7 +32,7 @@ JQ muß installiert sein
 
       - name: Upload API Doc Assets
         id: uploadApiDocs
-        uses: ./upload-api-doc-assets-action
+        uses: ./upload-api-doc-assets
         with:
           version: 1.0.0
           apiDocYmlPattern: ./build/resources/main/static/contentprovider*.yaml

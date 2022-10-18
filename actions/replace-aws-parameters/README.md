@@ -1,4 +1,4 @@
-# replace-aws-parameters-action
+# replace-aws-parameters
 
 Github Action zum Ersetzen von Schlüsseln in Dateien durch Werte aus dem AWS Parameter Store.
 Die Datei mit den Ersetzungsregeln muß für jede Regel folgende Syntax erfüllen: **FILE:KEY=AWS-KEY**

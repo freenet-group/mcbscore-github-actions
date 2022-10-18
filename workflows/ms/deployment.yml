@@ -1,33 +1,34 @@
 name: Deployment
 
-# Kontrolliert, welche Events die Action auslösen
 on:
   workflow_dispatch:
     inputs:
       component:
-        description: 'Der Name der Komponente'
+        description: Der Name der Komponente
         required: true
       componentVersion:
-        description: 'Die Version der Komponente'
+        description: Die Version der Komponente
         required: true
       additionalDeploymentComponent:
-        description: 'Ermöglicht Deployment unter anderem Namen'
+        description: Ermöglicht Deployment unter anderem Namen
         required: false
       environment:
-        description: 'Die Zielumgebung'
+        description: Die Zielumgebung
         required: true
-      javaVersion:
-        description: JAVA Version
-        required: false
-        default: '11'
       actionsRepositoryBranch:
-        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        type: string
         required: false
         default: main
-      msdeploymentRepositoryBranch:
-        description: Welcher Branch von Repository ms-deployment benutzt werden soll
+      deploymentRepositoryBranch:
+        description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
         default: main
+      bambiNotification:
+        description: Bambi Notification?
+        type: boolean
+        required: false
+        default: false
 
 jobs:
   create-deployment:
@@ -60,27 +61,33 @@ jobs:
           fi
 
       - name: Create GitHub deployment
-        uses: chrnorm/deployment-action@releases/v1
-        id: create_deployment
+        uses: chrnorm/deployment-action@v2
+        id: create-deployment
         with:
           token: ${{ env.TOKEN }}
           environment: ${{ github.event.inputs.environment }}
           ref: ${{ env.DEPLOYMENT_REF }}
 
     outputs:
-      deployment_id: ${{ steps.create_deployment.outputs.deployment_id }}
+      deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
 
   deploy:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
     needs: create-deployment
+    env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
+      DEPLOYMENT_PATH: mcbscore/deployment
+      NODEJS_VERSION: 16
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
         if: ${{ always() }}
         run: |
-          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
@@ -88,90 +95,72 @@ jobs:
           echo "Cleaning up previous run"
           rm -rf *
 
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
-
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
-
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
-        with:
-          parameterPairs: |
-            /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/checkmk_user = CHECKMK_USER, 
-            /github/secrets/checkmk_password = CHECKMK_PW,
-            /github/secrets/deployment_user = DEPLOYMENT_USER
-
       # Repository auschecken unter $GITHUB_WORKSPACE
-      - uses: actions/checkout@v3
+      - id: checkout-repository
+        name: Checkout Repository
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # Build Properties einlesen
-      - name: Read build.properties
-        shell: bash
-        run: |
-          cat ./.github/build.properties >> $GITHUB_ENV
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/deployment_user = DEPLOYMENT_USER,
+            /github/secrets/checkmk_user = CHECKMK_USER, 
+            /github/secrets/checkmk_password = CHECKMK_PW
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # Auschecken des Deployment Repositories
       - name: Checkout Deployment Data / Scripts
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: freenet-group/ms-deployment
           token: ${{ env.TOKEN }}
-          ref: ${{ github.event.inputs.msdeploymentRepositoryBranch }}
+          path: ${{ env.DEPLOYMENT_PATH }}
+          ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
 
-      # Die internen Actions auschecken
-      - name: checkout mcbscore actions
-        uses: actions/checkout@v3
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - id: init-workflow
+        name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
-          repository: freenet-group/mcbscore_actions
-          token: ${{ env.TOKEN }}
-          path: mcbscore/actions
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
-
-      # jq installieren
-      - name: Setup jq
-        uses: freenet-actions/setup-jq@v1
-
-      # Node JS installieren
-      - name: Setup Node JS
-        uses: actions/setup-node@v2
-        with:
-          node-version: '12'
-      - run: npm install
+          installNodeJs: true
+          installJq: true
 
       - name: Download Release
         id: downloadRelease
-        uses: ./mcbscore/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ github.event.inputs.componentVersion }}
           assetPattern: '-${{ github.event.inputs.componentVersion }}.jar'
-          targetPath: './release'
+          targetPath: './${{ env.DEPLOYMENT_PATH }}/release'
           token: ${{ env.TOKEN }}
-
-      # JAVA installieren
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: zulu
-          java-version: ${{ github.event.inputs.javaVersion }}
 
       # Standard Deployment
       - name: Deployment
         id: deployRelease
         if: ${{ github.event.inputs.additionalDeploymentComponent == '' }}
-        uses: ./actions/deploy-microservice-action
+        uses: ./mcbscore/github/actions/deploy-microservice
         with:
           component: ${{ github.event.inputs.component }}
           stage: ${{ github.event.inputs.environment }}
+          componentConfigPath: ${{ env.DEPLOYMENT_PATH }}
           dockerImage: ghcr.io/freenet-group/mcbs-core/ms-${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }}
           checkMkUser: ${{ env.CHECKMK_USER }}
           checkMkSecret: ${{ env.CHECKMK_PW }}
@@ -182,10 +171,11 @@ jobs:
       - name: Deployment
         id: additionalDeployment
         if: ${{ github.event.inputs.additionalDeploymentComponent != '' }}
-        uses: ./actions/deploy-microservice-action
+        uses: ./mcbscore/github/actions/deploy-microservice
         with:
           component: ${{ github.event.inputs.additionalDeploymentComponent }}
           stage: ${{ github.event.inputs.environment }}
+          componentConfigPath: ${{ env.DEPLOYMENT_PATH }}
           checkMkUser: ${{ env.CHECKMK_USER }}
           checkMkSecret: ${{ env.CHECKMK_PW }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
@@ -193,29 +183,29 @@ jobs:
       # Deployment als erfolgreich markieren
       - name: Update deployment status (success)
         if: success()
-        uses: chrnorm/deployment-status@releases/v1
+        uses: chrnorm/deployment-status@v2
         with:
           token: ${{ env.TOKEN }}
           state: "success"
-          deployment_id: ${{ needs.create-deployment.outputs.deployment_id }}
+          deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
       # Deployment als fehlerhaft markieren
       - name: Update deployment status (failure)
         if: failure()
-        uses: chrnorm/deployment-status@releases/v1
+        uses: chrnorm/deployment-status@v2
         with:
           token: ${{ env.TOKEN }}
           state: "failure"
-          deployment_id: ${{ needs.create-deployment.outputs.deployment_id }}
+          deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
     outputs:
       componentName: ${{ env.JIRA_COMPONENT }}
 
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
     needs: deploy
-    if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
+    if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && inputs.bambiNotification == 'true' }}
     steps:
       # Deployment als erfolgreich melden
       - name: Report deployment status
@@ -226,10 +216,10 @@ jobs:
           --data-raw '{
             "version": "${{ github.event.inputs.componentVersion }}",
             "componentName": "${{ needs.deploy.outputs.componentName }}",
+            "workflowName": "${{ github.workflow }}",
             "environment": "${{ github.event.inputs.environment }}",
             "extern": false,
             "workflowRunId": ${{ github.run_id }},
-            "workflowName": "${{ github.workflow }}",
             "deployState": "successfull",
             "deployUser": "${{ github.actor }}"
           }')

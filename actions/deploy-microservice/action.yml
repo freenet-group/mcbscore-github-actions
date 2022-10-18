@@ -1,0 +1,70 @@
+name: Deploy Microservice
+description: Action zum Deployment von Microservices
+
+inputs:
+  component:
+    description: Der Name der Komponente
+    required: true
+  stage:
+    description: Die Stage für das Deployment
+    required: true
+  componentConfigPath:
+    description: Pfad in dem die Konfiguration der Komponente liegt
+    required: true
+  dockerImage:
+    description: Docker-Image Name[:Tag]; ob das benutzt wird, regeln aber die Deployment-Properties des konkreten Services
+    required: false
+  checkMkUser:
+    description: Der Benutzer für den CheckMk Zugriff
+    required: true
+  checkMkSecret:
+    description: Das Secret für den CheckMk Zugriff
+    required: true
+  deploymentUser:
+    description: Der Benutzer für das Deployment
+    required: true
+  dockerRegistryToken:
+    description: |
+      Ein Github Token zum Lesen (pull) des Docker Images aus der Github-Container-Registry; nur
+      notwendig, wenn überhaupt (gemäß den Deployment-Properties) per Docker gestartet wird und das
+      Image ein Login braucht.
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+
+    # Make deployment.sh executable
+    - run: chmod +x ./${{ inputs.componentConfigPath }}/scripts/microservice/deployment.sh
+      shell: bash
+
+    # Make checkNginxUpstream.sh executable
+    - run: chmod +x ./${{ inputs.componentConfigPath }}/scripts/microservice/checkNginxUpstream.sh
+      shell: bash
+
+    - id: standard_or_domain_deployment
+      shell: bash
+      run: |
+        workingDirectory=$(pwd)
+        cd ${{ inputs.componentConfigPath }}
+        dockerRegistryToken='${{ inputs.dockerRegistryToken }}'
+
+        PROPERTY_FILE=./properties/${{ inputs.component }}/deployment-${{ inputs.stage }}.properties
+        COMPONENT='${{ inputs.component }}'
+        STAGE='${{ inputs.stage }}'
+        DOCKER_IMAGE='${{ inputs.dockerImage }}'
+        DOCKER_LOGIN_ENABLED=$(if [ -n "$dockerRegistryToken" ]; then echo y; fi)
+        DEPLOYMENT_USER='${{ inputs.deploymentUser }}'
+        CHECK_MK_USER='${{ inputs.checkMkUser }}'
+        CHECK_MK_SECRET='${{ inputs.checkMkSecret }}'
+
+        export COMPONENT STAGE DOCKER_IMAGE DOCKER_LOGIN_ENABLED DEPLOYMENT_USER CHECK_MK_USER CHECK_MK_SECRET
+
+        echo "Starte Deployment"
+        if [ -n "$dockerRegistryToken" ]; then
+          ./scripts/microservice/deployment.sh <<< "${dockerRegistryToken}"
+        else
+          ./scripts/microservice/deployment.sh
+        fi
+        
+        cd -- "$workingDirectory"
