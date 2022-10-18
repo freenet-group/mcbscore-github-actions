@@ -97,7 +97,7 @@ runs:
       run: |
         componentName='${{ inputs.componentName }}'
         componentVersion='${{ inputs.componentVersion }}'
-        username='${{ end.USER }}'
+        username='${{ env.USER }}'
         token='${{ env.TOKEN }}'
         enabled='${{ env.DOCKER_ENABLED }}'	# DOCKER_ENABLED aus .github/build.properties
 
