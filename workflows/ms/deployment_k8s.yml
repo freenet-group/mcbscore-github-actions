@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       component:
-        description: 'Der Name der Komponente'
+        description: Der Name der Komponente
         required: true
       componentVersion:
-        description: 'Die Version der Komponente'
+        description: Die Version der Komponente
         required: true
       environment:
-        description: 'Die Zielumgebung'
+        description: Die Zielumgebung
         required: true
       timeout:
         description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
@@ -33,23 +33,25 @@ on:
 #Nur ein k8s Workflow darf gleichzeitg gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
 concurrency:
   group: ${{ github.workflow }}
+env:
+  DEPLOYMENT_PATH: mcbscore/deployment
+  JAVA_VERSION: 11
 
 jobs:
   build-matrix:
     runs-on: ubuntu-latest
     steps:
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
+          fetch-depth: 0
 
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = GITHUB_TOKEN
 
       # Auschecken des Deployment Repositories
@@ -58,6 +60,7 @@ jobs:
         with:
           repository: freenet-group/ms-deployment
           token: ${{ env.GITHUB_TOKEN }}
+          path: ${{ env.DEPLOYMENT_PATH }}
           ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
 
       # Java installieren (für jrunscript in ms_properties_to_json.sh)
@@ -66,11 +69,11 @@ jobs:
         with:
           distribution: zulu
           # eine Version mit jrunscript
-          java-version: 11
+          java-version: ${{ env.JAVA_VERSION }}
 
       # jq installieren
       - name: Setup jq
-        uses: freenet-actions/setup-jq@v1
+        uses: freenet-actions/setup-jq@v2
 
       # Github Job-Matrix entsprechend domains aus kubernetes-deployment*.json oder deployment*.properties initialisieren
       - name: Init Job Matrix
@@ -82,11 +85,11 @@ jobs:
           domains=
 
           for f in \
-              "./properties/${component}/kubernetes-deployment-${environment}.json" \
-              "./properties/${component}/kubernetes-deployment.json" \
-              "./properties/${component}/deployment-${environment}.json" \
-              "./properties/${component}/deployment-${environment}.properties" \
-              "./properties/${component}/deployment.properties"
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json" \
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" \
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/deployment-${environment}.json" \
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/deployment-${environment}.properties" \
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/deployment.properties"
           do
             if [ -z "$domains" -a -e "$f" ]; then
               echo "Prüfe domains in $f"
@@ -94,7 +97,7 @@ jobs:
                 if [[ "$f" == \.json$ ]]; then
                   cat -- "$f"
                 else
-                  ./scripts/common/properties_to_json.sh < "$f"
+                  ./${{ env.DEPLOYMENT_PATH }}/scripts/common/properties_to_json.sh < "$f"
                 fi \
                 | jq -c -r 'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
                 # ^ ohne Domains: Leerstring => jq -r gibt nichts aus => if [ -z "$domains" ] bleibt true.
@@ -105,7 +108,7 @@ jobs:
           printf 'domains: %s\n' "$domains"
 
           # Ergebnis: domains JSON Array wie ["km","mc"] oder Default ["-"]
-          printf '::set-output name=domain_matrix::%s\n' "${domains:-[\"-\"]}"
+          echo "domainMatrix=${domains:-[\"-\"]}" >> $GITHUB_OUTPUT
 
       # Prüft, ob deployed werden soll
       - name: Check for deployment
@@ -117,33 +120,30 @@ jobs:
 
           enabled=$(
             for f in \
-              "./properties/${component}/kubernetes-deployment.json" \
-              "./properties/${component}/kubernetes-deployment-${environment}.json"
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" \
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json"
             do
               printf '%s existiert' "$f" >&2
               if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
             done | jq -s -r 'add | .enabled'
           )
 
-          printf '::set-output name=deployment_enabled::%s\n' "$enabled"
+          echo "deploymentEnabled=$enabled" >> $GITHUB_OUTPUT
 
     outputs:
-      deployment_enabled: ${{ steps.deployment-check.outputs.deployment_enabled }}
-      domain_matrix: ${{ steps.set-matrix.outputs.domain_matrix }}
+      deployment-enabled: ${{ steps.deployment-check.outputs.deploymentEnabled }}
+      domain-matrix: ${{ steps.set-matrix.outputs.domainMatrix }}
 
   helm-deployment:
     needs: build-matrix
-    if: ${{ needs.build-matrix.outputs.deployment_enabled == 'true' }}
-    runs-on: [self-hosted,vm]
+    if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
+    runs-on: [self-hosted, vm]
     container:
       image: docker.mobilcom.de/dpvo/cicd-kubernetes-helm3:latest
     strategy:
       fail-fast: false
       matrix:
-        domain: ${{ fromJson(needs.build-matrix.outputs.domain_matrix) }}
-    env:
-      JAVA_VERSION: 11
-
+        domain: ${{ fromJson(needs.build-matrix.outputs.domain-matrix) }}
     steps:
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
@@ -155,21 +155,17 @@ jobs:
       - name: Clean
         uses: AutoModality/action-clean@v1.1.0
 
-      # jq installieren
-      - name: Setup jq
-        uses: freenet-actions/setup-jq@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      # Secrets aus AWS auslesen
-      - name: configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
-        with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = GITHUB_TOKEN
 
       # Auschecken des Deployment Repositories
@@ -178,7 +174,12 @@ jobs:
         with:
           repository: freenet-group/ms-deployment
           token: ${{ env.GITHUB_TOKEN }}
+          path: ${{ env.DEPLOYMENT_PATH }}
           ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+
+      # jq installieren
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v2
 
       # kubernetes-deployment JSON einlesen
       - name: Read kubernetes-deployment.json
@@ -190,7 +191,7 @@ jobs:
           # Das letzte JSON-Objekt (Datei mit -${environment}) gewinnt in jq add.
           {
             printf '{ "secrets": [] }\n'  # Default hier beimischen ist einfacher als immer ohne "secrets" auszukommen.
-            for f in "./properties/${component}/kubernetes-deployment.json" "./properties/${component}/kubernetes-deployment-${environment}.json"; do
+            for f in "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json"; do
               printf '%s existiert' "$f" >&2
               if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
             done \
@@ -251,9 +252,11 @@ jobs:
 
       # Secrets für K8S Deployment aus AWS auslesen
       - name: Read AWS Parameters for K8S Deployment
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             ${{ env.DYNAMIC_AWS_PARAM_PAIRS }}
             /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
             /kubernetes/github-packages/token = K8S_REGISTRY,
@@ -326,7 +329,7 @@ jobs:
       - name: Deployment Properties to JSON
         shell: bash
         run: |
-          ./scripts/microservice/ms_properties_to_json.sh '${{ github.event.inputs.component }}' '${{ github.event.inputs.environment }}' \
+          ./${{ env.DEPLOYMENT_PATH }}/scripts/microservice/ms_properties_to_json.sh '${{ github.event.inputs.component }}' '${{ github.event.inputs.environment }}' \
           | tee deployment.generated.json
 
       - name: Helm Deployment
@@ -355,8 +358,8 @@ jobs:
             )
           fi
 
-          chartDir="helm/$component"
-          if [ ! -d "$chartDir" ]; then chartDir=helm/ms; fi
+          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$component"
+          if [ ! -d "$chartDir" ]; then chartDir=${{ env.DEPLOYMENT_PATH }}/helm/ms; fi
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.
@@ -371,7 +374,7 @@ jobs:
             fi
           done
 
-          # vor dem Deplyoment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" 
+          # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" 
           # in einer Schleife (10s warten, insgesamt max. maxWaitForDeployment) prüfen
           maxWait='${{ github.event.inputs.maxWaitForDeployment }}'
           maxWait=${maxWait//h/hour}; maxWait=${maxWait//m/min}; maxWait=${maxWait//s/sec}
@@ -386,7 +389,7 @@ jobs:
                       sleep 10
                       helmExit=1
                   else
-                      echo "Helm Status von $K8S_COMPONENT_NAME: $helmStatus, starte Deplyoment ..."
+                      echo "Helm Status von $K8S_COMPONENT_NAME: $helmStatus, starte Deployment ..."
                       maxWaitTimestamp=$(date -d "now" +%s)
                       helmExit=0
                   fi
