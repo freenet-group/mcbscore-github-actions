@@ -123,7 +123,7 @@ jobs:
 
       - name: Scripte prüfen
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') }}
-        run: sh ./gradlew -PLI_username=${{ env.MCBSTEST_USERNAME }} -PLI_password=${{ env.MCBSTEST_PASSWORD }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} createReleaseScripts ${{ github.event.inputs.gradleOptions }}
+        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} createReleaseScripts ${{ github.event.inputs.gradleOptions }}
 
       - id: gradle-build
         name: Gradle Build
