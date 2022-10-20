@@ -1,6 +1,5 @@
 name: Build
 
-# Kontrolliert, welche Events die Action auslösen
 on:
   push:
     branches-ignore:
@@ -12,21 +11,25 @@ on:
   workflow_dispatch:
     inputs:
       actionsRepositoryBranch:
-        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
 
 jobs:
   build:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
+    env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
-        if: always()
+        if: ${{ always() }}
         run: |
-          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
@@ -34,130 +37,55 @@ jobs:
           echo "Cleaning up previous run"
           rm -rf *
 
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
-
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
-
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
-        with:
-          parameterPairs: |
-            /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/mcbs_user = USER,
-            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
-            /github/common/JIRA_URL = JIRA_URL
-
-      # Repository auschecken unter $GITHUB_WORKSPACE
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ env.TOKEN }}
-
-      # Branch name ermitteln (wenn kein Pull Request)
-      - name: Get branch name (no pull_request)
-        if: github.event_name != 'pull_request'
-        shell: bash
-        run: |
-          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      # Branch name ermitteln (wenn Pull Request)
-      - name: Get branch name (pull request)
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-
-      # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
-      - name: Determine build type
-        shell: bash
-        run: |
-          if  [[ $BRANCH_NAME == release* ]] ;
-          then
-            echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
-            echo "DRAFT=false" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == develop ]] ;
-          then
-            echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
-            echo "DRAFT=true" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == feature* ]] ;
-          then
-            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == bugfix* ]] ;
-          then
-            echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
-          else
-            # default ist feature
-            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
-          fi
-
-      # Build Properties einlesen
-      - name: Read build.properties
-        shell: bash
-        run: |
-          cat ./.github/build.properties >> $GITHUB_ENV
-
-      # JAVA installieren
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: zulu
-          java-version: ${{ env.JAVA_VERSION }}
-
-      # Checkout developer-tools (master) in ./devtools
-      - name: checkout atldevtools
-        uses: actions/checkout@v2
-        with:
-          repository: 'freenet-group/atldevtools'
-          token: ${{ env.TOKEN }}
-          path: 'devtools'
-
-      # Die internen Actions auschecken
-      - name: checkout mcbscore actions
+      - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          repository: 'freenet-group/mcbscore_actions'
+          fetch-depth: 0
+
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER, 
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/jira/api_url = JIRA_API_URL
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
-          path: 'mcbscore/actions'
+          path: ${{ env.ACTIONS_PATH }}
           ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
-      # Komponenten Version ermitteln
-      - name: Determine component version
-        id: componentVersion
-        uses: ./mcbscore/actions/createVersion
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          MATCH: ${{ env.TAG_PATTERN }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          COMPONENT: ${{ env.JIRA_COMPONENT }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+          installJava: true
+          installJq: true
+          installNodeJs: true
 
-      # COMPONENT_VERSION Umgebungsvariable setzen
-      - name: Set component version
-        shell: bash
-        run: |
-          if [[ $BUILD_TYPE == 'RELEASE' ]]; then
-            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
-          else
-            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
-          fi
-          echo "issueList=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+      # ##################################################################################
+      # Version ermitteln
+      # ##################################################################################
 
-      - uses: actions/setup-node@v2
+      - id: determine-build-type-and-branch-name
+        name: Determine Build Type And Branch Name
+        uses: ./mcbscore/github/actions/build-type-and-branch-name
+
+      - id: determine-component-version
+        name: Determine Component Version
+        uses: ./mcbscore/github/actions/determine-component-version
         with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Setup jq
-        uses: freenet-actions/setup-jq@v1
-
-      - run: npm install
+          component: ${{ env.JIRA_COMPONENT }}
 
       - name: Write component version to bower.json
         shell: bash
@@ -182,52 +110,49 @@ jobs:
 
       # Release erstellen
       - name: Create Release
-        id: create_release
+        id: create-release
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          tag_name: '${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}'
-          release_name: '${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}'
-          draft: '${{ env.DRAFT }}'
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          release_name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
           prerelease: false
 
       # Release ZIP hinzufügen
       - name: Upload Release ZIP
-        id: upload-release-zip
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
           asset_path: ./metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
           asset_name: metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
           asset_content_type: application/gzip
 
       # Docker Image erzeugen
       - name: Docker Image erzeugen
-        id: createDockerImage
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/actions/microservice-docker-image-action
+        uses: ./mcbscore/github/actions/create-microservice-docker-image
         with:
-          token: ${{ env.TOKEN }}
-          username: ${{ env.USER }}
           componentName: ${{ env.COMPONENT }}
           componentVersion: ${{ env.COMPONENT_VERSION }}
-          port: ${{ env.SERVICE_PORT }}
 
       # Starte Deployment auf K8S
       - name: Invoke kubernetes workflow
-        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('**/deployment_k8s.yml') != ''
+        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_k8s.yml') != ''
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: K8s Deployment
           token: ${{ env.TOKEN }}
-          inputs: |
-            { "componentVersion": "${{ env.COMPONENT_VERSION }}"
-            , "environment": "dev" }
+          inputs: >
+            { 
+              "componentVersion": "${{ env.COMPONENT_VERSION }}",
+              "environment": "dev"
+            }
 
       - name: Commit bower.json
         shell: bash
