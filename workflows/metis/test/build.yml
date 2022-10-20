@@ -1,0 +1,81 @@
+name: Build
+
+# Kontrolliert, welche Events die Action auslösen
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: always()
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER 
+
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ env.TOKEN }}
+
+      # Build Properties einlesen
+      - name: Read build.properties
+        shell: bash
+        run: |
+          cat ./.github/build.properties >> $GITHUB_ENV
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Configure environment
+        shell: bash
+        run: |
+          sed -i 's/{restServerUrl}/https:\/\/metis-backend-d1.mobilcom.de\/metis-rest/' ./test/config/testConfig.js
+          sed -i 's/{frontendUrl}/https:\/\/metis-gui-dev.mobilcom.de/' ./test/config/testConfig.js
+  
+          cat ./test/config/testConfig.js
+
+      - run: curl -X POST metis-app-d1.mobilcom.de:8091/actuator/initDB/load -d "testDataSet=testDataSetFULL.xml"
+
+      - run: npm install
+
+      - run: node_modules/gulp/bin/gulp.js testRest
+
+      - run: node_modules/gulp/bin/gulp.js convertRestReports
+
+      - run: node_modules/gulp/bin/gulp.js backendHTMLReport
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: '**/reports/rest_report.xml'

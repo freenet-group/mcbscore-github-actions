@@ -1,0 +1,370 @@
+name: Build
+
+# Kontrolliert, welche Events die Action auslösen
+on:
+  push:
+    branches-ignore:
+      - release
+  pull_request:
+    branches-ignore:
+      - release
+      - develop
+  workflow_dispatch:
+    inputs:
+      gradleOptions:
+        description: 'Zusätzliche optionale Gradle Parameter'
+        required: false
+      actionsRepositoryBranch:
+        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        required: false
+        default: main
+
+jobs:
+  build:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+    env:
+      # TODO smokeTest wieder an, wenn Testdatenbank an neue BusinessTransactions angepasst
+      # GRADLE_COMMAND: clean build smokeTest
+      GRADLE_COMMAND: clean build
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER,
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/secrets/mcbstest_username = MCBSTEST_USERNAME,
+            /github/secrets/mcbstest_password = MCBSTEST_PASSWORD,
+            /github/common/JIRA_URL = JIRA_URL
+
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ env.TOKEN }}
+
+      # Branch name ermitteln (wenn kein Pull Request)
+      - name: Get branch name (no pull_request)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      # Branch name ermitteln (wenn Pull Request)
+      - name: Get branch name (pull request)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
+      # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
+      - name: Determine build type
+        shell: bash
+        run: |
+          if  [[ $BRANCH_NAME == release* ]] ;
+          then
+            echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
+            echo "DRAFT=false" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == develop ]] ;
+          then
+            echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
+            echo "DRAFT=true" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == feature* ]] ;
+          then
+            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == bugfix* ]] ;
+          then
+            echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
+          else
+            # default ist feature
+            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+          fi
+
+      # Build Properties einlesen
+      - name: Read build.properties
+        shell: bash
+        run: |
+          cat ./.github/build.properties >> $GITHUB_ENV
+
+      # JAVA installieren
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+
+      # Checkout developer-tools (master) in ./devtools
+      - name: checkout atldevtools
+        uses: actions/checkout@v2
+        with:
+          repository: 'freenet-group/atldevtools'
+          token: ${{ env.TOKEN }}
+          path: 'devtools'
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v3
+        with:
+          repository: 'freenet-group/mcbscore_actions'
+          token: ${{ env.TOKEN }}
+          path: 'mcbscore/actions'
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # metis-test auschecken
+      - name: checkout metis-test
+        uses: actions/checkout@v3
+        with:
+          repository: 'freenet-group/metis-test'
+          token: ${{ env.TOKEN }}
+          path: 'metis-test-repo'
+
+      # Komponenten Version ermitteln
+      - name: Determine component version
+        id: componentVersion
+        uses: ./mcbscore/actions/createVersion
+        with:
+          JIRA_URL: ${{ env.JIRA_URL }}
+          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
+          MATCH: ${{ env.TAG_PATTERN }}
+          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          COMPONENT: ${{ env.JIRA_COMPONENT }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+
+      # COMPONENT_VERSION Umgebungsvariable setzen
+      - name: Set component version
+        shell: bash
+        run: |
+          if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+          then
+            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+          else
+            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
+          fi
+          echo "issueList=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+
+      - name: Set release version in db changes
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && env.DB_CHANGES_DIRECTORY != '' }}
+        shell: bash
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          find ./${{ env.DB_CHANGES_BASE_DIRECTORY }}/${{ env.DB_CHANGES_DIRECTORY }} -type f -exec sed -i 's/{releaseVersion}/${{ env.COMPONENT_VERSION }}/g' {} +
+          
+          git status --porcelain
+          CHANGES_DETECTED=`git status --porcelain`
+          if [ -n "$CHANGES_DETECTED" ]
+          then
+            echo "Committing changes"
+            git commit -am "ReleaseVersion in DB Changes eingetragen"
+            git push
+          fi
+
+      - name: Scripte prüfen
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') }}
+        run: sh ./gradlew -PLI_username=${{ env.MCBSTEST_USERNAME }} -PLI_password=${{ env.MCBSTEST_PASSWORD }} -PLI_contexts=production -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} createDatabaseChangeScripts ${{ github.event.inputs.gradleOptions }}
+
+      - name: Add Sonarqube Gradle Task
+        if: ${{ env.COVERAGE_APP != '' }}
+        run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} sonarqube -Dsonar.login=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }}" >> $GITHUB_ENV
+
+      - name: Add Publish Gradle Task
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} publish artifactoryPublish" >> $GITHUB_ENV
+
+      # Gradle Build
+      - name: Build with Gradle
+        run: sh ./gradlew -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ secrets.MD_ARTIFACTORY_USER }} -PartifactoryPassword=${{ secrets.MD_ARTIFACTORY_PW }} ${{ env.GRADLE_COMMAND }} ${{ github.event.inputs.gradleOptions }}
+
+      # JUnit Ergebnisse publizieren
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        if: always()
+        with:
+          files: '**/test-results/**/*.xml'
+
+      # Existierende Draft Releases löschen
+      - name: Delete draft releases
+        if: env.BUILD_TYPE == 'DEVELOP'
+        uses: hugo19941994/delete-draft-releases@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+
+      # Release erstellen
+      - name: Create Release
+        id: create_release
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        # Diese Action definiert einen Output "upload_url".
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          tag_name: '${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}'
+          release_name: '${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}'
+          draft: '${{ env.DRAFT }}'
+          prerelease: false
+
+      # Release Upload pirun
+      - name: Read build.properties (pirun)
+        shell: bash
+        run: cat metis-pirun/.github/build.properties >> $GITHUB_ENV
+      - name: Upload Release JAR (pirun)
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.APPLICATION_JAR_NAME != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      # Release Upload masterdata
+      - name: Read build.properties (masterdata)
+        shell: bash
+        run: cat metis-masterdata/.github/build.properties >> $GITHUB_ENV
+      - name: Upload Release JAR (masterdata)
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.APPLICATION_JAR_NAME != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      # Release Upload hofactoring
+      - name: Read build.properties (hofactoring)
+        shell: bash
+        run: cat metis-hofactoring/.github/build.properties >> $GITHUB_ENV
+      - name: Upload Release JAR (hofactoring)
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.APPLICATION_JAR_NAME != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      # Release Upload shell
+      - name: Read build.properties (shell)
+        shell: bash
+        run: cat metis-shell/.github/build.properties >> $GITHUB_ENV
+      - name: Upload Release JAR (shell)
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.APPLICATION_JAR_NAME != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      # Release Upload rest
+      - name: Read build.properties (rest)
+        shell: bash
+        run: cat metis-rest/.github/build.properties >> $GITHUB_ENV
+      - name: Upload Release JAR (rest)
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.APPLICATION_JAR_NAME != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      # ##################################################################################
+      # Re-Merge
+      # ##################################################################################
+      - name: Merge development -> staging
+        if: env.BUILD_TYPE == 'RELEASE'
+        uses: devmasx/merge-branch@master
+        with:
+          type: now
+          from_branch: release
+          target_branch: develop
+          github_token: ${{ env.TOKEN }}
+
+      # Docker Image erzeugen
+      - name: Docker Image erzeugen
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: ./mcbscore/actions/microservice-docker-image-action
+        with:
+          token: ${{ env.TOKEN }}
+          username: ${{ env.USER }}
+          componentName: ms-${{ env.COMPONENT }}
+          componentVersion: ${{ env.COMPONENT_VERSION }}
+          port: ${{ env.SERVICE_PORT }}
+          jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+
+      # Starte Deployment auf K8S
+      - name: Invoke kubernetes workflow
+        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('**/deployment_k8s.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: K8s Deployment
+          token: ${{ env.TOKEN }}
+          inputs: |
+            { "component": "${{ env.COMPONENT }}"
+            , "componentVersion": "${{ env.COMPONENT_VERSION }}"
+            , "environment": "dev"
+            , "dryRun": "false" }
+
+      # Starte DB changes Workflow
+      - name: Invoke db changes workflow
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' && env.DB_CHANGES_DIRECTORY != '') }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: DB Changes
+          token: ${{ env.TOKEN }}
+          inputs: '{ "component": "${{ env.COMPONENT }}", "componentVersion": "${{ env.COMPONENT_VERSION }}", "tagPrefix": "${{ env.TAG_PREFIX }}" }'
+      
+      # Starte postBuild auf RELEASE
+      - name: Invoke postBuild workflow
+        if: env.BUILD_TYPE == 'RELEASE' && hashFiles('**/postBuild.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PostBuild
+          token: ${{ env.TOKEN }}
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.issueList }}" }'
+
+      # Tag am metis-test Repo setzen
+      - name: tag metis-test repository
+        if: env.BUILD_TYPE == 'RELEASE'
+        shell: bash
+        run: |
+          cd metis-test-repo
+          tag='metis_${{ env.COMPONENT_VERSION }}'
+          git tag -f -a "$tag" -m "$tag"
+          git push origin "$tag"
