@@ -19,7 +19,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
     steps:
       # Inputs zu handlichen Variablen umwandeln
       - name: Setup variables

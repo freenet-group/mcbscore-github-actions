@@ -28,7 +28,7 @@ jobs:
       - name: Ensure clean workspace
         run: |
           echo "Cleaning up previous run"
-          rm -rf *
+          rm -rf -- *
 
       - name: Checkout Repository
         uses: actions/checkout@v3
