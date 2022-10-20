@@ -1,0 +1,136 @@
+name: Deployment (PIRun, HO-Factoring, Masterdata, Shell)
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
+      host:
+        description: Der Zielhost
+        required: true
+        type: choice
+        options: [ "QA (metis-app-d2)", "GIT (mdapp-t1)", "Prod (mdapp-p1)" ]
+      actionsRepositoryBranch:
+        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        required: false
+        default: main
+
+jobs:
+  deploy:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf -- *
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbstest_username = SSH_USER,
+            /github/secrets/ssh/mcbstest_id_rsa = SSH_KEY
+
+      # Repository auschecken
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ env.TOKEN }}
+
+      # Build Properties einlesen
+      - name: Read build.properties
+        shell: bash
+        run: |
+          cat ./.github/build.properties >> $GITHUB_ENV
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/mcbscore_actions
+          token: ${{ env.TOKEN }}
+          path: mcbscore/actions
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # jq installieren
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v1
+
+      # Download Jars
+      - name: Download Release (pirun)
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
+          assetPattern: metis-pirun-${{ github.event.inputs.componentVersion }}.jar
+          targetPath: ./release
+          token: ${{ env.TOKEN }}
+      - name: Download Release (masterdata)
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
+          assetPattern: metis-masterdata-${{ github.event.inputs.componentVersion }}.jar
+          targetPath: ./release
+          token: ${{ env.TOKEN }}
+      - name: Download Release (hofactoring)
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
+          assetPattern: metis-hofactoring-${{ github.event.inputs.componentVersion }}.jar
+          targetPath: ./release
+          token: ${{ env.TOKEN }}
+      - name: Download Release (shell)
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
+          assetPattern: metis-shell-${{ github.event.inputs.componentVersion }}.jar
+          targetPath: ./release
+          token: ${{ env.TOKEN }}
+
+      # ssh Konfig
+      - name: Setup ssh
+        shell: bash
+        run: |
+          printf '' > id_rsa
+          chmod 600 id_rsa
+          printf %s "$SSH_KEY" >> id_rsa
+
+      # Release kopieren
+      - name: Copy release
+        shell: bash
+        run: |
+          version='${{ github.event.inputs.componentVersion }}'
+          hostDescription='${{ github.event.inputs.host }}'
+          host="${hostDescription##*\(}" # bis zur "(" abschneiden
+          host="${host%\)*}" # ab der ")" abschneiden
+          case "${hostDescription^^}" in
+            (PROD*) dir=/var/PROD;;
+            (GIT*)  dir=/var/GIT;;
+            (*)     dir=/var/metis-test/METIS_V3.3;;
+          esac
+
+          set -x
+          scp -i id_rsa -p release/metis-{pirun,masterdata,hofactoring,shell}-${version}.jar "${SSH_USER}@${host}:${dir}"
+
+      # ssh Konfig aufräumen
+      - name: Remove ssh key
+        if: always()
+        shell: bash
+        run: rm -v id_rsa

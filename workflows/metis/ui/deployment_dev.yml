@@ -1,0 +1,45 @@
+name: DEV Deployment
+
+# Kontrolliert, welche Events die Action auslösen
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Starte Deployment auf DEV
+      - name: Invoke deployment workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "host": "metis-fe-q11.mobilcom.de", "apiUrl": "http://metis-ws-q11:8090/metis-rest/" }'

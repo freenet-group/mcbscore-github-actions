@@ -1,0 +1,79 @@
+name: DB Changes
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Der Name der Komponente
+        required: true
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
+      tagPrefix:
+        description: Der Präfix des Tags
+        required: false
+
+jobs:
+  copyChanges:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      - name: Repository auschecken
+        uses: actions/checkout@v3
+        with:
+          token: ${{ env.TOKEN }}
+          path: source
+          ref: sql-${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
+
+      - name: DB Changes Repository auschecken
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/mcbscore_db-changes
+          token: ${{ env.TOKEN }}
+          path: target
+
+      # Build Properties einlesen
+      - name: Read build.properties
+        shell: bash
+        run: |
+          cat ./source/.github/${{ github.event.inputs.component }}_build.properties >> $GITHUB_ENV
+
+      - name: DB Changes kopieren
+        shell: bash
+        run: |
+          
+          cp -Rv source/${{ env.DB_CHANGES_BASE_DIRECTORY }}${{ env.DB_CHANGES_DIRECTORY }}/* target/${{ github.event.inputs.component }}/${{ env.DB_CHANGES_DIRECTORY }}
+          
+          cd target
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          CHANGES_DETECTED=`git status --porcelain`
+
+          if [ -n "$CHANGES_DETECTED" ]
+          then
+            git add .
+            git commit -m "[Releasebuild] db-changes ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}"
+            git push
+          fi
+
+          git tag -f -a sql-${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }} -m "tagging sql-${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}"
+          git push --tags -f

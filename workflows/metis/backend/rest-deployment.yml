@@ -1,0 +1,187 @@
+name: Deployment (ReST-Service)
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
+      environment:
+        description: Die Zielumgebung
+        required: true
+        type: choice
+        options:
+          - "Dev (mcbstest@metis-app-d1)"
+          - "Test (mcbstest@metis-ws-q11)"
+          - "FB-Test (mcbstest@metis-ws-t11)"
+          - "Prod (metis@metis-ws-p11)"
+      actionsRepositoryBranch:
+        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        required: false
+        default: main
+
+jobs:
+  deploy:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+    env:
+      SERVICE_PORT: 8090
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf -- *
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/metis_deployment_user = DEPLOYMENT_USER,
+            /github/secrets/metis_deployment_user_ssh_key = DEPLOYMENT_USER_SSH_KEY
+
+      # Repository auschecken
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ env.TOKEN }}
+
+      # Build Properties einlesen
+      - name: Read build.properties
+        shell: bash
+        run: |
+          cat ./.github/build.properties >> $GITHUB_ENV
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/mcbscore_actions
+          token: ${{ env.TOKEN }}
+          path: mcbscore/actions
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # jq installieren
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v1
+
+      # Download Jars
+      - name: Download Release
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
+          assetPattern: metis-rest-${{ github.event.inputs.componentVersion }}.jar
+          targetPath: ./release
+          token: ${{ env.TOKEN }}
+
+      # ssh Konfig
+      - name: Setup ssh
+        shell: bash
+        run: |
+          printf '' > id_rsa
+          chmod 600 id_rsa
+          printf %s "$DEPLOYMENT_USER_SSH_KEY" >> id_rsa
+
+      # Inputs zu handlichen Variablen umwandeln
+      - name: Setup variables
+        shell: bash
+        run: |
+          envDescription='${{ github.event.inputs.environment }}'
+          if ! [[ "$envDescription" =~ ^([^[:space:]]+)[[:space:]]*\((.+)\@(.+)\)$ ]]; then
+            printf 'Unerwartetes Format in Umgebung "%s"\n' "$envDescription" >&2
+            exit 1
+          fi
+          printf '%s=%s\n' \
+              GH_INPUT_ENV  "${BASH_REMATCH[1]}" \
+              GH_INPUT_USER "${BASH_REMATCH[2]}" \
+              GH_INPUT_HOST "${BASH_REMATCH[3]}" \
+            | tee -a -- $GITHUB_ENV
+
+      # Release kopieren
+      - name: Copy release
+        shell: bash
+        run: |
+          scp -i id_rsa -p release/metis-rest-*.jar "${GH_INPUT_USER}@${GH_INPUT_HOST}:metis-rest/metis-rest-LATEST.jar"
+
+      # Service stoppen
+      - name: stop service
+        shell: bash
+        run: |
+          ssh -i id_rsa "${GH_INPUT_USER}@${GH_INPUT_HOST}" bash -s <<-'SSH_SCRIPT'
+            pgrep --full '^\S*\bjava\b.*-jar\s+\S*\bmetis-rest\b\S*\.jar\b' | while read -r pid; do
+              (set -x; kill -- "$pid" || true)
+              running=true
+              for ((i=0;i<10;i++)); do
+                sleep 1
+                if ! ps --pid="$pid" > /dev/null; then running=false; break; fi
+              done
+              if $running; then (set -x; kill -KILL -- "$pid" || true); fi
+            done
+          SSH_SCRIPT
+
+      # Service starten
+      - name: start service
+        shell: bash
+        run: |
+          ssh -i id_rsa "${GH_INPUT_USER}@${GH_INPUT_HOST}" bash -s <<-'SSH_SCRIPT'
+            envName='${{ env.GH_INPUT_ENV }}'
+            user='${{ env.GH_INPUT_USER }}'
+            host='${{ env.GH_INPUT_HOST }}'
+
+            opts=(
+              -Xmx8096M
+              -Dmanagement.port=8091 -Dmanagement.security.enabled=false -Dendpoints.shutdown.enabled=true -Dendpoints.sensitive=false
+              -Dserver.port='${{ env.SERVICE_PORT }}'
+              -Dmetis.home="$PWD"
+            )
+
+            case "${envName,,}" in
+              (dev)     profile=testauto;  opts=( "${opts[@]}" '-Dspring.config.import=optional:aws-parameterstore:' );;
+              (fb-test) profile=test;;
+              (*)       profile="${envName,,}";;
+            esac
+            printf 'Profil %s\n' "$profile"
+
+            export AWS_EC2_METADATA_DISABLED=false
+            export AWS_REGION='${{ env.AWS_REGION }}'
+            set -x
+            nohup /usr/java/azuljdk-11/bin/java "${opts[@]}" -Dspring.profiles.active="$profile" \
+              -jar metis-rest/metis-rest-LATEST.jar &> metis-rest/metis-rest.out &
+            # Die Ausgabe der -x Option scheint im Github Log nicht zuverlässig anzukommen; vielleicht hilft das:
+            sleep 1
+          SSH_SCRIPT
+
+      # Service kontrollieren
+      - name: check service
+        shell: bash
+        run: |
+          ssh -i id_rsa "${GH_INPUT_USER}@${GH_INPUT_HOST}" bash -x -s <<-'SSH_SCRIPT'
+            url='http://${{ env.GH_INPUT_HOST }}:${{ env.SERVICE_PORT }}/metis-rest/login'
+            for ((i=0;i<12;i++)); do
+              if curl --data '{}' "$url" | grep -Fq '"code"'; then exit 0; fi
+              sleep 5
+            done
+            printf 'Health Check [%s] nicht erfolgreich\n' "$url"
+            exit 1
+          SSH_SCRIPT
+
+      # ssh Konfig aufräumen
+      - name: Remove ssh key
+        if: always()
+        shell: bash
+        run: rm -v id_rsa

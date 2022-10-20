@@ -1,0 +1,139 @@
+name: K8s Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true
+      environment:
+        description: 'Die Zielumgebung'
+        required: true
+      timeout:
+        description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
+        required: false
+        default: 3m30s
+      deploymentRepositoryBranch:
+        description: Branch von Repository ms-deployment, der benutzt werden soll
+        required: false
+        default: main
+
+jobs:
+  helm-deployment:
+    runs-on: [self-hosted,vm]
+    container:
+      image: docker.mobilcom.de/dpvo/cicd-kubernetes-helm3:latest
+    env:
+      component: metis-ui
+
+    steps:
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          chown -R "$(id -u):$(id -g)" . || true
+          rm -rf *
+      - name: Clean
+        uses: AutoModality/action-clean@v1.1.0
+
+      # jq installieren
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v1
+
+      # Secrets aus AWS auslesen
+      - name: configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = GITHUB_TOKEN
+
+      # Auschecken des Deployment Repositories
+      - name: Checkout Deployment Data / Scripts
+        uses: actions/checkout@v2
+        with:
+          repository: freenet-group/ms-deployment
+          token: ${{ env.GITHUB_TOKEN }}
+          ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+
+      # kubernetes-deployment JSON einlesen
+      - name: Read kubernetes-deployment.json
+        shell: bash
+        run: |
+          environment='${{ github.event.inputs.environment }}'
+
+          # Das letzte JSON-Objekt (Datei mit -${environment}) gewinnt in jq add.
+          for f in "./properties/${component}/kubernetes-deployment.json" "./properties/${component}/kubernetes-deployment-${environment}.json"; do
+            printf '%s existiert' "$f" >&2
+            if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
+          done \
+          | jq -s -r 'add | (
+            "K8S_CLUSTER=" + .cluster + "\n" +
+            "K8S_ENVIRONMENT=" + .environment + "\n" +
+            "K8S_NAMESPACE=" + .namespace + "\n" +
+            "K8S_COMPONENT_NAME=" + .componentName + "\n" +
+            "K8S_JAR_NAME=" + .jarName)' \
+          | tee -a -- "$GITHUB_ENV"
+
+      # Secrets aus AWS auslesen 2
+      - name: Read AWS Parameters 2
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
+            /kubernetes/github-packages/token = K8S_REGISTRY
+
+      # Kubernetes Login
+      - name: Login
+        run: /root/init-kubectl-auth.sh 'https://${{ env.K8S_CLUSTER }}' '${{ env.K8S_TOKEN }}'
+
+      # Helm Deployment
+      - name: Helm Deployment
+        shell: bash
+        run: |
+          environment='${{ github.event.inputs.environment }}'
+          componentVersion='${{ github.event.inputs.componentVersion }}'
+          timeout='${{ github.event.inputs.timeout }}'
+
+          chartDir="helm/$component"
+
+          # --values Helm Optionen
+          # Die letzte Datei gewinnt in helm --values.
+          valuesHelmOpts=()
+          for f in \
+              "$chartDir/stages/${environment}.yaml" \
+              "./properties/${component}/kubernetes-deployment.json" \
+              "./properties/${component}/kubernetes-deployment-${environment}.json"
+          do
+            if [ -e "$f" ]; then
+              valuesHelmOpts=("${valuesHelmOpts[@]}" "--values=$f")
+            fi
+          done
+
+          # helm Befehl ausgeben, damit man ihn bei Fehler leicht nochmal manuell wiederholen kann.
+          # Secrets im Log sollte Github ja automatisch unkenntlich machen.
+          set -x
+
+          # --set="environment=$environment": Wert aus Workflow Parameter (z.B. "dev") hat Vorrang
+          # vor dem environment (z.B. "np"), das wir für den AWS Parameternamen in
+          # kubernetes-deployment*.json haben.
+          helm upgrade --namespace="$K8S_NAMESPACE" \
+            --install --atomic --timeout="$timeout" \
+            "$K8S_COMPONENT_NAME" "$chartDir" \
+            "${valuesHelmOpts[@]}" \
+            --set="environment=$environment" \
+            --set="hostname=${K8S_COMPONENT_NAME}-${environment}" \
+            --set="appName=$K8S_COMPONENT_NAME" \
+            --set="docker_config_base64=$K8S_REGISTRY" \
+            --set="version=$componentVersion"
+
+      - name: Cleanup
+        if: ${{ always() }}
+        run: |
+          set +e
+          rm -rf /__w/_tool/*

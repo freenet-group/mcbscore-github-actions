@@ -1,0 +1,123 @@
+name: Deployment
+
+# Kontrolliert, welche Events die Action auslösen
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
+      host:
+        description: Der Zielhost
+        required: true
+      apiUrl:
+        description: Die URL der METIS API
+        required: true
+      actionsRepositoryBranch:
+        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        required: false
+        default: main
+
+jobs:
+  deploy:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/checkmk_user = CHECKMK_USER,
+            /github/secrets/checkmk_password = CHECKMK_PW,
+            /github/secrets/metis_deployment_user = DEPLOYMENT_USER,
+            /github/secrets/metis_deployment_user_ssh_key = DEPLOYMENT_USER_SSH_KEY
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/mcbscore_actions
+          token: ${{ env.TOKEN }}
+          path: mcbscore/actions
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # jq installieren
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v1
+
+      # Node JS installieren
+      - name: Setup Node JS
+        uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+
+      - run: npm install
+
+      - name: Download Release
+        id: downloadRelease
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: ${{ github.event.inputs.componentVersion }}
+          assetPattern: metis-ui-${{ github.event.inputs.componentVersion }}.tar.gz
+          targetPath: ./release
+          token: ${{ env.TOKEN }}
+
+      # Release kopieren und entpacken
+      - name: Copy release
+        shell: bash
+        run: |
+          echo "${{ env.DEPLOYMENT_USER_SSH_KEY }}" > id_rsa
+          chmod 600 ./id_rsa
+          scp -r -i ./id_rsa ./release/metis-ui-${{ github.event.inputs.componentVersion }}.tar.gz ${{ env.DEPLOYMENT_USER }}@${{ github.event.inputs.host }}:/tmp/metis-ui-${{ github.event.inputs.componentVersion }}.tar.gz
+
+      - name: Extract release
+        shell: bash
+        run: |
+          ssh -i ./id_rsa ${{ env.DEPLOYMENT_USER }}@${{ github.event.inputs.host }} "\
+          set -e && \
+          tar xfvz /tmp/metis-ui-${{ github.event.inputs.componentVersion }}.tar.gz --directory /home/www/default/htdocs"
+
+      # config.json anlegen
+      - name: Create and deploy config.json
+        shell: bash
+        run: |
+          echo "{" > config.json
+          echo -e "    \"API_URL\": \"${{ github.event.inputs.apiUrl }}\"," >> config.json
+          echo -e "    \"DEBUG_INFO\" : false" >> config.json
+          echo "}" >> config.json
+          scp -r -i ./id_rsa ./config.json ${{ env.DEPLOYMENT_USER }}@${{ github.event.inputs.host }}:/home/www/default/htdocs/config.json
+
+      # Apache restart
+      - name: Apache restart
+        shell: bash
+        run: |
+          ssh -i ./id_rsa ${{ env.DEPLOYMENT_USER }}@${{ github.event.inputs.host }} "\
+          set -e && \
+          sudo /etc/init.d/apache2 start"
+          rm -f ./id_rsa
