@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       actionsRepositoryBranch:
-        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
 
