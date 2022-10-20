@@ -12,6 +12,7 @@ on:
           - ALL
           - errorcodes
           - mandel
+          - metis
           - ms
           - mslib
           - proxy
@@ -53,6 +54,31 @@ jobs:
       matrix:
         repository:
           - { name: mcbscore-mandel, branch: develop, group: mandel, workflows: "../check, build, ../encoding, postBuild" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        id: distributeWorkflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  metis:
+    if: ${{ github.event.inputs.group == 'metis' || github.event.inputs.group == 'ALL' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: metis-test, branch: develop, group: metis, workflows: "../check, test/build, ../encoding" }
+#          - { name: metis-ui, branch: develop, group: metis, workflows: "../check, ui/build, ui/deployment, ui/deployment_dev, ui/deployment_test, ui/deployment_prod, ui/deployment_k8s, ../encoding" }
+#          - { name: metis, branch: develop, group: metis, workflows: "../check, ../encoding, backend/build, backend/postBuild, backend/dbChanges, backend/deployment, ../ms/deployment_k8s, backend/rest-deployment, backend/rest-database-init" }
     steps:
       - uses: actions/checkout@v3
         with:
