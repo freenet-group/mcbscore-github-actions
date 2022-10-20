@@ -2,6 +2,11 @@ name: Build
 
 on:
   workflow_dispatch:
+    inputs:
+      actionsRepositoryBranch:
+        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        required: false
+        default: main
 
 jobs:
   build:
