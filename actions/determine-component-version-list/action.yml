@@ -24,6 +24,7 @@ runs:
         atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
         component: ${{ inputs.component }}
         branchName: ${{ env.BRANCH_NAME }}
+        includes_components: ${{ inputs.included_components }}
 
     # COMPONENT_VERSION Umgebungsvariable setzen
     - name: Set component version
