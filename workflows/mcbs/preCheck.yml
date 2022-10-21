@@ -90,6 +90,7 @@ jobs:
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
+          configurationPrefix: ${{ matrix.product.name }}
 
       # ##################################################################################
       # Version ermitteln
