@@ -96,14 +96,12 @@ jobs:
           rm -rf *
 
       # Repository auschecken unter $GITHUB_WORKSPACE
-      - id: checkout-repository
-        name: Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - id: read-aws-secrets
-        name: Read AWS Secrets
+      - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -136,8 +134,7 @@ jobs:
       # Initialize Workflow
       # ##################################################################################
 
-      - id: init-workflow
-        name: Initialize Workflow
+      - name: Initialize Workflow
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installNodeJs: true
