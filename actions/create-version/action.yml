@@ -105,7 +105,9 @@ runs:
         cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
+        cd jiraResources
         ls -lrt
+        cd ..
         
         if [[ ${{inputs.versionByComponentList}} == false ]]; 
         then
