@@ -1,4 +1,4 @@
-name: Determine Component Version
+name: Determine Component Version List
 description: Ermittelt die Version der Komponente basierend auf den Commits und dem Branch
 inputs:
   component:
@@ -13,7 +13,7 @@ runs:
   using: "composite"
   steps:
     # Komponenten Version ermitteln
-    - name: Determine component version
+    - name: Determine component version list
       id: componentVersion
       if: ${{ inputs.component != '' }}
       uses: ./mcbscore/github/actions/create-version-list
@@ -24,7 +24,7 @@ runs:
         atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
         component: ${{ inputs.component }}
         branchName: ${{ env.BRANCH_NAME }}
-        includes_components: ${{ inputs.included_components }}
+        included_components: ${{ inputs.included_components }}
 
     # COMPONENT_VERSION Umgebungsvariable setzen
     - name: Set component version
