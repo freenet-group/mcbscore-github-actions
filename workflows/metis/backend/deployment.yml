@@ -29,8 +29,10 @@ jobs:
       - name: Change Owner to Runner User
         if: ${{ always() }}
         run: |
-          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
-          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          githubUser='${{ github.actor }}'
+          githubToken='${{ secrets.GH_R_PACKAGES }}'
+          docker login ghcr.io -u "$githubUser" -p "$githubToken"
+          docker run --rm -v "$(pwd):/target" -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace

@@ -38,7 +38,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -61,7 +60,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -84,7 +82,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -109,7 +106,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -164,7 +160,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -188,7 +183,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -236,7 +230,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -259,7 +252,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -297,7 +289,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -324,7 +315,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -357,7 +347,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -386,7 +375,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
@@ -409,7 +397,6 @@ jobs:
           fetch-depth: 0
 
       - name: Distribute Workflows
-        id: distributeWorkflows
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
