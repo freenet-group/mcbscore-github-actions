@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       gradleOptions:
-        description: Zusätzliche optionale Gradle Parameter
+        description: Zusätzliche optionale Gradle-Parameter
         required: false
 
 jobs:
