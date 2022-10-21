@@ -41,7 +41,7 @@ runs:
       run: |
         echo Checked out ...
         ls -l
-        echo "${{ env.included_components }}"
+        echo "${{ inputs.included_components }}"
 
         # letztes Tag ermitteln
         lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
