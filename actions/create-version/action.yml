@@ -105,6 +105,7 @@ runs:
         cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
+        mv jiraResources/mcbs.properties jiraResources/MCBS.properties 
         cd jiraResources
         ls -lrt
         cd ..
