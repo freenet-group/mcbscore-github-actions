@@ -1,0 +1,60 @@
+name: Determine Component Version List
+description: Ermittelt die Version der Komponente basierend auf den Commits und dem Branch
+inputs:
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: false
+  included_components: 
+    description: die Liste der zugehörigen Komponenten
+    required: true
+    
+
+runs:
+  using: "composite"
+  steps:
+    # Komponenten Version ermitteln
+    - name: Determine component version list
+      id: componentVersion
+      if: ${{ inputs.component != '' }}
+      uses: ./mcbscore/github/actions/create-version-list
+      with:
+        jiraUrl: ${{ env.JIRA_API_URL }}
+        jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+        tagPattern: ${{ env.TAG_PATTERN }}
+        atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+        component: ${{ inputs.component }}
+        branchName: ${{ env.BRANCH_NAME }}
+        included_components: ${{ inputs.included_components }}
+
+    # COMPONENT_VERSION Umgebungsvariable setzen
+    - name: Set component version
+      if: ${{ inputs.component != '' }}
+      shell: bash
+      run: |
+        if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+        then
+          echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+        else
+          echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
+        fi
+        echo "RAW_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+        echo "ISSUE_LIST=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+
+    - name: Determine Version
+      if: ${{ inputs.component == '' }}
+      shell: bash
+      run: |
+        # letztes Tag ermitteln
+        LAST_VERSION=`git describe --abbrev=0 --tags --match "[0-9]*"`
+        echo "last version : ${LAST_VERSION}"
+        echo "RAW_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')" >> $GITHUB_ENV
+        
+        if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+        then
+          echo "COMPONENT_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')" >> $GITHUB_ENV
+        else
+          echo "COMPONENT_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')-SNAPSHOT" >> $GITHUB_ENV
+        fi
+        
+        echo "version : ${{ env.COMPONENT_VERSION }}"
+

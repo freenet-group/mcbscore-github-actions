@@ -1,0 +1,414 @@
+name: Build
+
+# Kontrolliert, welche Events die Action auslösen
+on:
+  push:
+    branches-ignore:
+      - release**
+  pull_request:
+    branches-ignore:
+      - release**
+      - develop
+  workflow_dispatch:
+    inputs:
+      gradleOptions:
+        description: 'Zusätzliche optionale Gradle Parameter'
+        required: false
+      product:
+        description: 'Das zu bauende Produkt (ms-cuba, ms-customer, ms-customerelastic, ms-customerproduct, ms-mcbsservices, mcbs, mcbsservices)'
+        required: false
+      epic:
+        description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
+        required: false
+        default: META-170
+      actionsRepositoryBranch:
+        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        required: false
+        default: main
+      manualVersion:
+        description: Eine manuell zu vergebende Versionskennung (xx.yy.zz / ohne prefix) (Überschreibt ausschließlich die Version , keine Issues)
+        required: false
+      manualIssues:
+        description: Eine blank-separierte Liste von Issues für das Patch-Release (Überschreibt ausschließlich die Issues , keine Version)
+        required: false  
+
+jobs:
+  build:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+    env:
+      GRADLE_COMMAND: clean build
+    strategy:
+      matrix:
+        product:
+          - { id: mcbs, name: mcbs, group: standard, gradleCommand: 'clean build', publishCommand: 'artifactoryPublish', modules: 'mcbs' }
+          - { id: mcbsservices, name: zap, group: standard, gradleCommand: 'clean :mcbs-services:mcbs-connector:mobilcom-business-common:buildDependents', publishCommand: ':mcbs-services:artifactoryPublish', modules: 'zap'}
+          - { id: ms-cuba, name: cuba, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-cuba:build', publishCommand: ':mcbs-customer-domain:mcbs-cuba:artifactoryPublish', modules: 'cuba' }
+          - { id: ms-customer, name: customer, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-rest:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-rest:artifactoryPublish', modules: 'customer' }
+          - { id: ms-customerelastic, group: ms, name: customerelastic, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:artifactoryPublish', modules: 'customer' }
+          - { id: ms-customerproduct, name: customerproduct, group: ms, gradleCommand: 'clean :mcbs-product-domain:mcbs-customer-product:mcbs-customer-product-rest:build', publishCommand: ':mcbs-product-domain:mcbs-customer-product:mcbs-customer-product-rest:artifactoryPublish', modules: 'customerproduct' }
+          - { id: ms-mcbsservices, name: mcbsservices, group: ms, gradleCommand: 'clean :mcbs-services:mcbs-services-ms:build', publishCommand: ':mcbs-services:mcbs-services-ms:artifactoryPublish', modules: 'mcbsservices,zap' }
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER, 
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/secrets/mcbstest_username = MCBSTEST_USERNAME,
+            /github/secrets/mcbstest_password = MCBSTEST_PASSWORD,
+            /github/common/JIRA_URL = JIRA_URL 
+
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - uses: actions/checkout@v3
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        with:
+          fetch-depth: 0
+          token: ${{ env.TOKEN }}
+
+      # Branch name ermitteln (wenn kein Pull Request)
+      - name: Get branch name (no pull_request)
+        if: ${{ github.event_name != 'pull_request' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        shell: bash
+        run: |
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      # Branch name ermitteln (wenn Pull Request)
+      - name: Get branch name (pull request)
+        if: ${{ github.event_name == 'pull_request' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        shell: bash
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
+      # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
+      - name: Determine build type
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        shell: bash
+        run: |
+          if  [[ $BRANCH_NAME == release* ]] ;
+          then
+            echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
+            echo "DRAFT=false" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == develop ]] ;
+          then
+            echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
+            echo "DRAFT=true" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == feature* ]] ;
+          then
+            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == bugfix* ]] ;
+          then
+            echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
+          else
+            # default ist feature
+            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+          fi
+
+      # Build Properties einlesen
+      - name: Read build.properties
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        shell: bash
+        run: |
+          cat ./.github/${{ matrix.product.name }}_build.properties >> $GITHUB_ENV
+
+      # JAVA installieren
+      - name: Set up JDK
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+
+      # Checkout developer-tools (master) in ./devtools
+      - name: checkout atldevtools
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: actions/checkout@v3
+        with:
+          repository: 'freenet-group/atldevtools'
+          token: ${{ env.TOKEN }}
+          path: 'devtools'
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: actions/checkout@v3
+        with:
+          repository: 'freenet-group/mcbscore_actions'
+          token: ${{ env.TOKEN }}
+          path: 'mcbscore/actions'
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # Komponenten Version ermitteln
+      - name: Determine component version
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        id: componentVersion
+        uses: ./mcbscore/actions/createVersionByComponentList
+        with:
+          JIRA_URL: ${{ env.JIRA_URL }}
+          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
+          MATCH: ${{ env.TAG_PATTERN }}
+          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          COMPONENT: ${{ env.JIRA_COMPONENT }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+
+      # COMPONENT_VERSION und issueList-Umgebungsvariablen auf Basis von determineComponentVersion) setzen
+      - name: Set component version
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        shell: bash
+        run: |
+          if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+          then
+            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+          else
+            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
+          fi
+          echo "issueList=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+
+      # component_Version ggf. manuell übersteuern, sofern eine Eingabe vorliegt
+      - name: manualVersion
+        if: ${{ github.event.inputs.manualVersion != '' }}
+        shell: bash
+        run: |
+          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}"
+          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}" >> $GITHUB_ENV
+                    
+      # issueList ggf. manuell übersteuern , sofern eine Eingabe vorliegt
+      - name: manualIssues
+        if: ${{ github.event.inputs.manualIssues != '' }}
+        shell: bash
+        run: |
+          echo "issueList=${{github.event.inputs.manualIssues}}"
+          echo "issueList=${{github.event.inputs.manualIssues}}" >> $GITHUB_ENV 
+          
+      - name: Set release version in db changes
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && env.DB_CHANGES_DIRECTORY != '' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        shell: bash
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          find ./${{ env.DB_CHANGES_BASE_DIRECTORY }}/${{ env.DB_CHANGES_DIRECTORY }} -type f -exec sed -i 's/{releaseVersion}/${{ env.COMPONENT_VERSION }}/g' {} +
+          
+          git status --porcelain
+          CHANGES_DETECTED=`git status --porcelain`
+
+          if [ -n "$CHANGES_DETECTED" ]
+          then
+            echo "Committing changes"
+            git commit -am "ReleaseVersion in DB Changes eingetragen"
+            git push
+          fi
+        
+          git tag -f -a sql-${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}"
+          git push --tags -f
+
+      - name: Scripte prüfen
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') && matrix.product.id == 'mcbs' }}
+        run: sh ./gradlew -PLI_username=${{ env.MCBSTEST_USERNAME }} -PLI_password=${{ env.MCBSTEST_PASSWORD }} -PLI_contexts=PROD -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PINCLUDED_MODULES=${{ matrix.product.modules }} createReleaseScripts ${{ github.event.inputs.gradleOptions }}
+
+      - name: Set Gradle Command
+        if: ${{ github.event.inputs.product == matrix.product.id || github.event.inputs.product == '' }}
+        run: echo "GRADLE_COMMAND=${{ matrix.product.gradleCommand }}" >> $GITHUB_ENV
+
+      - name: Add Publish Gradle Task
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{ matrix.product.publishCommand }}" >> $GITHUB_ENV
+
+      # Gradle Build
+      - name: Build with Gradle
+        if: ${{ github.event.inputs.product == matrix.product.id || github.event.inputs.product == '' }}
+        run: sh ./gradlew -PLI_username=${{ env.MCBSTEST_USERNAME }} -PLI_password=${{ env.MCBSTEST_PASSWORD }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${{ secrets.MD_ARTIFACTORY_USER }} -PartifactoryPassword=${{ secrets.MD_ARTIFACTORY_PW }} -PINCLUDED_MODULES=${{ matrix.product.modules }} ${{ env.GRADLE_COMMAND }} ${{ github.event.inputs.gradleOptions }}
+
+      # JUnit Ergebnisse publizieren
+      - name: Upload Unit Test Results
+        if: ${{ always() && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: Unit Test Results (${{ matrix.product.name }})
+          path: '**/test-results/**/*.xml'
+
+      - uses: freenet-actions/setup-github-cli@v1
+
+      # Existierende Draft Releases löschen
+      - name: Delete draft releases
+        if: ${{ env.BUILD_TYPE == 'DEVELOP' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        run: |
+          gh release list | sed 's/|/ /' | awk '{print $0, $8}' | while read -r line; do
+            DRAFT_RELEASE=$(echo "$line" | grep -E '${{ env.TAG_PATTERN }}' | grep "Draft" | awk '{print $3}')
+          
+            if [ ! -z "$DRAFT_RELEASE" ]
+            then
+              echo "Deleting $DRAFT_RELEASE"
+              gh release delete -y "$DRAFT_RELEASE"
+            fi
+          done
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+
+      # Release erstellen
+      - name: Create Release
+        id: create_release
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          tag_name: '${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}'
+          release_name: '${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}'
+          draft: '${{ env.DRAFT }}'
+          prerelease: false
+
+      # Release JAR hinzufügen
+      - name: Upload Release JAR
+        id: upload-release-jar
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '')  && matrix.product.group == 'ms' && env.APPLICATION_JAR_NAME != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
+
+      # Release ZIP hinzufügen
+      - name: Upload Release ZIP
+        id: upload-release-zip
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '')  && matrix.product.group == 'standard' && env.APPLICATION_ZIP_NAME != '' }}
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ${{ env.APPLICATION_ZIP_PATH }}${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
+          asset_name: ${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
+          asset_content_type: application/zip
+
+      # jq installieren
+      - name: Setup jq
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') && env.API_DOC_YAML_PATTERN != '' }}
+        uses: freenet-actions/setup-jq@v1
+
+      # Vorhandene Open API Yamls als Asset hinzufügen
+      - name: Upload API Doc Assets
+        id: uploadApiDocs
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') && env.API_DOC_YAML_PATTERN != '' }}
+        uses: ./mcbscore/actions/upload-api-doc-assets-action
+        with:
+          version: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          apiDocYmlPattern: ${{ env.API_DOC_YAML_PATTERN }}
+          token: ${{ env.TOKEN }}
+
+      # Docker Image erzeugen
+      - name: Docker Image erzeugen
+        id: createDockerImage
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') && matrix.product.group == 'ms' }}
+        uses: ./mcbscore/actions/microservice-docker-image-action
+        with:
+          token: ${{ env.TOKEN }}
+          username: ${{ env.USER }}
+          componentName: ms-${{ env.COMPONENT }}
+          componentVersion: ${{ env.COMPONENT_VERSION }}
+          port: ${{ env.SERVICE_PORT }}
+          jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          javaVersion: ${{ env.JAVA_VERSION }}
+
+      # Starte Deployment auf DEV
+      - name: Invoke deployment workflow
+        if: ${{ env.BUILD_TYPE == 'DEVELOP' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') && matrix.product.group == 'ms' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "component": "${{ matrix.product.name }}", "componentVersion": "${{ env.COMPONENT_VERSION }}", "environment": "dev", "tagPrefix": "${{ env.TAG_PREFIX }}" }'
+
+      
+      # Starte Deployment auf REF_CALLS
+      - name: Invoke deployment workflow (ref_calls)
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && github.event.inputs.product == 'mcbs' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: RefcallsDeployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "component": "${{ matrix.product.name }}", "componentVersion": "${{ env.COMPONENT_VERSION }}" }'
+
+      # Starte DB changes Workflow
+      - name: Invoke db changes workflow
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && env.DB_CHANGES_DIRECTORY != '' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: DB Changes
+          token: ${{ env.TOKEN }}
+          inputs: '{ "component": "${{ matrix.product.name }}", "componentVersion": "${{ env.COMPONENT_VERSION }}", "tagPrefix": "${{ env.TAG_PREFIX }}" }'
+
+      # Starte postBuild auf RELEASE (MS)
+      - name: Invoke postBuild workflow ms
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') && matrix.product.group == 'ms' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PostBuild MS
+          token: ${{ env.TOKEN }}
+          inputs: '{  "component": "${{ matrix.product.name }}" ,"releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.issueList }}" ,  "epic": "${{ github.event.inputs.epic}}" } '
+      
+      # Starte postBuild auf RELEASE (MCBS)
+      - name: Invoke postBuild workflow mcbs
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') && matrix.product.id == 'mcbs' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PostBuild MCBS
+          token: ${{ env.TOKEN }}
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.issueList }}" ,  "epic": "${{ github.event.inputs.epic}}","component": "${{ github.event.inputs.name}}" } '
+      
+      # Starte postBuild auf RELEASE (ZAP)
+      - name: Invoke postBuild workflow mcbs
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') && matrix.product.id == 'mcbsservices' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PostBuild ZAP
+          token: ${{ env.TOKEN }}
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.issueList }}" ,  "epic": "${{ github.event.inputs.epic}}","component": "${{ github.event.inputs.name}}" } '
+
+  publish-test-results:
+    name: "Publish Unit Tests Results"
+    needs: build
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: artifacts/**/*.xml

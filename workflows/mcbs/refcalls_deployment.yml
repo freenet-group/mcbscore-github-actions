@@ -1,0 +1,98 @@
+name: RefcallsDeployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: 'Die Version der Komponente (ohne prefix: 93.0.8)'
+        required: true
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        required: false
+        default: main
+      
+jobs:
+  RefCallsDeployment:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted, vm]
+    env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
+      NODEJS_VERSION: 16
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf -- *
+
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbstest_username = USERNAME,
+            /github/secrets/ssh/mcbstest_id_rsa = ID_RSA,
+            /github/secrets/hosts/refcalls = HOST
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJq: true
+          installNodeJs: true
+
+      - name: Download Release
+        uses: ./mcbscore/github/actions/download-release-assets
+        with:
+          version: 'mcbs.${{ github.event.inputs.componentVersion }}'
+          assetPattern: '-${{ github.event.inputs.componentVersion }}.zip'
+          targetPath: '.'
+          token: ${{ env.TOKEN }}
+      
+      - name: copy file via ssh password
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USERNAME }}
+          key: ${{ env.ID_RSA }}
+          source: '*${{ github.event.inputs.componentVersion }}.zip'
+          target: '/var/QS/MCBS/${{ github.event.inputs.componentVersion }}'
+
+      - name: executing remote ssh commands (unzip release)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USERNAME }}
+          key: ${{ env.ID_RSA }}
+          script: |
+            cd /var/QS/MCBS/${{ github.event.inputs.componentVersion }}
+            unzip mcbs-${{ github.event.inputs.componentVersion }}.zip
+            

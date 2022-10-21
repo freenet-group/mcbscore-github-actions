@@ -12,6 +12,7 @@ on:
           - ALL
           - errorcodes
           - mandel
+          - mcbs
           - metis
           - ms
           - mslib
@@ -54,6 +55,29 @@ jobs:
       matrix:
         repository:
           - { name: mcbscore-mandel, branch: develop, group: mandel, workflows: "../check, build, ../encoding, postBuild" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        id: distributeWorkflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  mcbs:
+    if: ${{ github.event.inputs.group == 'mcbs' || github.event.inputs.group == 'ALL' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../ms/deployment_k8s, ../developerPortal, ../encoding, postBuild_MCBS, postBuild_ms, postBuild_ZAP, sonarqube, MCBS-Freigabe, refcalls_deployment" }
     steps:
       - uses: actions/checkout@v3
         with:
