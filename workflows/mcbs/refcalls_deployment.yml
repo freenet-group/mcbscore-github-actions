@@ -1,0 +1,126 @@
+name: RefcallsDeployment
+
+# Kontrolliert, welche Events die Action auslösen
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'Der Name der Komponente ( mcbs )'
+        required: true
+        default: 'mcbs'
+      componentVersion:
+        description: 'Die Version der Komponente (ohne prefix : 93.0.8) '
+        required: true
+      
+      
+jobs:
+  RefcallsDeployment:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted,vm]
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/checkmk_user = CHECKMK_USER, 
+            /github/secrets/checkmk_password = CHECKMK_PW,
+            /github/secrets/deployment_user = DEPLOYMENT_USER
+            /github/secrets/ssh/mcbstest_id_rsa = MCBSTEST_ID_RSA
+      
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/mcbscore_actions
+          token: ${{ env.TOKEN }}
+          path: mcbscore/actions
+          ref: main
+
+       # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v3
+        with:
+          repository: freenet-group/mcbscore_actions
+          token: ${{ env.TOKEN }}
+          path: mcbscore/actions
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # jq installieren
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v1
+
+      # Node JS installieren
+      - name: Setup Node JS
+        uses: actions/setup-node@v2
+        with:
+          node-version: '12'
+      - run: npm install
+
+      - name: Download Release
+        id: downloadRelease
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: 'mcbs.${{ github.event.inputs.componentVersion }}'
+          assetPattern: '-${{ github.event.inputs.componentVersion }}.zip'
+          targetPath: '.'
+          token: ${{ env.TOKEN }}
+      
+      - name: Id-File (ssh) erzeugen     
+        id: generate_id_file
+        run: |
+          echo "Id-File"
+          echo "${{ env.MCBSTEST_ID_RSA }}" > mcbstest_id_rsa
+          cat mcbstest_id_rsa
+      
+      
+      - name: Kontrollausgabe     
+        id: check_dir
+        run: |
+          echo "Kontrollausgabe"
+          ls -l
+        
+      - name: copy file via ssh password
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.REFCALLS_HOST }}
+          username: ${{ secrets.REFCALLS_USER }}
+          key_path: mcbstest_id_rsa
+          port: ${{ secrets.REFCALLS_PORT }}
+          source: "*${{ github.event.inputs.componentVersion }}.zip"
+          target: "/var/QS/MCBS/${{ github.event.inputs.componentVersion }}"
+
+      - name: executing remote ssh commands (unzip release)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.REFCALLS_HOST }}
+          username: ${{ secrets.REFCALLS_USER }}
+          key_path: mcbstest_id_rsa
+          port: ${{ secrets.REFCALLS_PORT }}
+          script: |
+            cd /var/QS/MCBS/${{ github.event.inputs.componentVersion }}
+            unzip mcbs-${{ github.event.inputs.componentVersion }}.zip
+            
