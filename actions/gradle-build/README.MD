@@ -28,6 +28,10 @@ Für die Branches release und develop wird zusätzlich der publish Task gerufen.
 ### artifactoryPassword
     description: Passwort für das Artifactory
     required: true
+### enableSonarCheckOnAllBranches
+    description: Soll Sonar auf allen Branches ausgeführt werden?
+    type: boolean
+    default: false
 
 ---
 

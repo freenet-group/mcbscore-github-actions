@@ -13,20 +13,20 @@ inputs:
   tagPattern:
     description: das zu erfüllende Muster für die Suche nach einem Tag im Repository (e.g "*" , "ms-bm.*" ,"[0-9]*") ( Regex )
     required: true
-  atlassianToolsVersion:
-    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
-    required: true
   branchName:
     description: Der Branchname zur Steuerung des Versions-Suffix '-SNAPSHOT'
+    required: true
+  versionByComponentList:
+    description: Erzeugt die Version auf einem anderen Weg (MCBS Spezial). Ist für mcbs-master auf true zu setzen
+    required: false
+    default: false
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
     required: true
   logLevel:
     description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
     required: false
     default: info
-  versionByComponentList:
-    description: Erzeugt die Version auf einem anderen Weg (MCBS Spezial). Ist für mcbs-master auf true zu setzen
-    required: false
-    default: false
 outputs:
   newVersion:
     description: die Versionskennung für das nachfolgende Releasebuild
@@ -105,10 +105,8 @@ runs:
         cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
+        # Workaround für mcbs-master. Der Case macht anscheinend Probleme
         cp jiraResources/mcbs.properties jiraResources/MCBS.properties 
-        cd jiraResources
-        ls -lrt
-        cd ..
         
         if [[ ${{inputs.versionByComponentList}} == false ]]; 
         then

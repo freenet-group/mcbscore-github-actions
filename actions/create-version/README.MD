@@ -19,6 +19,10 @@ sowie eine neu zu erzeugende Release-Version zu ermitteln ...
   ### branchName
     description: Der Name des bearbeiteten Branch, um ggf. -SNAPSHOT als Suffix zu setzen
     required: true
+  ### versionByComponentList
+    description: Erzeugt die Version auf einem anderen Weg (MCBS Spezial). Ist für mcbs-master auf true zu setzen
+    required: false
+    default: false
   ### atlassianToolsVersion
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)  
     required: true  
