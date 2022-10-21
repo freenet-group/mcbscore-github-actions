@@ -105,6 +105,8 @@ runs:
         cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
+        ls -lrt
+        
         if [[ ${{inputs.versionByComponentList}} == false ]]; 
         then
           java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
