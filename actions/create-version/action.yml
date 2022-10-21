@@ -23,6 +23,10 @@ inputs:
     description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
     required: false
     default: info
+  versionByComponentList:
+    description: Erzeugt die Version auf einem anderen Weg (MCBS Spezial). Ist für mcbs-master auf true zu setzen
+    required: false
+    default: false
 outputs:
   newVersion:
     description: die Versionskennung für das nachfolgende Releasebuild
@@ -101,14 +105,26 @@ runs:
         cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
-          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
-          mcbs_info.CreateNewMCBSComponentVersionKt \
-          $lastTag \
-          "${{inputs.component}}" \
-          "branch_issues.txt" \
-          "${{inputs.jiraUrl}}" \
-          "${{inputs.jiraCredentials}}"
+        if [[ ${{inputs.versionByComponentList}} == false ]]; 
+        then
+          java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+            -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+            mcbs_info.CreateNewMCBSComponentVersionKt \
+            $lastTag \
+            "${{inputs.component}}" \
+            "branch_issues.txt" \
+            "${{inputs.jiraUrl}}" \
+            "${{inputs.jiraCredentials}}"
+        else
+          java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+            -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+            mcbs_info.CreateNewMCBSComponentListVersionKt \
+            $lastTag \
+            "${{inputs.component}}" \
+            "branch_issues.txt" \
+            "${{inputs.jiraUrl}}" \
+            "${{inputs.jiraCredentials}}"
+        fi
         
         # Output-Variablen belegen
         outVarVersion=`cat newVersion.txt`

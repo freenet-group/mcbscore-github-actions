@@ -14,6 +14,11 @@ inputs:
     description: jq installieren?
     type: boolean
     default: false
+  configurationPostfix:
+    description: 'Postfix für workflow.properties Dateien. Beispiel: workflow-customer.properties'
+    type: string
+    required: false
+    default:
 
 runs:
   using: "composite"

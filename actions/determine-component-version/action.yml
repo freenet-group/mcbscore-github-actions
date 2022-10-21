@@ -4,6 +4,10 @@ inputs:
   component:
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
     required: false
+  versionByComponentList:
+    description: Erzeugt die Version auf einem anderen Weg (MCBS Spezial). Ist für mcbs-master auf true zu setzen
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -20,6 +24,7 @@ runs:
         atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
         component: ${{ inputs.component }}
         branchName: ${{ env.BRANCH_NAME }}
+        versionByComponentList: ${{ inputs.versionByComponentList }}
 
     # COMPONENT_VERSION Umgebungsvariable setzen
     - name: Set component version
