@@ -1,6 +1,5 @@
 name: Sonarqube
 
-# Kontrolliert, welche Events die Action auslösen
 on:
   # vorserst deaktiviert, weil Sonar nicht mehr JAVA 8 kompatibel ist
   # Jeden Samstag um 0 UTC
@@ -9,57 +8,46 @@ on:
   workflow_dispatch:
     inputs:
       gradleOptions:
-        description: 'Zusätzliche optionale Gradle Parameter'
+        description: Zusätzliche optionale Gradle Parameter
         required: false
 
 jobs:
   sonarqube:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
     env:
       JAVA_VERSION: 11
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
-        if: always()
+        if: ${{ always() }}
         run: |
-          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
         run: |
           echo "Cleaning up previous run"
-          rm -rf *
+          rm -rf -- *
 
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
-
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
+          fetch-depth: 0
 
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER
 
-      # Repository auschecken unter $GITHUB_WORKSPACE
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ env.TOKEN }}
-
       # JAVA installieren
       - name: Set up JDK
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
         uses: actions/setup-java@v3
         with:
           distribution: zulu
@@ -78,7 +66,7 @@ jobs:
           path: '**/test-results/**/*.xml'
 
   publish-test-results:
-    name: "Publish Unit Tests Results"
+    name: Publish Unit Tests Results
     needs: sonarqube
     runs-on: ubuntu-latest
     if: always()
