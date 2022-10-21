@@ -1,0 +1,226 @@
+name: MCBS-Freigabe
+
+# Workflow-Steuerung
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'Die Komponente im Sprachgebrauch (mcbs)'
+        required: false
+        default: mcbs
+      releaseVersion:
+        description: 'Die Release Version'
+        required: true
+      epic:
+        description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
+        required: false
+        default: META-170
+      iterations:
+        description: 'Die beinhalteten Iterationen (MCBS_93.0.0,MCBS_93.0.1)'
+        required: true
+
+jobs:
+  mcbsFreigabe:
+    # self-hosted Runner für den Systeminternen Zugriff
+    runs-on: [self-hosted,vm]
+    env:
+      TEAMS_MAIL:  76890356.freenetgroup.onmicrosoft.com@emea.teams.ms
+      TEAMS_WEBHOOK: https://freenetgroup.webhook.office.com/webhookb2/f8549d95-1549-442e-a3a6-2e35030173b4@7d95deb3-0bca-4c9d-a61e-1fd6c47ed60c/IncomingWebhook/3173e226403c4fb58231ce63e9a41246/ca24e4e3-cb4c-4259-a58d-fca357c5e7cf
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+      # Leeren Workspace sicherstellen
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      # ##################################################################################
+      # Parameter
+      # ##################################################################################
+      - name: Show Params
+        run: |
+          echo "####################"
+          echo "Job-Parameter :"   
+          echo "####################"
+          echo "Komponente : ${{ github.event.inputs.component }} "
+          echo "Release-Version :  ${{ github.event.inputs.releaseVersion }}"
+          echo "EPIC : ${{ github.event.inputs.epic }}"
+          echo "Iterationen :  ${{ github.event.inputs.iterations }}"    
+
+      # ##################################################################################
+      # AWS Secrets
+      # ##################################################################################
+
+      # Secrets aus AWS auslesen
+      - name: Read and set AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Read AWS Parameters
+        uses: dkershner6/aws-ssm-getparameters-action@v1
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/JIRA_URL = JIRA_URL
+
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Checkout atldevtools (main) in ./devtools
+      - name: checkout atldevtools
+        uses: actions/checkout@v2
+        with:
+          repository: 'freenet-group/atldevtools'
+          token: ${{ env.TOKEN }}
+          path: 'devtools'
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v2
+        with:
+          repository: freenet-group/mcbscore_actions
+          token: ${{ env.TOKEN }}
+          path: mcbscore/actions
+          ref: main
+
+      # ##################################################################################
+      # Properties
+      # ##################################################################################
+
+      # Build Properties einlesen
+      - name: Read build.properties
+        shell: bash
+        run: |
+          cat ./.github/${{ github.event.inputs.component }}_build.properties >> $GITHUB_ENV
+      # ##################################################################################
+      # JAVA
+      # ##################################################################################
+
+      # Java / JDK initialisieren
+      - name: Setup Java JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: zulu
+          java-version: ${{ env.JAVA_VERSION }}
+
+      # ##################################################################################
+      # Auslesen und Bereitstellen des Inbetriebnahmedatums in ibn.properties
+      # ##################################################################################
+      - name: IBNDate
+        id: fetch_ibn-date
+        run: |
+          if [ ${{ github.event.inputs.epic }} == "META-170" ];
+          then
+            echo "170 :: unbestimmt"
+            echo "IBN-Date=unbestimmt" >> ibn.properties
+          
+          else
+            echo "Datum holen !"
+            java -Dlog4j.configuration=./log4j_info.properties  -cp devtools/apps/atltools/AtlassianDeveloperTools-all-1.21.0.jar:.:devtools/apps/atltools/AtlassianDeveloperTools  meta_issue.GetIBNDateKt "${{ env.JIRA_URL }}" "${{ env.MCBSTEST_CREDENTIALS }}" "${{ github.event.inputs.epic }}"
+          fi 
+
+      # IBN-Datum auslesen (Nutzung via ${{ steps.read_ibn-date.outputs.value }} )
+      - name: Read Date
+        id: read_ibn-date
+        uses: christian-draeger/read-properties@1.0.1
+        with:
+          path: './ibn.properties'
+          property: 'IBN-Date'
+
+      # ##################################################################################
+      # Auslesen und Bereitstellen der Issues über alle Iterationen
+      # ##################################################################################
+      - name: ReleaseIssues
+        id: queryIssuesForRelease
+        run: |
+          
+          java -Dlog4j2.configurationFile=./log4j2-info.xml  -cp devtools/apps/atltools/AtlassianDeveloperTools-all-2.0.2.jar:.:devtools/apps/atltools/AtlassianDeveloperTools  release.QueryIssueInfosForReleaseKt "${{ env.JIRA_URL }}" "${{ env.MCBSTEST_CREDENTIALS }}" "${{ github.event.inputs.iterations }}"
+          cat issueList.txt
+          cat releaseIssues.csv
+
+      # ##################################################################################
+      # Auslesen und Bereitstellen der DB-Relevanz
+      # ##################################################################################
+      - name: CheckDB-Changes
+        id: checkReleaseHasSQL
+        run: |
+          issueList=`cat issueList.txt | xargs echo -n`
+          java -Dlog4j2.configurationFile=./log4j2-info.xml  -cp devtools/apps/atltools/AtlassianDeveloperTools-all-2.0.2.jar:.:devtools/apps/atltools/AtlassianDeveloperTools  dev_config.GetSQLUpdateKt "${{ env.JIRA_URL }}" "${{ env.MCBSTEST_CREDENTIALS }}" "$issueList"
+          cat sql.properties
+
+      # SQL-Relevanz nutzen
+      - name: Read SQL
+        id: read_sql
+        uses: christian-draeger/read-properties@1.0.1
+        with:
+          path: './sql.properties'
+          property: 'sql'
+
+      # ##################################################################################
+      # Dependencies
+      # ##################################################################################
+      - name: Dependencies
+        id: cD
+        run: |
+          issueList=`cat issueList.txt | xargs echo -n`
+          # Dependencies auswerten      
+          java -Dlog4j2.configurationFile=./devtools/apps/atltools/log4j2-${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}.xml -cp ./devtools/apps/atltools/AtlassianDeveloperTools-all-2.0.2.jar:.:./devtools/apps/atltools/AtlassianDeveloperTools  dev_config.GetDependencyKt  "${{ env.JIRA_URL }}" "${{ env.MCBSTEST_CREDENTIALS }}" "$issueList" 
+          
+          # Liste / Property-File der Abhängigkeiten auslesen
+          while IFS='=' read -r key value
+          do
+           eval ${key}=${value}
+          done < dependendIssues.properties
+          echo "Dependency       = " ${dependendIssueList}
+          echo "DEPENDENT_ISSUES=$(echo $dependendIssueList)" >> $GITHUB_ENV
+          # Liste als Variable bereitstellen
+          echo "##[set-output name=dependent_issues;]$dependendIssueList"
+          
+          # Dependencies TRUE || FALSE
+          while IFS='=' read -r key value
+          do
+            eval ${key}=${value}
+          done < dependency.properties
+          if [ "$dependency" = "true" ]; then dependency="JA"; else dependency="NEIN"; fi 
+          echo "Dependency       = " ${dependency}
+          echo "DEPENDENCY=$(echo $dependency)" >> $GITHUB_ENV
+          # Variable bereitstellen
+          echo "##[set-output name=dependency;]$dependency"
+      # ##################################################################################
+      # Mailversand
+      # ##################################################################################
+      - name: ReleaseMail
+        id: sendReleaseMail
+        run: |
+          
+          java -Dlog4j2.configurationFile=./log4j2-info.xml  -cp devtools/apps/atltools/AtlassianDeveloperTools-all-2.0.2.jar:.:devtools/apps/atltools/AtlassianDeveloperTools  mail_info.SendReleaseMailKt MCBS "${{ github.event.inputs.releaseVersion }}" ${{ steps.read_ibn-date.outputs.value }} ${{ steps.read_sql.outputs.value }} ${{ steps.cD.outputs.dependency }} "${{ github.event.inputs.iterations }}" "releaseIssues.csv" "${{ env.TEAMS_MAIL }}" "ProdFreigabeMCBSTemplate.ftl"
+
+      # ##################################################################################
+      # Freigabestatement auf der Releasenote
+      # ##################################################################################
+      - name: Checkout wiki code
+        uses: actions/checkout@v3
+        with:
+          repository: ${{github.repository}}.wiki
+          path: markdown
+
+      - name: Freigabestatement
+        id: freigabestatement
+        run: |
+          
+          cd markdown
+          echo "## Produktionsfreigabe :" >> ${{ github.event.inputs.releaseVersion }}.md
+          echo "Freigabe für PROD zum ${{ steps.read_ibn-date.outputs.value }} am "$(date "+%d.%m.%y") >> ${{ github.event.inputs.releaseVersion }}.md
+          git commit -am "Ergänzung :  Freigabe"
+          git push
