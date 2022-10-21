@@ -29,7 +29,7 @@ runs:
       run: |
         # Einlesen beider Dateien, da build.properties in workflow.properties umbenannt werden sollte. Somit bleibt es
         # abwärtskompatibel
-        if [ -f ./.github/${{ inputs.installJava }}workflow.properties ]; then cat ./.github/${{ inputs.installJava }}workflow.properties >> $GITHUB_ENV; fi
+        if [ -f ./.github/${{ inputs.configurationPrefix }}workflow.properties ]; then cat ./.github/${{ inputs.configurationPrefix }}workflow.properties >> $GITHUB_ENV; fi
         if [ -f ./.github/workflow.properties ]; then cat ./.github/workflow.properties >> $GITHUB_ENV; fi
         if [ -f ./.github/build.properties ]; then cat ./.github/build.properties >> $GITHUB_ENV; fi
 
