@@ -107,12 +107,13 @@ runs:
         
         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
-          mcbs_info.CreateNewMCBSComponentVersionKt \
+          mcbs_info.CreateNewMCBSComponentListVersionKt \
           $lastTag \
           "${{inputs.component}}" \
           "branch_issues.txt" \
           "${{inputs.jiraUrl}}" \
-          "${{inputs.jiraCredentials}}"
+          "${{inputs.jiraCredentials}}" \
+          "${{inputs.included_components}}"
         
         # Output-Variablen belegen
         outVarVersion=`cat newVersion.txt`
