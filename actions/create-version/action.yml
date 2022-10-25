@@ -13,11 +13,15 @@ inputs:
   tagPattern:
     description: das zu erfüllende Muster für die Suche nach einem Tag im Repository (e.g "*" , "ms-bm.*" ,"[0-9]*") ( Regex )
     required: true
-  atlassianToolsVersion:
-    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
-    required: true
   branchName:
     description: Der Branchname zur Steuerung des Versions-Suffix '-SNAPSHOT'
+    required: true
+  versionByComponentList:
+    description: Erzeugt die Version auf einem anderen Weg (MCBS Spezial). Ist für mcbs-master auf true zu setzen
+    required: false
+    default: false
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
     required: true
   logLevel:
     description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
@@ -101,14 +105,29 @@ runs:
         cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
-          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
-          mcbs_info.CreateNewMCBSComponentVersionKt \
-          $lastTag \
-          "${{inputs.component}}" \
-          "branch_issues.txt" \
-          "${{inputs.jiraUrl}}" \
-          "${{inputs.jiraCredentials}}"
+        # Workaround für mcbs-master. Der Case macht anscheinend Probleme
+        cp jiraResources/mcbs.properties jiraResources/MCBS.properties 
+        
+        if [[ ${{inputs.versionByComponentList}} == false ]]; 
+        then
+          java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+            -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+            mcbs_info.CreateNewMCBSComponentVersionKt \
+            $lastTag \
+            "${{inputs.component}}" \
+            "branch_issues.txt" \
+            "${{inputs.jiraUrl}}" \
+            "${{inputs.jiraCredentials}}"
+        else
+          java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+            -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+            mcbs_info.CreateNewMCBSComponentListVersionKt \
+            $lastTag \
+            "${{inputs.component}}" \
+            "branch_issues.txt" \
+            "${{inputs.jiraUrl}}" \
+            "${{inputs.jiraCredentials}}"
+        fi
         
         # Output-Variablen belegen
         outVarVersion=`cat newVersion.txt`

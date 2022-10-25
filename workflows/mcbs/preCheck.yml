@@ -1,17 +1,16 @@
 name: preCheck
 
-# Kontrolliert, welche Events die Action auslösen
 on:
   workflow_dispatch:
     inputs:
       gradleOptions:
-        description: 'Zusätzliche optionale Gradle Parameter'
+        description: Zusätzliche optionale Gradle-Parameter
         required: false
       product:
-        description: 'Das zu bauende Produkt (ms-cuba, ms-customer, ms-customerelastic, ms-customerproduct, ms-mcbsservices, mcbs, mcbsservices)'
+        description: Das zu bauende Produkt (ms-cuba, ms-customer, ms-customerelastic, ms-customerproduct, ms-mcbsservices, mcbs, mcbsservices)
         required: false
       actionsRepositoryBranch:
-        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
       manualVersion:
@@ -22,9 +21,10 @@ on:
 jobs:
   preCheck:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
     env:
-      GRADLE_COMMAND: clean build
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
     strategy:
       matrix:
         product:
@@ -32,7 +32,7 @@ jobs:
           - { id: mcbsservices, name: zap, group: standard, gradleCommand: 'clean :mcbs-services:mcbs-connector:mobilcom-business-common:buildDependents', publishCommand: ':mcbs-services:artifactoryPublish', modules: 'zap'}
           - { id: ms-cuba, name: cuba, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-cuba:build', publishCommand: ':mcbs-customer-domain:mcbs-cuba:artifactoryPublish', modules: 'cuba' }
           - { id: ms-customer, name: customer, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-rest:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-rest:artifactoryPublish', modules: 'customer' }
-          - { id: ms-customerelastic, group: ms, name: customer-elastic, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:artifactoryPublish', modules: 'customer' }
+          - { id: ms-customerelastic, name: customerelastic, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:artifactoryPublish', modules: 'customer' }
           - { id: ms-customerproduct, name: customerproduct, group: ms, gradleCommand: 'clean :mcbs-product-domain:mcbs-customer-product:mcbs-customer-product-rest:build', publishCommand: ':mcbs-product-domain:mcbs-customer-product:mcbs-customer-product-rest:artifactoryPublish', modules: 'customerproduct' }
           - { id: ms-mcbsservices, name: mcbsservices, group: ms, gradleCommand: 'clean :mcbs-services:mcbs-services-ms:build', publishCommand: ':mcbs-services:mcbs-services-ms:artifactoryPublish', modules: 'mcbsservices,zap' }
 
@@ -41,153 +41,83 @@ jobs:
       - name: Change Owner to Runner User
         if: ${{ always() && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
         run: |
-          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
+          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
         if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
         run: |
           echo "Cleaning up previous run"
-          rm -rf *
+          rm -rf -- *
 
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
-
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
+      - name: Checkout Repository
         if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: actions/checkout@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
+          fetch-depth: 0
 
-      - name: Read AWS Parameters
+      - name: Read AWS Secrets
         if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER, 
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/secrets/mcbstest_username = MCBSTEST_USERNAME,
             /github/secrets/mcbstest_password = MCBSTEST_PASSWORD,
-            /github/common/JIRA_URL = JIRA_URL 
-
-      # Repository auschecken unter $GITHUB_WORKSPACE
-      - uses: actions/checkout@v3
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        with:
-          fetch-depth: 0
-          token: ${{ env.TOKEN }}
-
-      # Branch name ermitteln (wenn kein Pull Request)
-      - name: Get branch name (no pull_request)
-        if: ${{ github.event_name != 'pull_request' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        shell: bash
-        run: |
-          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      # Branch name ermitteln (wenn Pull Request)
-      - name: Get branch name (pull request)
-        if: ${{ github.event_name == 'pull_request' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        shell: bash
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-
-      # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
-      - name: Determine build type
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        shell: bash
-        run: |
-          if  [[ $BRANCH_NAME == release* ]] ;
-          then
-            echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
-            echo "DRAFT=false" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == develop ]] ;
-          then
-            echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
-            echo "DRAFT=true" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == feature* ]] ;
-          then
-            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
-          elif  [[ $BRANCH_NAME == bugfix* ]] ;
-          then
-            echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
-          else
-            # default ist feature
-            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
-          fi
-
-      # Build Properties einlesen
-      - name: Read build.properties
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        shell: bash
-        run: |
-          cat ./.github/${{ matrix.product.name }}_build.properties >> $GITHUB_ENV
-
-      # JAVA installieren
-      - name: Set up JDK
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        uses: actions/setup-java@v3
-        with:
-          distribution: zulu
-          java-version: ${{ env.JAVA_VERSION }}
-
-      # Checkout developer-tools (master) in ./devtools
-      - name: checkout atldevtools
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        uses: actions/checkout@v3
-        with:
-          repository: 'freenet-group/atldevtools'
-          token: ${{ env.TOKEN }}
-          path: 'devtools'
+            /github/common/jira/api_url = JIRA_API_URL
 
       # Die internen Actions auschecken
-      - name: checkout mcbscore actions
+      - name: checkout mcbscore-github-actions
         if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
         uses: actions/checkout@v3
         with:
-          repository: 'freenet-group/mcbscore_actions'
+          repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
-          path: 'mcbscore/actions'
+          path: ${{ env.ACTIONS_PATH }}
           ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
-      # Komponenten Version ermitteln
-      - name: Determine component version
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        id: componentVersion
-        uses: ./mcbscore/actions/createVersionByComponentList
-        with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          MATCH: ${{ env.TAG_PATTERN }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          COMPONENT: ${{ env.JIRA_COMPONENT }}
-          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
 
-      # COMPONENT_VERSION Umgebungsvariable setzen
-      - name: Set component version
+      - name: Initialize Workflow
         if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
-        shell: bash
-        run: |
-          if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
-          then
-            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
-          else
-            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
-          fi
-          echo "issueList=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJava: true
+          configurationPrefix: ${{ matrix.product.name }}_
+
+      # ##################################################################################
+      # Version ermitteln
+      # ##################################################################################
+
+      - id: determine-build-type-and-branch-name
+        name: Determine Build Type And Branch Name
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: ./mcbscore/github/actions/build-type-and-branch-name
+
+      - id: determine-component-version
+        name: Determine Component Version
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        uses: ./mcbscore/github/actions/determine-component-version
+        with:
+          component: ${{ env.JIRA_COMPONENT }}
+          versionByComponentList: true
 
       # Version ggf. manuell übersteuern
       - name: manualVersion
         if: ${{ github.event.inputs.manualVersion != '0.0.0' }}
         shell: bash
         run: |
-          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}"
-          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}" >> $GITHUB_ENV
-        
-        
+          echo "COMPONENT_VERSION=${{ github.event.inputs.manualVersion }}"
+          echo "COMPONENT_VERSION=${{ github.event.inputs.manualVersion }}" >> $GITHUB_ENV
+          echo "RAW_VERSION=${{ github.event.inputs.manualVersion }}" >> $GITHUB_ENV
+
       # Ausgaben
       - name: Output
         shell: bash
