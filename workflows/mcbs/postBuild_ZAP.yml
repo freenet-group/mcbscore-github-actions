@@ -16,6 +16,11 @@ on:
         description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
         required: false
         default: META-170
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        type: string
+        required: false
+        default: main
 
 jobs:
   postBuild:
@@ -25,7 +30,6 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-      COMPONENT: mcbsserv
       MAIL_TEMPLATE: B_MS.ftl
       TEAMS_MAIL: 3e0e2102.freenetgroup.onmicrosoft.com@emea.teams.ms
 
@@ -161,6 +165,18 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
+      # Ermitteln der ZusatzInfos zum Release
+      # ##################################################################################
+      - name: Fetch Additional Information
+        id: fetch-additional-information
+        uses: ./mcbscore/github/actions/fetch-additional-information
+        with:
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+
+      # ##################################################################################
       # Erzeugen einer Releasenote im WIKI
       # ##################################################################################
       # GitHub WIKI Repository in das Unterverzeichnis "markdown" auschecken
@@ -199,7 +215,7 @@ jobs:
       - name: Send notification as mail
         uses: ./mcbscore/github/actions/releasebuild-notification
         with:
-          component:  ${{ env.COMPONENT }}
+          component: MCBSServices
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           issueList: issue_info.csv
