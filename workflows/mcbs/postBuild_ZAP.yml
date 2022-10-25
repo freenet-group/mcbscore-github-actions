@@ -171,7 +171,7 @@ jobs:
           path: markdown
 
       - name: Create Release Note
-        uses: ./mcbscore/github/actions/create-mcbsservices-release-note
+        uses: ./mcbscore/github/actions/create-release-note-mcbsservices
         with:
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           jiraWebUrl: ${{ env.JIRA_WEB_URL }}
