@@ -24,7 +24,8 @@ jobs:
     container:
       image: docker.mobilcom.de/dpvo/cicd-kubernetes-helm3:latest
     env:
-      component: metis-ui
+      COMPONENT: metis-ui
+      DEPLOYMENT_PATH: mcbscore/deployment
 
     steps:
       # Leeren Workspace sicherstellen
@@ -70,7 +71,7 @@ jobs:
           environment='${{ github.event.inputs.environment }}'
 
           # Das letzte JSON-Objekt (Datei mit -${environment}) gewinnt in jq add.
-          for f in "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json"; do
+          for f in "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment.json" "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment-${environment}.json"; do
             printf '%s existiert' "$f" >&2
             if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
           done \
@@ -102,15 +103,15 @@ jobs:
           componentVersion='${{ github.event.inputs.componentVersion }}'
           timeout='${{ github.event.inputs.timeout }}'
 
-          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$component"
+          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$COMPONENT"
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.
           valuesHelmOpts=()
           for f in \
               "$chartDir/stages/${environment}.yaml" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json"
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment.json" \
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment-${environment}.json"
           do
             if [ -e "$f" ]; then
               valuesHelmOpts=("${valuesHelmOpts[@]}" "--values=$f")
