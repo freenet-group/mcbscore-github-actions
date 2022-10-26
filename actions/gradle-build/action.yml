@@ -9,6 +9,9 @@ inputs:
     description: Das Verzeichnis, in dem der Build erfolgen soll
     required: false
     default: .
+  gradleProperties:
+    description: Zusätzliche Gradle Properties
+    required: false
   gradleOptions:
     description: Zusätzliche optionale Gradle-Parameter
     required: false
@@ -59,6 +62,11 @@ runs:
       if: env.LIQUIBASE_USERNAME != '' && env.LIQUIBASE_PASSWORD != ''
       shell: bash
       run: echo "GRADLE_PROPERTIES=${{env.GRADLE_PROPERTIES}} -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }}" >> $GITHUB_ENV
+
+    - name: Add additional Properties
+      if: ${{ inputs.gradleProperties != '' }}
+      shell: bash
+      run: echo "GRADLE_PROPERTIES=${{env.GRADLE_PROPERTIES}} ${{ inputs.gradleProperties }}" >> $GITHUB_ENV
 
     # Gradle Build
     - name: Build with Gradle
