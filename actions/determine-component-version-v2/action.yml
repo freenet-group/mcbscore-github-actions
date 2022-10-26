@@ -1,4 +1,4 @@
-name: Determine Component Version List
+name: Determine Component Version v2
 description: Ermittelt die Version der Komponente basierend auf den Commits und dem Branch
 inputs:
   component:
@@ -13,7 +13,7 @@ runs:
   using: "composite"
   steps:
     # Komponenten Version ermitteln
-    - name: Determine component version list
+    - name: Determine component version v2
       id: componentVersion
       if: ${{ inputs.component != '' }}
       uses: ./mcbscore/github/actions/create-version-v2
