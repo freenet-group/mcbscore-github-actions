@@ -5,6 +5,10 @@ inputs:
     description: Das Gradle-Kommando
     required: false
     default: clean build
+  gradlePublishCommand:
+    description: Das Gradle Kommando zum Publish
+    required: false
+    default: publish
   gradleDirectory:
     description: Das Verzeichnis, in dem der Build erfolgen soll
     required: false
@@ -51,7 +55,7 @@ runs:
     - name: Add Publish Gradle Task
       if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
       shell: bash
-      run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} publish" >> $GITHUB_ENV
+      run: echo "GRADLE_COMMAND=${{env.GRADLE_COMMAND}} ${{ inputs.gradlePublishCommand }}" >> $GITHUB_ENV
 
     - name: Add Artifactory Properties
       if: ${{ inputs.artifactoryUserName != '' && inputs.artifactoryPassword != '' }}
