@@ -16,7 +16,7 @@ runs:
     - name: Determine component version list
       id: componentVersion
       if: ${{ inputs.component != '' }}
-      uses: ./mcbscore/github/actions/create-version-list
+      uses: ./mcbscore/github/actions/create-version-v2
       with:
         jiraUrl: ${{ env.JIRA_API_URL }}
         jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
