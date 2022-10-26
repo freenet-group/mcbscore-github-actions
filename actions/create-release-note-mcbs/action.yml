@@ -110,8 +110,7 @@ runs:
         echo "gitHub :  " >> $release.md
         echo " ${{ inputs.releaseUrl }}" >> $release.md
         echo "Artifactory : " >> $release.md
-        echo "https://artifactory.mobilcom.de/artifactory/md-release/de/md/mcbs/${/${{ inputs.componentVersion }}/mcbs-${{ inputs.componentVersion }}.zip"
-
+        echo "https://artifactory.mobilcom.de/artifactory/simple/md-release/de/md/mcbs/${{ inputs.componentVersion }}/"
         echo "##  " >> $release.md
         echo "ImplementedIssues: $issueList" >> $release.md
         
