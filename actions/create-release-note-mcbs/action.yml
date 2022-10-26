@@ -1,21 +1,22 @@
-name: Create MCBSServices Releasenote
+name: Create MCBS Releasenote
 description: 'Auswertung der Issues eines Repositories seit dem letzten Tag, Bereitstellen von Issue-Infos für eventuelle Release-Notes, Erzeugen einer neuen Version für ein nachfolgendes Releasebuild'
 inputs:
   component:
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
-    required: false
-    default: MCBSServices
+    required: true
+    default: MCBS
   componentVersion:
     description: die zur Komponente gehörende Version
     required: true
+  hasSql:
+    description: Datenbankänderungen (true|false)
+    required: true
   hasDependencies:
     description: Abhängigkeiten (true|false)
-    required: false
-    default: false
+    required: true
   dependentIssues:
     description: Liste der Issues mit Abhängigkeiten und zugehörigem Text
-    required: false
-    default: false  
+    required: true
   releaseUrl:
     description: Die Downloadadresse für das Release
     required: true
@@ -33,7 +34,7 @@ inputs:
 runs:
   using: "composite"
   steps: 
-    - id: createMcbsServicesReleaseNote
+    - id: createReleaseNote
       env:
         ISSUE_FILE: issue_info.csv
       shell: bash
@@ -60,6 +61,7 @@ runs:
         echo "## Freigabeprofil" >> $release.md
         echo "| Komponente | geplant | freigegeben |" >> $release.md
         echo "| ---------- | ------- | ----------- |" >> $release.md
+        echo "| MCBS (allg.) | X | |"  >> $release.md
         echo "| MCBSServices | X | |"  >> $release.md
         
         #Java-Version
@@ -67,12 +69,30 @@ runs:
         echo "| JAVA-Version | ${{ inputs.javaVersion }} |" >> $release.md
         echo "| ------------ | - " >> $release.md
         
+        
         #Sonstiges
         echo "## Ergänzungen" >> $release.md
         echo "| BE-Version |  |" >> $release.md
         echo "| ----- | - " >> $release.md
         echo "| Bemerkungen |  |" >> $release.md
-
+        
+        
+        echo "## DB-Changes" >> $release.md
+        if [ "$hasSql" = "JA" ]; then 
+          echo "- [x] DB-Changes  " >>  $release.md
+          echo "     gitHub :  " >> $release.md
+          echo "    " >> $release.md
+          echo "     Artifactory :  " >> $release.md  
+          echo "    " >> $release.md
+        
+          echo "## DB-Schema-Anpassungen" >> $release.md
+          echo "| DB | Tabelle | Inhalt | Issue | " >> $release.md
+          echo "| ----- | ------------ | ------ | ----------- |" >> $release.md
+          echo "| | | | |" >> $release.md;
+        else 
+          echo "- [ ] DB-Changes" >> $release.md; 
+        fi
+        
         echo "## Dependencies" >> $release.md
         if [ "${{ inputs.hasDependencies }}" = "JA" ]; then echo "- [x] Dependencies  " >>  $release.md; echo "  ${{ inputs.dependentIssues }}" >>  $release.md; else echo "- [ ] Dependencies" >> $release.md; fi
         
@@ -83,9 +103,14 @@ runs:
           echo "| [$(echo $line | cut -d";" -f1 )](${{ inputs.jiraWebUrl }}$(echo $line | cut -d";" -f1 ) )  | $(echo $line | cut -d";" -f2 ) | $(echo $line | cut -d";" -f3 ) | $(echo $line | cut -d";" -f6 ) | $(echo $line | cut -d";" -f4 ) | $(echo $line | cut -d";" -f8 ) | $(echo $line | cut -d";" -f9 )" >> $release.md
           issueList=$(echo "$issueList $(echo $line | cut -d";" -f1 )")
         done < ../$ISSUE_FILE
-          
+        
+        echo "## weiterführende Dokumentation" >> $release.md
+        
         echo "## Downloads" >> $release.md
+        echo "gitHub :  " >> $release.md
         echo " ${{ inputs.releaseUrl }}" >> $release.md
+        echo "Artifactory : " >> $release.md
+        echo "https://artifactory.mobilcom.de/artifactory/md-release/de/md/mcbs/${/${{ inputs.componentVersion }}/mcbs-${{ inputs.componentVersion }}.zip"
 
         echo "##  " >> $release.md
         echo "ImplementedIssues: $issueList" >> $release.md

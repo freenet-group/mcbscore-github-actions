@@ -1,305 +1,232 @@
 name: PostBuild MCBS
 
-# Workflow-Steuerung
 on:
   workflow_dispatch:
     inputs:
       component:
-        description: 'Die Komponente im Sprachgebrauch'
-        required: false
-        default: mcbs
+        description: Die Komponente im Sprachgebrauch
+        required: true
       releaseVersion:
-        description: 'Die Release Version (x.y.z  ... ohne Prefix) '
+        description: Die Release Version
         required: true
       issueList:
-        description: 'Die Liste der integrierten JIRA-Issues'
+        description: Die Liste der integrierten JIRA-Issues
         required: true
       epic:
         description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
         required: false
         default: META-170
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        type: string
+        required: false
+        default: main
 
 jobs:
   postBuild:
     # self-hosted Runner für den Systeminternen Zugriff
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
+    name: "postBuild: ${{ toJSON(inputs) }}"
     env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
+      MAIL_TEMPLATE: B_MCBS.ftl
       TEAMS_MAIL: 3e0e2102.freenetgroup.onmicrosoft.com@emea.teams.ms
-      TEAMS_WEBHOOK: https://freenetgroup.webhook.office.com/webhookb2/f8549d95-1549-442e-a3a6-2e35030173b4@7d95deb3-0bca-4c9d-a61e-1fd6c47ed60c/IncomingWebhook/3173e226403c4fb58231ce63e9a41246/ca24e4e3-cb4c-4259-a58d-fca357c5e7cf
+#      TEAMS_WEBHOOK: https://freenetgroup.webhook.office.com/webhookb2/f8549d95-1549-442e-a3a6-2e35030173b4@7d95deb3-0bca-4c9d-a61e-1fd6c47ed60c/IncomingWebhook/3173e226403c4fb58231ce63e9a41246/ca24e4e3-cb4c-4259-a58d-fca357c5e7cf
 
     steps:
+      - name: Show Params
+        run: echo '${{ toJSON(inputs) }}'
+
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
         if: ${{ always() }}
         run: |
-          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          githubUser='${{ github.actor }}'
+          githubToken='${{ secrets.GH_R_PACKAGES }}'
+          docker login ghcr.io -u "$githubUser" -p "$githubToken"
+          docker run --rm -v "$(pwd):/target" -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
         run: |
           echo "Cleaning up previous run"
-          rm -rf *
-          
-      # ##################################################################################
-      # Parameter
-      # ##################################################################################    
-      - name: Show Params
-        run: |
-          echo "####################"
-          echo "Job-Parameter :"   
-          echo "####################"
-          echo "Komponente : ${{ github.event.inputs.component }} "
-          echo "Release-Version :  ${{ github.event.inputs.releaseVersion }}"
-          echo "Issues : ${{ github.event.inputs.issueList }}"
-          echo "EPIC :  ${{ github.event.inputs.epic }}"       
-          
-      # ##################################################################################
-      # AWS Secrets
-      # ##################################################################################
+          rm -rf -- *
 
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
-
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
-        with:
-          parameterPairs: |
-            /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
-            /github/common/JIRA_URL = JIRA_URL, 
-            /github/common/JIRA_URL2 = JIRA_URL2 
       # Repository auschecken unter $GITHUB_WORKSPACE
-      - uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # Checkout atldevtools (main) in ./devtools
-      - name: checkout atldevtools
-        uses: actions/checkout@v2
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          repository: 'freenet-group/atldevtools'
-          token: ${{ env.TOKEN }}
-          path: 'devtools'
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/jira/api_url = JIRA_API_URL, 
+            /github/common/jira/url = JIRA_WEB_URL,
+            /github/common/sonar/api_url = SONAR_API_URL,
+            /github/common/JIRA_URL2 = JIRA_URL2 
 
       # Die internen Actions auschecken
-      - name: checkout mcbscore actions
-        uses: actions/checkout@v2
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v3
         with:
-          repository: freenet-group/mcbscore_actions
+          repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
-          path: mcbscore/actions
-          ref: main
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
-      # Properties
+      # Initialize Workflow
       # ##################################################################################
-
-      # Build Properties einlesen
-      - name: Read build.properties
-        shell: bash
-        run: |
-          cat ./.github/${{ github.event.inputs.component }}_build.properties >> $GITHUB_ENV
-      # ##################################################################################
-      # JAVA
-      # ##################################################################################
-
-      # Java / JDK initialisieren
-      - name: Setup Java JDK
-        uses: actions/setup-java@v2
+      - name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
-          distribution: zulu
-          java-version: ${{ env.JAVA_VERSION }}
-
-      # ##################################################################################
-      # Auslesen und Bereitstellen des Inbetriebnahmedatums in ibn.properties
-      # ##################################################################################
-      - name: IBNDate
-        id: fetch_ibn-date
-        run: |
-          if [ ${{ github.event.inputs.epic }} == "META-170" ];
-          then
-            echo "170 :: unbestimmt"
-            echo "IBN-Date=unbestimmt" >> ibn.properties
-            
-          else
-            echo "Datum holen !"
-            java -Dlog4j.configuration=./log4j_info.properties  -cp devtools/apps/atltools/AtlassianDeveloperTools-all-1.21.0.jar:.:devtools/apps/atltools/AtlassianDeveloperTools  meta_issue.GetIBNDateKt "${{ env.JIRA_URL }}" "${{ env.MCBSTEST_CREDENTIALS }}" "${{ github.event.inputs.epic }}"
-          fi
-                  
-      # IBN-Datum auslesen (Nutzung via ${{ steps.read_ibn-date.outputs.value }} )
-      - name: Read Date
-        id: read_ibn-date
-        uses: christian-draeger/read-properties@1.0.1
-        with:
-          path: './ibn.properties'
-          property: 'IBN-Date'
-
+          installJava: true
+          configurationPrefix: ${{ github.event.inputs.component }}_
 
       # ##################################################################################
       # Erzeugen von Version / ComponentVersion in JIRA
       # ##################################################################################
       - name: jiraConfig-ABRMS
-        id: jC-ABRMS
-        uses: ./mcbscore/actions/jiraConfig
+        uses: ./mcbscore/github/actions/jira-configuration
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_URL2: ${{ env.JIRA_URL2 }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          JIRA_PROJECT: ABRMS
-          JIRA_COMPONENT: ${{ env.COMPONENT }}
-          JIRA_VERSION: ${{ github.event.inputs.releaseVersion }}
-          COMPONENT_LIST: "${{ env.JIRA_ABRMS_COMPONENT }}"
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraUrl2: ${{ env.JIRA_URL2 }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraProject: ABRMS
+          component: ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentList: ${{ env.JIRA_ABRMS_COMPONENT }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: jiraConfig-MCBS
-        id: jC-MCBS
-        uses: ./mcbscore/actions/jiraConfig
+        uses: ./mcbscore/github/actions/jira-configuration
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_URL2: ${{ env.JIRA_URL2 }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          JIRA_PROJECT: 'MCBS'
-          JIRA_COMPONENT: ${{ env.COMPONENT }}
-          JIRA_VERSION: ${{ github.event.inputs.releaseVersion }}
-          COMPONENT_LIST: "${{ env.JIRA_MCBS_COMPONENT }},Microservices"
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraUrl2: ${{ env.JIRA_URL2 }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraProject: MCBS
+          component: ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentList: ${{ env.JIRA_MCBS_COMPONENT }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
       # Erzeugen einer CSV-Datei mit ergänzenden Issue-Infos
       # ##################################################################################
       - name: fetchIssueInfos
-        id: fI
-        uses: ./mcbscore/actions/fetchIssueInfos
+        uses: ./mcbscore/github/actions/fetch-issue-information
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          ISSUES: ${{ github.event.inputs.issueList }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
-     
       # ##################################################################################
       # Eintrag der fixVersion
       # ##################################################################################
       - name: setFixVersions
-        id: sF
-        uses: ./mcbscore/actions/setFixVersion
+        uses: ./mcbscore/github/actions/set-fix-version
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          COMPONENT:  ${{ env.JIRA_COMPONENT }}
-          VERSION: ${{ github.event.inputs.releaseVersion }}
-          ISSUES: ${{ github.event.inputs.issueList }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          component: ${{ env.JIRA_COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
       # set Issues "done"
       # ##################################################################################
       - name: setIssueListDone
-        id: sD
-        uses: ./mcbscore/actions/setIssueListDone
+        uses: ./mcbscore/github/actions/set-issue-list-done
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          ISSUES: ${{ github.event.inputs.issueList }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
       # Setzen eines Build-Kommentars an den Issues
       # ##################################################################################
-      - name: setIssueComments
-        id: sC
-        uses: ./mcbscore/actions/setIssueComments
+      - name: setIssueComment
+        uses: ./mcbscore/github/actions/set-issue-comment
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          COMMENT: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
-          ISSUES: ${{ github.event.inputs.issueList }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+
+      # ##################################################################################
+      # Ermitteln der ZusatzInfos zum Release
+      # ##################################################################################
+      - name: Fetch Additional Information
+        id: fetch-additional-information
+        uses: ./mcbscore/github/actions/fetch-additional-information
+        with:
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          issueList: ${{ github.event.inputs.issueList }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
       # Erzeugen einer Releasenote im WIKI
       # ##################################################################################
-      # GitHub-WIKI auschecken
-      # Parallel dazu das Wiki-Repository in ein anderes Verzeichnis ("markdown" auschecken
+      # GitHub WIKI Repository in das Unterverzeichnis "markdown" auschecken
       - name: Checkout wiki code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          repository: ${{github.repository}}.wiki
+          repository: ${{ github.REPOSITORY }}.wiki
           path: markdown
 
-      # Aufruf der Action
-      - name: createMCBSReleasenote
-        id: cR
-        uses: ./mcbscore/actions/createMCBSReleasenote
+      - name: Create Release Note
+        uses: ./mcbscore/github/actions/create-release-note-mcbs
         with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          ISSUES: ${{ github.event.inputs.issueList }}  
-          COMPONENT:  MCBS
-          REPO: ${{ github.REPOSITORY }}
-          RELEASE: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ env.TAG_PREFIX }}${{ github.event.inputs.releaseVersion }}"
-          VERSION: ${{ github.event.inputs.releaseVersion }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          LOGLEVEL: info
-          EPIC: ${{ github.event.inputs.epic }}
-          JAVA-Version: ${{ env.RELEASENOTES_JAVA_RELEASE }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          jiraWebUrl: ${{ env.JIRA_WEB_URL }}
+          hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
+          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          dependentIssues: ${{ steps.fetch-additional-information.outputs.dependentIssues }}
+          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ env.TAG_PREFIX }}${{ github.event.inputs.releaseVersion }}"
+          javaVersion: ${{ env.RELEASENOTES_JAVA_RELEASE }}
+          epic: ${{ github.event.inputs.epic }}
+
+      # ###################################################################################
+      # EPIC / IBN auswerten
+      # ###################################################################################
+      - name: IBN Datum ermitteln
+        id: determine-going-live-date
+        uses: ./mcbscore/github/actions/determine-going-live-date
+        with:
+          jiraUrl: ${{ env.JIRA_API_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          epic: ${{ github.event.inputs.epic }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ###################################################################################
       # Teams-Notification
       # ###################################################################################
-      - name: Notification
-        id: createNotificationTable
-        run: |
-          tabelle="<ul>"
-          while IFS= read -r line; do
-            # echo "| [$(echo $line | cut -d";" -f1 )](https://jira.freenet-group.de/browse/$(echo $line | cut -d";" -f1 ) )  | $(echo $line | cut -d";" -f2 ) | $(echo $line | cut -d";" -f3 ) | $(echo $line | cut -d";" -f6 ) | $(echo $line | cut -d";" -f4 ) | $(echo $line | cut -d";" -f8 ) | $(echo $line | cut -d";" -f9 )" >> $release.md
-            tabelle=${tabelle}"<li>$(echo $line | cut -d";" -f1 ) :: $(echo $line | cut -d";" -f2 ) </li>"
-          done < issue_info.csv
-          tabelle=${tabelle}"</ul>"
-          echo "${tabelle}"
-          echo "tabelle=${tabelle}" >> $GITHUB_ENV
       - name: Send notification as mail
-        id: sM2
-        uses: ./mcbscore/actions/sendMail2
+        uses: ./mcbscore/github/actions/releasebuild-notification
         with:
-          COMPONENT:  ${{ env.JIRA_COMPONENT }}
-          VERSION: ${{ github.event.inputs.releaseVersion }}
-          IBN: ${{ steps.read_ibn-date.outputs.value }}
-          # ISSUES: ${{ github.event.inputs.issueList }}
-          ISSUES: issue_info.csv
-          SQL: ${{ steps.cR.outputs.sql }}
-          CONFIG: '%'
-          DEPENDENCIES: ${{ steps.cR.outputs.dependency }}
-          EXTRA: "extra"
-          EPIC: ${{ github.event.inputs.epic }}
-          WEBHOOK_URI: ${{ env.TEAMS_MAIL }}
-          TEMPLATE: "B_MCBS.ftl"
-          LOGLEVEL: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          REPO: ${{ github.REPOSITORY }}
-
-      # ##################################################################################
-      # Update der referenced issues
-      # ##################################################################################
-      # Aufruf der Action
-      - name: updateReferencedIssues
-        id: updateReferencedIssues
-        uses: ./mcbscore/actions/updateReferencedIssues
-        with:
-          JIRA_URL: ${{ env.JIRA_URL }}
-          JIRA_CREDENTIALS: ${{ env.MCBSTEST_CREDENTIALS }}
-          COMPONENT:  ${{ env.JIRA_COMPONENT }}
-          VERSION: ${{ github.event.inputs.releaseVersion }}
-          ISSUES: ${{ github.event.inputs.issueList }}
-          ATLASSIAN_DEVELOPER_TOOLS: ${{ env.ATLDEVTOOLS }}
-          LOGLEVEL: ${{ env.LOGLEVEL }}
+          component: ${{ env.JIRA_COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
+          issueList: issue_info.csv
+          hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
+          hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
+          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          additionalText: "extra"
+          epic: ${{ github.event.inputs.epic }}
+          webhookUri: ${{ env.TEAMS_MAIL }}
+          mailTemplate: ${{ env.MAIL_TEMPLATE }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          repositoryName: ${{ github.REPOSITORY }}
