@@ -3,7 +3,7 @@ description: 'Auswertung der Issues eines Repositories seit dem letzten Tag, Ber
 inputs:
   component:
     description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
-    required: true
+    required: false
     default: MCBS
   componentVersion:
     description: die zur Komponente gehörende Version
