@@ -39,13 +39,13 @@ jobs:
     strategy:
       matrix:
         product:
-          - { id: mcbs, name: mcbs, group: standard, gradleCommand: 'clean build', publishCommand: 'artifactoryPublish', modules: 'mcbs' }
-          - { id: mcbsservices, name: zap, group: standard, gradleCommand: 'clean :mcbs-services:mcbs-connector:mobilcom-business-common:buildDependents', publishCommand: ':mcbs-services:artifactoryPublish', modules: 'zap'}
-          - { id: ms-cuba, name: cuba, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-cuba:build', publishCommand: ':mcbs-customer-domain:mcbs-cuba:artifactoryPublish', modules: 'cuba' }
-          - { id: ms-customer, name: customer, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-rest:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-rest:artifactoryPublish', modules: 'customer' }
-          - { id: ms-customerelastic, name: customerelastic, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:artifactoryPublish', modules: 'customer' }
-          - { id: ms-customerproduct, name: customerproduct, group: ms, gradleCommand: 'clean :mcbs-product-domain:mcbs-customer-product:mcbs-customer-product-rest:build', publishCommand: ':mcbs-product-domain:mcbs-customer-product:mcbs-customer-product-rest:artifactoryPublish', modules: 'customerproduct' }
-          - { id: ms-mcbsservices, name: mcbsservices, group: ms, gradleCommand: 'clean :mcbs-services:mcbs-services-ms:build', publishCommand: ':mcbs-services:mcbs-services-ms:artifactoryPublish', modules: 'mcbsservices,zap' }
+          - { id: mcbs, name: mcbs }
+          - { id: mcbsservices, name: zap }
+          - { id: ms-cuba, name: cuba }
+          - { id: ms-customer, name: customer }
+          - { id: ms-customerelastic, name: customerelastic }
+          - { id: ms-customerproduct, name: customerproduct }
+          - { id: ms-mcbsservices, name: mcbsservices }
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -141,6 +141,6 @@ jobs:
           echo "# Branch : ${{ env.BRANCH_NAME }}"
           echo "#########################################"
           echo "# COMPONENT_VERSION=${{env.COMPONENT_VERSION}}" 
-          echo "# issueList=${{ env.issueList }}"
+          echo "# issueList=${{ env.ISSUE_LIST }}"
           echo "#########################################"
 

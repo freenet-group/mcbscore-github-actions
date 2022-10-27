@@ -1,4 +1,4 @@
-name: RefcallsDeployment
+name: RefCalls Deployment
 
 on:
   workflow_dispatch:
