@@ -53,7 +53,7 @@ jobs:
               "component": "${{ env.COMPONENT }}",
               "environment": "prod",
               "componentVersion": "${{ github.event.inputs.componentVersion }}",
-              "bambiNotification": true,
+              "bambiNotification": "true",
               "additionalDeploymentComponent": "${{ github.event.inputs.additionalDeploymentComponent }}",
               "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}",
               "deploymentRepositoryBranch": "${{ github.event.inputs.deploymentRepositoryBranch }}"
