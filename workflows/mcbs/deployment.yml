@@ -1,6 +1,5 @@
 name: Deployment
 
-# Kontrolliert, welche Events die Action auslösen
 on:
   workflow_dispatch:
     inputs:
