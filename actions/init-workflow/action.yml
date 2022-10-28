@@ -14,6 +14,10 @@ inputs:
     description: jq installieren?
     type: boolean
     default: false
+  installGithubCli:
+    description: Github CLI installieren?
+    type: boolean
+    default: false
   configurationPrefix:
     description: 'Prefix für workflow.properties Dateien. Beispiel: customer-workflow.properties'
     type: string
@@ -51,3 +55,8 @@ runs:
     - name: Setup jq
       if: ${{ inputs.installJq }}
       uses: freenet-actions/setup-jq@v2
+
+    # Github CLI installieren
+    - name: Setup Github CLI
+      if: ${{ inputs.installGithubCli }}
+      uses: freenet-actions/setup-github-cli@v2

@@ -1,6 +1,5 @@
 name: Deployment
 
-# Kontrolliert, welche Events die Action auslösen
 on:
   workflow_dispatch:
     inputs:
@@ -74,6 +73,7 @@ jobs:
   deploy:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, vm]
+    name: "deploy: ${{ toJSON(inputs) }}"
     needs: create-deployment
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
@@ -82,6 +82,9 @@ jobs:
       NODEJS_VERSION: 16
 
     steps:
+      - name: Show Params
+        run: echo '${{ toJSON(inputs) }}'
+
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
         if: ${{ always() }}

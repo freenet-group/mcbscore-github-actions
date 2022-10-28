@@ -1,10 +1,10 @@
-name: PostBuild ZAP
+name: PostBuild MS
 
 on:
   workflow_dispatch:
     inputs:
       component:
-        description: Der Name der Komponente
+        description: Die Komponente zur Steuerung der *_build.properties (customerelastic, cuba, customer, customerproduct, mcbsservices)
         required: true
       releaseVersion:
         description: Die Release-Version
@@ -31,7 +31,7 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       MAIL_TEMPLATE: B_MS.ftl
-      TEAMS_MAIL: 3e0e2102.freenetgroup.onmicrosoft.com@emea.teams.ms
+      TEAMS_MAIL: b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms
 
     steps:
       - name: Show Params
@@ -51,7 +51,7 @@ jobs:
         run: |
           echo "Cleaning up previous run"
           rm -rf -- *
-          
+
       # Repository auschecken unter $GITHUB_WORKSPACE
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -100,7 +100,7 @@ jobs:
           jiraUrl2: ${{ env.JIRA_URL2 }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           jiraProject: ABRMS
-          component: ${{ env.COMPONENT }}
+          component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           componentList: '${{ env.JIRA_COMPONENT }},ABRMS (unspez.)'
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -112,7 +112,7 @@ jobs:
           jiraUrl2: ${{ env.JIRA_URL2 }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           jiraProject: MCBS
-          component: ${{ env.COMPONENT }}
+          component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           componentList: '${{ env.JIRA_COMPONENT }},Microservices'
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -127,7 +127,17 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-     
+
+      # ##################################################################################
+      # Erzeugen der BAMBI-Einträge via D&A-Docker-Container
+      # ##################################################################################
+      - name: createBambi-Entry
+        uses: addnab/docker-run-action@v3
+        with:
+          image: docker.mobilcom.de/dua/microservices/init-abrms-build-data:latest
+          options: --workdir /app --rm -e JOXREPDB=JOXP -e MD_ENV=PROD
+          run: perl /app/initInsertBambiTables.pl -p -c '${{ env.JIRA_COMPONENT }}' -v '${{ github.event.inputs.releaseVersion }}' -u '${{ github.actor }}' -i '${{ github.event.inputs.issueList }}'
+
       # ##################################################################################
       # Eintrag der fixVersion
       # ##################################################################################
@@ -136,7 +146,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          component: ${{ env.COMPONENT }}
+          component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -160,7 +170,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
+          comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -187,13 +197,19 @@ jobs:
           path: markdown
 
       - name: Create Release Note
-        uses: ./mcbscore/github/actions/create-release-note-mcbsservices
+        uses: ./mcbscore/github/actions/create-release-note
         with:
+          component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           jiraWebUrl: ${{ env.JIRA_WEB_URL }}
+          hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
+          hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
           dependentIssues: ${{ steps.fetch-additional-information.outputs.dependentIssues }}
-          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ env.TAG_PREFIX }}${{ github.event.inputs.releaseVersion }}"
+          coverage: ${{ steps.fetch-coverage.outputs.coverage }}
+          releaseUrl: '${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ env.TAG_PREFIX }}${{ github.event.inputs.releaseVersion }}'
+          junitResultUrl: '${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases'
+          cucumberResultUrl: '${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases'
           javaVersion: ${{ env.RELEASENOTES_JAVA_RELEASE }}
           epic: ${{ github.event.inputs.epic }}
 
@@ -215,7 +231,7 @@ jobs:
       - name: Send notification as mail
         uses: ./mcbscore/github/actions/releasebuild-notification
         with:
-          component: MCBSServices
+          component:  ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           issueList: issue_info.csv
@@ -228,17 +244,3 @@ jobs:
           mailTemplate: ${{ env.MAIL_TEMPLATE }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}
-
-      # ##################################################################################
-      # Issue zur BE-Integration
-      # ##################################################################################
-      - name: Create BE-Issue
-        uses: ./mcbscore/github/actions/create-backend-issue
-        with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          component: MCBSServices
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
-          epic: ${{ github.event.inputs.epic }}
-          hasDbChanges: ${{ steps.fetch-additional-information.outputs.sql }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}

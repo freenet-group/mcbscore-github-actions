@@ -7,8 +7,19 @@ on:
         description: Zusätzliche optionale Gradle-Parameter
         required: false
       product:
-        description: Das zu bauende Produkt (ms-cuba, ms-customer, ms-customerelastic, ms-customerproduct, ms-mcbsservices, mcbs, mcbsservices)
-        required: false
+        description: Das zu bauende Produkt
+        type: choice
+        required: true
+        default: ALL
+        options:
+          - ALL
+          - ms-cuba
+          - ms-customer
+          - ms-customerelastic
+          - ms-customerproduct
+          - ms-mcbsservices
+          - mcbs
+          - mcbsservices
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
@@ -28,37 +39,37 @@ jobs:
     strategy:
       matrix:
         product:
-          - { id: mcbs, name: mcbs, group: standard, gradleCommand: 'clean build', publishCommand: 'artifactoryPublish', modules: 'mcbs' }
-          - { id: mcbsservices, name: zap, group: standard, gradleCommand: 'clean :mcbs-services:mcbs-connector:mobilcom-business-common:buildDependents', publishCommand: ':mcbs-services:artifactoryPublish', modules: 'zap'}
-          - { id: ms-cuba, name: cuba, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-cuba:build', publishCommand: ':mcbs-customer-domain:mcbs-cuba:artifactoryPublish', modules: 'cuba' }
-          - { id: ms-customer, name: customer, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-rest:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-rest:artifactoryPublish', modules: 'customer' }
-          - { id: ms-customerelastic, name: customerelastic, group: ms, gradleCommand: 'clean :mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:build', publishCommand: ':mcbs-customer-domain:mcbs-customer:mcbs-customer-elastic:artifactoryPublish', modules: 'customer' }
-          - { id: ms-customerproduct, name: customerproduct, group: ms, gradleCommand: 'clean :mcbs-product-domain:mcbs-customer-product:mcbs-customer-product-rest:build', publishCommand: ':mcbs-product-domain:mcbs-customer-product:mcbs-customer-product-rest:artifactoryPublish', modules: 'customerproduct' }
-          - { id: ms-mcbsservices, name: mcbsservices, group: ms, gradleCommand: 'clean :mcbs-services:mcbs-services-ms:build', publishCommand: ':mcbs-services:mcbs-services-ms:artifactoryPublish', modules: 'mcbsservices,zap' }
+          - { id: mcbs, name: mcbs }
+          - { id: mcbsservices, name: zap }
+          - { id: ms-cuba, name: cuba }
+          - { id: ms-customer, name: customer }
+          - { id: ms-customerelastic, name: customerelastic }
+          - { id: ms-customerproduct, name: customerproduct }
+          - { id: ms-mcbsservices, name: mcbsservices }
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
-        if: ${{ always() && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        if: ${{ always() && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         run: |
           docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
           docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         run: |
           echo "Cleaning up previous run"
           rm -rf -- *
 
       - name: Checkout Repository
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Read AWS Secrets
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -73,7 +84,7 @@ jobs:
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         uses: actions/checkout@v3
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
@@ -86,7 +97,7 @@ jobs:
       # ##################################################################################
 
       - name: Initialize Workflow
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
@@ -98,12 +109,12 @@ jobs:
 
       - id: determine-build-type-and-branch-name
         name: Determine Build Type And Branch Name
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         uses: ./mcbscore/github/actions/build-type-and-branch-name
 
       - id: determine-component-version
         name: Determine Component Version
-        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == '') }}
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         uses: ./mcbscore/github/actions/determine-component-version
         with:
           component: ${{ env.JIRA_COMPONENT }}
@@ -111,7 +122,7 @@ jobs:
 
       # Version ggf. manuell übersteuern
       - name: manualVersion
-        if: ${{ github.event.inputs.manualVersion != '0.0.0' }}
+        if: ${{ github.event.inputs.manualVersion != '0.0.0' && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         shell: bash
         run: |
           echo "COMPONENT_VERSION=${{ github.event.inputs.manualVersion }}"
@@ -120,6 +131,7 @@ jobs:
 
       # Ausgaben
       - name: Output
+        if: ${{ (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
         shell: bash
         run: |
           echo "#########################################"
@@ -129,6 +141,6 @@ jobs:
           echo "# Branch : ${{ env.BRANCH_NAME }}"
           echo "#########################################"
           echo "# COMPONENT_VERSION=${{env.COMPONENT_VERSION}}" 
-          echo "# issueList=${{ env.issueList }}"
+          echo "# issueList=${{ env.ISSUE_LIST }}"
           echo "#########################################"
 
