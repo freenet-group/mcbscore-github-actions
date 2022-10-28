@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       componentVersion:
-        description: 'Die Version der Komponente'
+        description: Die Version der Komponente
         required: true
       environment:
-        description: 'Die Zielumgebung'
+        description: Die Zielumgebung
         required: true
       timeout:
         description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
@@ -20,11 +20,12 @@ on:
 
 jobs:
   helm-deployment:
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
     container:
       image: docker.mobilcom.de/dpvo/cicd-kubernetes-helm3:latest
     env:
-      component: metis-ui
+      COMPONENT: metis-ui
+      DEPLOYMENT_PATH: mcbscore/deployment
 
     steps:
       # Leeren Workspace sicherstellen
@@ -33,33 +34,35 @@ jobs:
           echo "Cleaning up previous run"
           chown -R "$(id -u):$(id -g)" . || true
           rm -rf *
+
       - name: Clean
         uses: AutoModality/action-clean@v1.1.0
 
-      # jq installieren
-      - name: Setup jq
-        uses: freenet-actions/setup-jq@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      # Secrets aus AWS auslesen
-      - name: configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
-        with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = GITHUB_TOKEN
 
       # Auschecken des Deployment Repositories
       - name: Checkout Deployment Data / Scripts
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: freenet-group/ms-deployment
           token: ${{ env.GITHUB_TOKEN }}
+          path: ${{ env.DEPLOYMENT_PATH }}
           ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+
+      # jq installieren
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v2
 
       # kubernetes-deployment JSON einlesen
       - name: Read kubernetes-deployment.json
@@ -68,7 +71,7 @@ jobs:
           environment='${{ github.event.inputs.environment }}'
 
           # Das letzte JSON-Objekt (Datei mit -${environment}) gewinnt in jq add.
-          for f in "./properties/${component}/kubernetes-deployment.json" "./properties/${component}/kubernetes-deployment-${environment}.json"; do
+          for f in "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment.json" "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment-${environment}.json"; do
             printf '%s existiert' "$f" >&2
             if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
           done \
@@ -100,15 +103,15 @@ jobs:
           componentVersion='${{ github.event.inputs.componentVersion }}'
           timeout='${{ github.event.inputs.timeout }}'
 
-          chartDir="helm/$component"
+          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$COMPONENT"
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.
           valuesHelmOpts=()
           for f in \
               "$chartDir/stages/${environment}.yaml" \
-              "./properties/${component}/kubernetes-deployment.json" \
-              "./properties/${component}/kubernetes-deployment-${environment}.json"
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment.json" \
+              "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment-${environment}.json"
           do
             if [ -e "$f" ]; then
               valuesHelmOpts=("${valuesHelmOpts[@]}" "--values=$f")

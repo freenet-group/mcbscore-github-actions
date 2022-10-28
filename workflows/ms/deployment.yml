@@ -24,11 +24,11 @@ on:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
         default: main
-      bambiNotification:
-        description: Bambi Notification?
-        type: boolean
-        required: false
-        default: false
+#      bambiNotification:
+#        description: Bambi Notification?
+#        type: boolean
+#        required: false
+#        default: false
 
 jobs:
   create-deployment:
@@ -202,7 +202,7 @@ jobs:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, vm]
     needs: deploy
-    if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && inputs.bambiNotification == 'true' }}
+    if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
       # Deployment als erfolgreich melden
       - name: Report deployment status

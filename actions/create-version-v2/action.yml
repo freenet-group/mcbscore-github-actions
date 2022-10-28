@@ -1,0 +1,136 @@
+name: Create Version
+description: 'Auswertung der Issues eines Repositories seit dem letzten Tag, Bereitstellen von Issue-Infos für eventuelle Release-Notes, Erzeugen einer neuen Version für ein nachfolgendes Releasebuild'
+inputs:
+  jiraUrl:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: true
+  included_components:
+    description: Liste der zur Komponente gehörenden Komponenten
+    required: true  
+  tagPattern:
+    description: das zu erfüllende Muster für die Suche nach einem Tag im Repository (e.g "*" , "ms-bm.*" ,"[0-9]*") ( Regex )
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  branchName:
+    description: Der Branchname zur Steuerung des Versions-Suffix '-SNAPSHOT'
+    required: true
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+outputs:
+  newVersion:
+    description: die Versionskennung für das nachfolgende Releasebuild
+    value: ${{ steps.create-version.outputs.version }}
+  issueList:
+    description: Liste der beinhalteten Issues durch Leerzeichen getrennt
+    value: ${{ steps.create-version.outputs.issueList }}
+runs:
+  using: "composite"
+  steps: 
+    - id: create-version
+      shell: bash
+      run: |
+        echo Checked out ...
+        ls -l
+        echo "${{ inputs.included_components }}"
+
+        # letztes Tag ermitteln
+        lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
+        echo "Last Tag : ${lastTag}"
+
+        # hashcode fuer das vorherige release (i.e. lastTag)
+        tag=`git rev-list -n 1 $lastTag`
+        echo "Tag-Addresse ($lastTag) : $tag"
+
+        # merges
+        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "Merge" | grep "from" | cut -d '/' -f 3 | grep -Eo '^ABRMS-[0-9]{4}'  | cut -d '-' -f 1,2 | sort | uniq > a.txt ; then
+          echo "kein ABRMS-Merge"
+        fi
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "Merge" | grep "from" | cut -d '/' -f 3 | grep -Eo '^MCBS-[0-9]{4}'  | cut -d '-' -f 1,2 | sort | uniq >> a.txt ; then
+          echo "kein MCBS-Merge"
+        fi
+        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "Merge" | grep "from" | cut -d '/' -f 3 | grep -Eo '^HOMER-[0-9]{4}'  | cut -d '-' -f 1,2 | sort | uniq > a.txt ; then
+          echo "kein HOMER-Merge"
+        fi
+
+        # commits
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^\[ABRMS*" | cut -d ' ' -f 1 | sed s'/.$//' | sed s'/^.//' | sort | uniq >> a.txt ; then
+          echo "kein [ABRMS-Commit"
+        fi
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^\[MCBS*" | cut -d ' ' -f 1 | sed s'/.$//' | sed s'/^.//' | sort | uniq >> a.txt ; then
+          echo "kein [MCBS-Commit"
+        fi
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^\[HOMER*" | cut -d ' ' -f 1 | sed s'/.$//' | sed s'/^.//' | sort | uniq >> a.txt ; then
+          echo "kein [HOMER-Commit"
+        fi
+
+        # commits
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^ABRMS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
+          echo "kein ABRMS-Commit"
+        fi
+        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "^MCBS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 | sort | uniq  >> a.txt ; then
+          echo "kein MCBS-Commit"
+        fi
+        if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^HOMER*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
+          echo "kein HOMER-Commit"
+        fi
+        
+        # sortieren und unique ausgeben in die Zieldatei
+        cat a.txt
+        cat a.txt | sort | uniq >> branch_issues.txt
+        rm -f a.txt
+
+        # Kontrollausgabe
+        cat branch_issues.txt | while read line
+        do
+          printf $line" " 
+          printf $line" " >> issue_list.txt
+        done
+        
+        if [ ! -e issue_list.txt ];
+        then
+          printf "MCBS-3408 " >> issue_list.txt
+        fi
+        
+        # Ermitteln der nächsten Version basierend auf dem letztem Tag , der Komponente und der zuvor erzeugten Datei mit den beinhalteten Issues 
+        cp -r ./mcbscore/github/atlassian-tools/AtlassianDeveloperTools/jiraResources .
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+        
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianToolsVersion}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          mcbs_info.CreateNewMCBSComponentListVersionKt \
+          $lastTag \
+          "${{inputs.component}}" \
+          "branch_issues.txt" \
+          "${{inputs.jiraUrl}}" \
+          "${{inputs.jiraCredentials}}" \
+          "${{inputs.included_components}}"
+        
+        # Output-Variablen belegen
+        outVarVersion=`cat newVersion.txt`
+        
+        outVarList=`cat issue_list.txt | xargs echo -n`
+                        
+        echo "###########################################"
+        echo "New Version : "
+        echo "###########################################"
+        echo "$outVarVersion"
+        echo "###########################################"
+        echo "###########################################"
+        echo "Issue-List : "
+        echo "###########################################"
+        echo "$outVarList"
+        echo "###########################################"
+                  
+        # Version und Liste als Variable bereitstellen
+        echo "version=$outVarVersion" >> $GITHUB_OUTPUT
+        echo "issueList=$outVarList" >> $GITHUB_OUTPUT
