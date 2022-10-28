@@ -16,15 +16,17 @@ on:
           - "FB-Test (mcbstest@metis-ws-t11)"
           - "Prod (metis@metis-ws-p11)"
       actionsRepositoryBranch:
-        description: Welcher Branch von Repository mcbscore_actions benutzt werden soll
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
 
 jobs:
   deploy:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted,vm]
+    runs-on: [self-hosted, vm]
     env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
       SERVICE_PORT: 8090
 
     steps:
@@ -32,7 +34,10 @@ jobs:
       - name: Change Owner to Runner User
         if: ${{ always() }}
         run: |
-          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+          githubUser='${{ github.actor }}'
+          githubToken='${{ secrets.GH_R_PACKAGES }}'
+          docker login ghcr.io -u "$githubUser" -p "$githubToken"
+          docker run --rm -v "$(pwd):/target" -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       # Leeren Workspace sicherstellen
       - name: Ensure clean workspace
@@ -40,49 +45,42 @@ jobs:
           echo "Cleaning up previous run"
           rm -rf -- *
 
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+          fetch-depth: 0
+
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/metis_deployment_user = DEPLOYMENT_USER,
             /github/secrets/metis_deployment_user_ssh_key = DEPLOYMENT_USER_SSH_KEY
 
-      # Repository auschecken
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          token: ${{ env.TOKEN }}
-
-      # Build Properties einlesen
-      - name: Read build.properties
-        shell: bash
-        run: |
-          cat ./.github/build.properties >> $GITHUB_ENV
-
       # Die internen Actions auschecken
-      - name: checkout mcbscore actions
+      - name: checkout mcbscore-github-actions
         uses: actions/checkout@v3
         with:
-          repository: freenet-group/mcbscore_actions
+          repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
-          path: mcbscore/actions
+          path: ${{ env.ACTIONS_PATH }}
           ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
-      # jq installieren
-      - name: Setup jq
-        uses: freenet-actions/setup-jq@v1
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJq: true
 
       # Download Jars
       - name: Download Release
-        uses: ./mcbscore/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
           assetPattern: metis-rest-${{ github.event.inputs.componentVersion }}.jar
@@ -145,7 +143,7 @@ jobs:
 
             opts=(
               -Xmx8096M
-              -Dmanagement.port=8091 -Dmanagement.security.enabled=false -Dendpoints.shutdown.enabled=true -Dendpoints.sensitive=false
+              -Dmanagement.server.port=8091 -Dmanagement.security.enabled=false -Dendpoints.shutdown.enabled=true -Dendpoints.sensitive=false
               -Dserver.port='${{ env.SERVICE_PORT }}'
               -Dmetis.home="$PWD"
             )
