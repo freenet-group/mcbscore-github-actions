@@ -158,7 +158,8 @@ jobs:
         run: |
           
           cd markdown
-          echo "## Produktionsfreigabe :" >> ${{ github.event.inputs.releaseVersion }}.md
-          echo "Freigabe für PROD zum ${{ steps.determine-going-live-date.outputs.goingLiveDate }} am "$(date "+%d.%m.%y") >> ${{ github.event.inputs.releaseVersion }}.md
-          git commit -am "Ergänzung :  Freigabe"
+          echo "## Produktionsfreigabe: " >> MCBS_${{ github.event.inputs.releaseVersion }}
+          echo "Freigabe für PROD zum ${{ steps.determine-going-live-date.outputs.goingLiveDate }} am "$(date "+%d.%m.%y") >> MCBS_${{ github.event.inputs.releaseVersion }}
+          git add MCBS_${{ github.event.inputs.releaseVersion }}
+          git diff-index --quiet HEAD || git commit -m "Freigabe"
           git push
