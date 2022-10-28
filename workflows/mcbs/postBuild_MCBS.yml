@@ -7,7 +7,7 @@ on:
         description: Die Komponente im Sprachgebrauch
         required: true
       releaseVersion:
-        description: Die Release Version
+        description: Die Release-Version
         required: true
       issueList:
         description: Die Liste der integrierten JIRA-Issues
