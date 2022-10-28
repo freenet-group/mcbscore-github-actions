@@ -46,6 +46,7 @@ jobs:
   build:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, vm]
+    name: "build: ${{ toJSON(inputs) }}"
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
@@ -61,6 +62,9 @@ jobs:
           - { id: ms-mcbsservices, name: mcbsservices, group: ms }
 
     steps:
+      - name: Show Params
+        run: echo '${{ toJSON(inputs) }}'
+
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
         if: ${{ always() && (github.event.inputs.product == matrix.product.id || github.event.inputs.product == 'ALL') }}
