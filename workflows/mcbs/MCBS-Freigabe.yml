@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       releaseVersion:
-        description: Die Release Version
+        description: Die Release-Version
         required: true
       epic:
         description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
