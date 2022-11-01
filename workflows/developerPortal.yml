@@ -15,10 +15,6 @@ on:
       environment:
         description: Die Zielumgebung
         required: true
-      javaVersion:
-        description: JAVA Version
-        required: false
-        default: 11
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
