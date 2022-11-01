@@ -227,9 +227,7 @@ jobs:
         shell: bash
         run: |
           gh release list | sed 's/|/ /' | awk '{print $0, $8}' | while read -r line; do
-            draftRelease=$(echo "$line" | grep -E '${{ env.TAG_PATTERN }}' | grep "Draft" | awk '{print $3}')
-          
-            if [ ! -z "$draftRelease" ]
+            if draftRelease=$(echo "$line" | grep -E '${{ env.TAG_PATTERN }}' | grep "Draft" | awk '{print $3}');
             then
               echo "Deleting $draftRelease"
               gh release delete -y "$draftRelease"
