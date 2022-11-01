@@ -33,6 +33,7 @@ on:
 #Nur ein k8s Workflow darf gleichzeitg gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
 concurrency:
   group: ${{ github.workflow }}
+  cancel-in-progress: false
 env:
   DEPLOYMENT_PATH: mcbscore/deployment
   JAVA_VERSION: 11
