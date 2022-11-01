@@ -31,10 +31,17 @@ runs:
     - name: Read workflow.properties
       shell: bash
       run: |
+        # Einlesen der workflow.properties, wenn ein Prefix gesetzt ist
+        if [ ${{ inputs.configurationPrefix }} != '' && -f ./.github/workflow.properties ]; then cat ./.github/workflow.properties >> $GITHUB_ENV; fi 
         # Einlesen beider Dateien, da build.properties in workflow.properties umbenannt werden sollte. Somit bleibt es
         # abwärtskompatibel
         if [ -f ./.github/${{ inputs.configurationPrefix }}workflow.properties ]; then cat ./.github/${{ inputs.configurationPrefix }}workflow.properties >> $GITHUB_ENV; fi
         if [ -f ./.github/${{ inputs.configurationPrefix }}build.properties ]; then cat ./.github/${{ inputs.configurationPrefix }}build.properties >> $GITHUB_ENV; fi
+
+    - name: dump
+      shell: bash
+      run: |
+        env
 
     # JAVA installieren
     - name: Set up JDK
