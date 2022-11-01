@@ -37,11 +37,6 @@ runs:
         if [ -f ./.github/${{ inputs.configurationPrefix }}workflow.properties ]; then echo "$(cat ./.github/${{ inputs.configurationPrefix }}workflow.properties)" >> $GITHUB_ENV; fi
         if [ -f ./.github/${{ inputs.configurationPrefix }}build.properties ]; then echo "$(cat ./.github/${{ inputs.configurationPrefix }}build.properties)" >> $GITHUB_ENV; fi
 
-    - name: dump
-      shell: bash
-      run: |
-        env
-
     # JAVA installieren
     - name: Set up JDK
       if: ${{ inputs.installJava }}
