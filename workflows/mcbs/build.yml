@@ -281,9 +281,8 @@ jobs:
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && env.API_DOC_YAML_PATTERN != '' }}
         uses: ./mcbscore/github/actions/upload-api-doc-assets
         with:
-          version: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          componentVersion: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
           apiDocYmlPattern: ${{ env.API_DOC_YAML_PATTERN }}
-          token: ${{ env.TOKEN }}
 
       # Docker Image erzeugen
       - name: Docker Image erzeugen
