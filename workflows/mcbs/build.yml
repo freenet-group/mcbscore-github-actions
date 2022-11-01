@@ -289,7 +289,7 @@ jobs:
       - name: Docker Image erzeugen
         id: createDockerImage
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.group == 'ms' }}
-        uses: ./mcbscore/github/actions/microservice-docker-image-action
+        uses: ./mcbscore/github/actions/create-microservice-docker-image
         with:
           componentName: ms-${{ env.COMPONENT }}
           componentVersion: ${{ env.COMPONENT_VERSION }}
