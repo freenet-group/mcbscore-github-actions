@@ -60,4 +60,4 @@ runs:
     # Github CLI installieren
     - name: Setup Github CLI
       if: ${{ inputs.installGithubCli }}
-      uses: freenet-actions/setup-github-cli@v2
+      uses: freenet-actions/setup-github-cli@v1
