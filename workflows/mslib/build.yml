@@ -88,9 +88,10 @@ jobs:
 
       - id: determine-component-version
         name: Determine Component Version
-        uses: ./mcbscore/github/actions/determine-component-version
+        uses: ./mcbscore/github/actions/determine-component-version-v2
         with:
           component: ${{ env.COMPONENT }}
+          included_components: ${{ env.INCLUDED_COMPONENTS }}
 
       # ##################################################################################
       # Release bauen
