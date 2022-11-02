@@ -32,6 +32,11 @@ runs:
       shell: bash
       run: |
         echo "0"
+        ls -lrt
+        cd .github
+        echo "22"
+        ls -lrt
+        cd ..
         # Einlesen der workflow.properties, wenn ein Prefix gesetzt ist
         if [ -n '${{ inputs.configurationPrefix }}' ] && [ -f ./.github/workflow.properties ]; then echo "1"; { cat .github/workflow.properties; echo; } >> $GITHUB_ENV; fi 
         # Einlesen beider Dateien, da build.properties in workflow.properties umbenannt werden sollte. Somit bleibt es abwärtskompatibel
