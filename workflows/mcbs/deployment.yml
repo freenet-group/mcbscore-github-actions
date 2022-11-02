@@ -79,6 +79,7 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       DEPLOYMENT_PATH: mcbscore/deployment
+      REPOSITORY_PATH: repository
       NODEJS_VERSION: 16
 
     steps:
@@ -103,7 +104,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          path: repository
+          path: ${{ env.REPOSITORY_PATH }}
 
       - name: Read AWS Secrets
         uses: ./repository/.github/actions/read-aws-secrets
@@ -144,6 +145,7 @@ jobs:
           installNodeJs: true
           installJq: true
           configurationPrefix: ${{ github.event.inputs.component }}_
+          lookupBasePath: ./${{ env.REPOSITORY_PATH }}
 
       - name: Download Release
         uses: ./mcbscore/github/actions/download-release-assets
