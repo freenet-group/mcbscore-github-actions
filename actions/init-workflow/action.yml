@@ -23,6 +23,11 @@ inputs:
     type: string
     required: false
     default:
+  lookupBasePath:
+    description: Basispfad für den Lookup der Properties Dateien
+    type: string
+    required: false
+    default: .
 
 runs:
   using: "composite"
@@ -32,10 +37,10 @@ runs:
       shell: bash
       run: |
         # Einlesen der workflow.properties, wenn ein Prefix gesetzt ist
-        if [ -n '${{ inputs.configurationPrefix }}' ] && [ -f ./.github/workflow.properties ]; then { cat .github/workflow.properties; echo; } >> $GITHUB_ENV; fi 
+        if [ -n '${{ inputs.configurationPrefix }}' ] && [ -f ${{ inputs.lookupBasePath }}/.github/workflow.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/workflow.properties; echo; } >> $GITHUB_ENV; fi 
         # Einlesen beider Dateien, da build.properties in workflow.properties umbenannt werden sollte. Somit bleibt es abwärtskompatibel
-        if [ -f ./.github/${{ inputs.configurationPrefix }}workflow.properties ]; then { cat ./.github/${{ inputs.configurationPrefix }}workflow.properties; echo; } >> $GITHUB_ENV; fi
-        if [ -f ./.github/${{ inputs.configurationPrefix }}build.properties ]; then { cat ./.github/${{ inputs.configurationPrefix }}build.properties; echo; } >> $GITHUB_ENV; fi
+        if [ -f ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}workflow.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}workflow.properties; echo; } >> $GITHUB_ENV; fi
+        if [ -f ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}build.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}build.properties; echo; } >> $GITHUB_ENV; fi
 
     # JAVA installieren
     - name: Set up JDK
