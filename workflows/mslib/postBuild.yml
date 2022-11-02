@@ -125,7 +125,7 @@ jobs:
       # Eintrag der fixVersion
       # ##################################################################################
       - name: setFixVersions
-        uses: ./mcbscore/github/actions/set-fix-version
+        uses: ./mcbscore/github/actions/set-fix-version-v2
         with:
           jiraUrl: ${{ env.JIRA_API_URL }}
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
@@ -133,6 +133,7 @@ jobs:
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          included_components: ${{ env.INCLUDED_COMPONENTS }}
 
       # ##################################################################################
       # set Issues "done"
