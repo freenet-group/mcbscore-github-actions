@@ -83,7 +83,7 @@ jobs:
           token: ${{ env.TOKEN }}
 
       - name: Download Release (masterdata)
-        uses: ./mcbscore/github/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
           assetPattern: metis-masterdata-${{ github.event.inputs.componentVersion }}.jar
@@ -91,7 +91,7 @@ jobs:
           token: ${{ env.TOKEN }}
 
       - name: Download Release (hofactoring)
-        uses: ./mcbscore/github/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
           assetPattern: metis-hofactoring-${{ github.event.inputs.componentVersion }}.jar
@@ -99,7 +99,7 @@ jobs:
           token: ${{ env.TOKEN }}
 
       - name: Download Release (shell)
-        uses: ./mcbscore/github/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
           assetPattern: metis-shell-${{ github.event.inputs.componentVersion }}.jar
