@@ -118,6 +118,9 @@ jobs:
             git push
           fi
 
+          git tag -f -a sql-${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}"
+          git push --tags -f
+          
       - name: Scripte prüfen
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') }}
         run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password='${{ env.LIQUIBASE_PASSWORD }}' -PLI_contexts=production -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN='${{ env.TOKEN }}' createDatabaseChangeScripts ${{ github.event.inputs.gradleOptions }}

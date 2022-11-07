@@ -75,7 +75,7 @@ jobs:
 
       # Download Jars
       - name: Download Release (pirun)
-        uses: ./mcbscore/github/actions/download-release-assets-action
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
           assetPattern: metis-pirun-${{ github.event.inputs.componentVersion }}.jar
