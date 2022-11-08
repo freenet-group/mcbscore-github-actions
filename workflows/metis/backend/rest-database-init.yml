@@ -47,4 +47,4 @@ jobs:
             requestBody=
           fi
           set -x
-          curl -X POST -d "$requestBody" "${GH_INPUT_BASE_URL}/actuator/${path}"
+          curl --request POST --data "$requestBody" --fail-with-body "${GH_INPUT_BASE_URL}/actuator/${path}"
