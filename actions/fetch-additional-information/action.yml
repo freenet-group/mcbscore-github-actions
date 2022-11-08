@@ -27,7 +27,7 @@ outputs:
     value: ${{ steps.fetchAdditionalInfo.outputs.dependency }}  
   dependentIssues:
     description: konkrete Abhängigkeiten
-    value: ${{ steps.fetchAdditionalInfo.outputs.dependent_issues }}
+    value: ${{ steps.fetchAdditionalInfo.outputs.dependentIssues }}
   sql:
     description: Indikator für db-changes
     value: ${{ steps.fetchAdditionalInfo.outputs.sql }}  
@@ -64,8 +64,8 @@ runs:
         echo "DEPENDENT_ISSUES=$(echo $dependendIssueList)" >> $GITHUB_ENV
 
         # Liste als Variable bereitstellen
-        echo "##[set-output name=dependent_issues;]$dependendIssueList"
-
+        echo "dependentIssues=$dependendIssueList" >> $GITHUB_OUTPUT
+        
         # Dependencies TRUE || FALSE
         while IFS='=' read -r key value
         do
@@ -76,7 +76,7 @@ runs:
         echo "DEPENDENCY=$(echo $dependency)" >> $GITHUB_ENV
 
         # Variable bereitstellen
-        echo "##[set-output name=dependency;]$dependency"
+        echo "dependency=$dependency" >> $GITHUB_OUTPUT
         
         # DB-Changes auswerten
         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
@@ -95,7 +95,7 @@ runs:
         echo "SQL=$(echo $sql)" >> $GITHUB_ENV
 
         # Variable bereitstellen
-        echo "##[set-output name=sql;]$sql"
+        echo "sql=$sql" >> $GITHUB_OUTPUT
         
         # Config auswerten
         java -Dlog4j2.configurationFile="$atlassianToolsDir"s/log4j2-${{ inputs.logLevel }}.xml \
@@ -114,4 +114,4 @@ runs:
         echo "CONFIG=$(echo $config)" >> $GITHUB_ENV
 
         # Version als Variable bereitstellen
-        echo "##[set-output name=config;]$config"
+        echo "config=$config" >> $GITHUB_OUTPUT
