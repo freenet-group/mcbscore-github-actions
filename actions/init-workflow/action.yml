@@ -69,6 +69,13 @@ runs:
         echo "2 ${{ inputs.installJavaWithNashornEngine }}"
 
     # JAVA installieren
+    - name: Set up JDK
+      if: ${{ inputs.installJavaWithNashornEngine == true }}
+      shell: bash
+      run: |
+        echo "2.5 ${{ inputs.installJavaWithNashornEngine }}"
+
+    # JAVA installieren
     - name: Set up JDK 2
       if: ${{ inputs.installJava }}
       shell: bash
