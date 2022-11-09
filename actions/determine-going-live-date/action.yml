@@ -35,7 +35,7 @@ runs:
         if [ "${{ inputs.epic }}" == "META-170" ];
         then
           # Version als Variable bereitstellen
-          echo "##[set-output name=goingLiveDate;]unbestimmt"
+          echo "goingLiveDate=unbestimmt" >> $GITHUB_OUTPUT
         else
           java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
             -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
@@ -44,5 +44,5 @@ runs:
             "${{ inputs.jiraCredentials }}" \
             "${{ inputs.epic }}"
           ibnDate=`cat ./ibn.properties | grep "IBN-Date" | cut -d'=' -f2`
-          echo "##[set-output name=goingLiveDate;]$ibnDate"
+          echo "goingLiveDate=$ibnDate" >> $GITHUB_OUTPUT
         fi

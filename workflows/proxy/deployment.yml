@@ -75,9 +75,9 @@ jobs:
         run: |
           if  [[ ${{ inputs.externalProxy }} == 'true' ]] ;
           then
-            echo "::set-output name=suffix::-extern"
+            echo "suffix=-extern" >> $GITHUB_OUTPUT
           else
-            echo "::set-output name=suffix::"
+            echo "suffix=" >> $GITHUB_OUTPUT
           fi
 
       - name: Create GitHub deployment
