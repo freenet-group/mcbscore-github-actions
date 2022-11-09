@@ -55,47 +55,12 @@ runs:
         java-version: ${{ env.JAVA_VERSION }}
 
     # JAVA installieren
-    - name: Set up JDK
-      if: ${{ inputs.installJava == 'true' }}
-      shell: bash
-      run: |
-        echo "1 ${{ inputs.installJava }}"
-
-    # JAVA installieren
-    - name: Set up JDK
+    - name: Set up JDK with Nashorn engine
       if: ${{ inputs.installJavaWithNashornEngine == 'true' }}
-      shell: bash
-      run: |
-        echo "2 ${{ inputs.installJavaWithNashornEngine }}"
-
-    # JAVA installieren
-    - name: Set up JDK
-      if: ${{ inputs.installJavaWithNashornEngine == 'true' }}
-      shell: bash
-      run: |
-        echo "2.5 ${{ inputs.installJavaWithNashornEngine }}"
-
-    # JAVA installieren
-    - name: Set up JDK 2
-      if: ${{ inputs.installJava == 'true' }}
-      shell: bash
-      run: |
-        echo "3 ${{ inputs.installJava }}"
-
-    # JAVA installieren
-    - name: Set up JDK 1
-      if: ${{ inputs.installJavaWithNashornEngine == 'true' }}
-      shell: bash
-      run: |
-        echo "4 ${{ inputs.installJavaWithNashornEngine }}"
-
-    # JAVA installieren
-#    - name: Set up JDK
-#      if: ${{ inputs.installJavaWithNashornEngine }}
-#      uses: actions/setup-java@v3
-#      with:
-#        distribution: zulu
-#        java-version: 11
+      uses: actions/setup-java@v3
+      with:
+        distribution: zulu
+        java-version: 11
 
     # Node.js installieren
     - name: Set up Node.js
