@@ -55,6 +55,34 @@ runs:
         java-version: ${{ env.JAVA_VERSION }}
 
     # JAVA installieren
+    - name: Set up JDK
+      if: ${{ inputs.installJava }}
+      shell: bash
+      run: |
+        echo "1 ${{ inputs.installJava }}"
+
+    # JAVA installieren
+    - name: Set up JDK
+      if: ${{ inputs.installJavaWithNashornEngine }}
+      shell: bash
+      run: |
+        echo "2 ${{ inputs.installJavaWithNashornEngine }}"
+
+    # JAVA installieren
+    - name: Set up JDK 2
+      if: ${{ inputs.installJava }}
+      shell: bash
+      run: |
+        echo "3 ${{ inputs.installJava }}"
+
+    # JAVA installieren
+    - name: Set up JDK 1
+      if: ${{ inputs.installJavaWithNashornEngine }}
+      shell: bash
+      run: |
+        echo "4 ${{ inputs.installJavaWithNashornEngine }}"
+
+    # JAVA installieren
 #    - name: Set up JDK
 #      if: ${{ inputs.installJavaWithNashornEngine }}
 #      uses: actions/setup-java@v3
