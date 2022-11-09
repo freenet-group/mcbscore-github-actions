@@ -48,33 +48,33 @@ runs:
 
     # JAVA installieren
     - name: Set up JDK
-      if: ${{ inputs.installJava }}
+      if: ${{ inputs.installJava == 'true' }}
       uses: actions/setup-java@v3
       with:
         distribution: zulu
         java-version: ${{ env.JAVA_VERSION }}
 
     # JAVA installieren
-#    - name: Set up JDK
-#      if: ${{ inputs.installJavaWithNashornEngine }}
-#      uses: actions/setup-java@v3
-#      with:
-#        distribution: zulu
-#        java-version: 11
+    - name: Set up JDK with Nashorn engine
+      if: ${{ inputs.installJavaWithNashornEngine == 'true' }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: zulu
+        java-version: 11
 
     # Node.js installieren
     - name: Set up Node.js
-      if: ${{ inputs.installNodeJs }}
+      if: ${{ inputs.installNodeJs == 'true' }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ env.NODEJS_VERSION }}
 
     # jq installieren
     - name: Setup jq
-      if: ${{ inputs.installJq }}
+      if: ${{ inputs.installJq == 'true' }}
       uses: freenet-actions/setup-jq@v2
 
     # Github CLI installieren
     - name: Setup Github CLI
-      if: ${{ inputs.installGithubCli }}
+      if: ${{ inputs.installGithubCli == 'true' }}
       uses: freenet-actions/setup-github-cli@v2
