@@ -48,7 +48,7 @@ runs:
 
     # JAVA installieren
     - name: Set up JDK
-      if: ${{ inputs.installJava }}
+      if: ${{ inputs.installJava == 'true' }}
       uses: actions/setup-java@v3
       with:
         distribution: zulu
@@ -56,35 +56,35 @@ runs:
 
     # JAVA installieren
     - name: Set up JDK
-      if: ${{ inputs.installJava }}
+      if: ${{ inputs.installJava == 'true' }}
       shell: bash
       run: |
         echo "1 ${{ inputs.installJava }}"
 
     # JAVA installieren
     - name: Set up JDK
-      if: ${{ inputs.installJavaWithNashornEngine }}
+      if: ${{ inputs.installJavaWithNashornEngine == 'true' }}
       shell: bash
       run: |
         echo "2 ${{ inputs.installJavaWithNashornEngine }}"
 
     # JAVA installieren
     - name: Set up JDK
-      if: ${{ inputs.installJavaWithNashornEngine == true }}
+      if: ${{ inputs.installJavaWithNashornEngine == 'true' }}
       shell: bash
       run: |
         echo "2.5 ${{ inputs.installJavaWithNashornEngine }}"
 
     # JAVA installieren
     - name: Set up JDK 2
-      if: ${{ inputs.installJava }}
+      if: ${{ inputs.installJava == 'true' }}
       shell: bash
       run: |
         echo "3 ${{ inputs.installJava }}"
 
     # JAVA installieren
     - name: Set up JDK 1
-      if: ${{ inputs.installJavaWithNashornEngine }}
+      if: ${{ inputs.installJavaWithNashornEngine == 'true' }}
       shell: bash
       run: |
         echo "4 ${{ inputs.installJavaWithNashornEngine }}"
@@ -99,17 +99,17 @@ runs:
 
     # Node.js installieren
     - name: Set up Node.js
-      if: ${{ inputs.installNodeJs }}
+      if: ${{ inputs.installNodeJs == 'true' }}
       uses: actions/setup-node@v3
       with:
         node-version: ${{ env.NODEJS_VERSION }}
 
     # jq installieren
     - name: Setup jq
-      if: ${{ inputs.installJq }}
+      if: ${{ inputs.installJq == 'true' }}
       uses: freenet-actions/setup-jq@v2
 
     # Github CLI installieren
     - name: Setup Github CLI
-      if: ${{ inputs.installGithubCli }}
+      if: ${{ inputs.installGithubCli == 'true' }}
       uses: freenet-actions/setup-github-cli@v2
