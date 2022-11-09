@@ -88,7 +88,7 @@ jobs:
       - name: Initialize Workflow
         uses: ./mcbscore/github/actions/init-workflow
         with:
-          installJava: true
+          installJavaWithNashornEngine: true
           installJq: true
           installNodeJs: true
 
