@@ -195,6 +195,7 @@ jobs:
           componentName: ms-${{ env.COMPONENT }}
           componentVersion: ${{ env.COMPONENT_VERSION }}
           jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          javaVersion: ${{ env.JAVA_VERSION }}
 
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow
