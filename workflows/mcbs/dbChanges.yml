@@ -42,13 +42,20 @@ jobs:
       - name: Read workflow.properties
         shell: bash
         run: |
-          cat ./source/.github/${{ github.event.inputs.component }}_workflow.properties >> $GITHUB_ENV
+          cat ./source/.github/${{ github.event.inputs.component }}_build.properties >> $GITHUB_ENV
 
       - name: DB Changes kopieren
         shell: bash
         run: |
-          cp -Rv source/${{ env.DB_CHANGES_BASE_DIRECTORY }}${{ env.DB_CHANGES_DIRECTORY }}/* target/${{ github.event.inputs.component }}/${{ env.DB_CHANGES_DIRECTORY }}
+          # Pfade in Array laden
+          IFS=',' read -r -a array <<< "${{ env.DB_CHANGES_PATHS }}"
           
+          # Alle Inhalte der Pfade aus dem Array kopieren
+          for path in "${array[@]}"
+          do
+            cp -Rv source/${{ env.DB_CHANGES_BASE_DIRECTORY }}$path/* target/${{ github.event.inputs.component }}/$path
+          done
+
           cd target
           git config user.name github-actions
           git config user.email github-actions@github.com
