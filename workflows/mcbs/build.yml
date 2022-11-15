@@ -349,7 +349,7 @@ jobs:
             {
               "component": "${{ matrix.product.name }}",
               "releaseVersion": "${{ env.COMPONENT_VERSION }}",
-              "issueList": "${{ env.issueList }}",
+              "issueList": "${{ env.ISSUE_LIST }}",
               "epic": "${{ env.EPIC }}",
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             } 
@@ -365,7 +365,7 @@ jobs:
             {
               "component": "${{ matrix.product.id }}",
               "releaseVersion": "${{ env.COMPONENT_VERSION }}",
-              "issueList": "${{ env.issueList }}",
+              "issueList": "${{ env.ISSUE_LIST }}",
               "epic": "${{ env.EPIC }}",
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             }
@@ -381,7 +381,7 @@ jobs:
             {
               "component": "${{ matrix.product.id }}",
               "releaseVersion": "${{ env.COMPONENT_VERSION }}",
-              "issueList": "${{ env.issueList }}",
+              "issueList": "${{ env.ISSUE_LIST }}",
               "epic": "${{ env.EPIC }}",
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             }
