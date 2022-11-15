@@ -64,7 +64,7 @@ jobs:
       # Inputs zu handlichen Variablen umwandeln
       - name: Setup variables
         env:
-          - GH_INPUT_ENV: ${{ inputs.environment }}
+          GH_INPUT_ENV: ${{ inputs.environment }}
         shell: bash
         run: |
           prof=${GH_INPUT_ENV%%(*}    # ab erster Klammer abschneiden
