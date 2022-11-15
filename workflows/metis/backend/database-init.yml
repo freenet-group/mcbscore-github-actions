@@ -1,0 +1,88 @@
+name: Test-Datenbank löschen und initialisieren
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
+      environment:
+        description: Die Zielumgebung
+        required: true
+        type: choice
+        options:
+          - "dev (=> Datenbank wie im dev Profil konfiguriert)"
+          - "testauto (=> temporäre Datenbank; zum Workflow testen)"
+      loadTestData:
+        description: nach dem Zurücksetzen der Datenbank Testdaten einspielen
+        type: boolean
+        required: false
+        default: false
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        type: string
+        required: false
+        default: main
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, vm]
+    name: "deploy: ${{ toJSON(inputs) }}"
+    env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
+
+    steps:
+      - name: Read AWS Secrets
+        uses: ./repository/.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v3
+        with:
+          token: ${{ env.TOKEN }}
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
+
+      - name: Initialize Workflow
+        uses: ${{ env.ACTIONS_PATH }}/actions/init-workflow
+        with:
+          installJava: true
+
+      # Inputs zu handlichen Variablen umwandeln
+      - name: Setup variables
+        env:
+          - GH_INPUT_ENV: ${{ inputs.environment }}
+        shell: bash
+        run: |
+          prof=${GH_INPUT_ENV%%(*}    # ab erster Klammer abschneiden
+          prof=${prof//[[:space:]]/}  # trimmen
+          printf '%s=%s\n' SPRING_PROFILE prof | tee -a -- "$GITHUB_ENV"
+
+      - name: Download release
+        uses: ${{ env.ACTIONS_PATH }}/actions/download-release-assets
+        with:
+          version: ${{ env.TAG_PREFIX }}${{ inputs.componentVersion }}
+          assetPattern: metis-shell-${{ inputs.componentVersion }}.jar
+          targetPath: ./release
+          token: ${{ env.TOKEN }}
+
+      - name: Reset database
+        shell: bash
+        env:
+          GH_INPUT_COMPONENT_VERSION: ${{ inputs.componentVersion }}
+        run: |
+          java -Xmx1g -Dfile.encoding=UTF-8 "-Dspring.profiles.active=$SPRING_PROFILE" \
+            -jar "metis-shell-${GH_INPUT_COMPONENT_VERSION}.jar" resetTestData
+
+      - name: Load test data
+        if: inputs.loadTestData == 'true'
+        shell: bash
+        run: |
+          java -Xmx2g -Dfile.encoding=UTF-8 "-Dspring.profiles.active=$SPRING_PROFILE" \
+            -jar "metis-shell-${GH_INPUT_COMPONENT_VERSION}.jar" 'loadTestData --inputFileName testDataSetFULL.xml'
