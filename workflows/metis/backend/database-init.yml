@@ -1,4 +1,4 @@
-name: Test-Datenbank löschen und initialisieren
+name: "Test-Datenbank löschen und initialisieren"
 
 on:
   workflow_dispatch:
@@ -31,10 +31,17 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
+      REPOSITORY_PATH: repository
 
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          path: ${{ env.REPOSITORY_PATH }}
+
       - name: Read AWS Secrets
-        uses: ./repository/.github/actions/read-aws-secrets
+        uses: ./${{ env.REPOSITORY_PATH }}/.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
