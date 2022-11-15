@@ -41,7 +41,7 @@ jobs:
           path: ${{ env.REPOSITORY_PATH }}
 
       - name: Read AWS Secrets
-        uses: ./${{ env.REPOSITORY_PATH }}/.github/actions/read-aws-secrets
+        uses: ./repository/.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
