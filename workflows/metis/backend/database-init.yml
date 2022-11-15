@@ -72,7 +72,7 @@ jobs:
           printf '%s=%s\n' SPRING_PROFILE prof | tee -a -- "$GITHUB_ENV"
 
       - name: Download release
-        uses: ${{ env.ACTIONS_PATH }}/actions/download-release-assets
+        uses: mcbscore/github/actions/download-release-assets
         with:
           version: ${{ env.TAG_PREFIX }}${{ inputs.componentVersion }}
           assetPattern: metis-shell-${{ inputs.componentVersion }}.jar
