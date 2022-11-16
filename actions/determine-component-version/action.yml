@@ -8,6 +8,10 @@ inputs:
     description: Erzeugt die Version auf einem anderen Weg (MCBS Spezial). Ist für mcbs-master auf true zu setzen
     required: false
     default: false
+  included_components:
+    description: die zugehörigen Komonenten
+    required: false
+    default: " "  
 
 runs:
   using: "composite"
