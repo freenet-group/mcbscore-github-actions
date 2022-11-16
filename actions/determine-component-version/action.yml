@@ -8,8 +8,8 @@ inputs:
     description: Erzeugt die Version auf einem anderen Weg (MCBS Spezial). Ist für mcbs-master auf true zu setzen
     required: false
     default: false
-  included_components:
-    description: die zugehörigen Komonenten
+  includedComponents:
+    description: die zugehörigen Komponenten
     required: false
     default: " "  
 
@@ -29,7 +29,7 @@ runs:
         component: ${{ inputs.component }}
         branchName: ${{ env.BRANCH_NAME }}
         versionByComponentList: ${{ inputs.versionByComponentList }}
-        included_components: ${{ inputs.included_components }}
+        included_components: ${{ inputs.includedComponents }}
 
     # COMPONENT_VERSION Umgebungsvariable setzen
     - name: Set component version
