@@ -42,7 +42,7 @@ jobs:
       - name: Read workflow.properties
         shell: bash
         run: |
-          cat ./source/.github/${{ github.event.inputs.component }}_build.properties >> $GITHUB_ENV
+          cat ./source/.github/${{ github.event.inputs.component }}_workflow.properties >> $GITHUB_ENV
 
       - name: DB Changes kopieren
         shell: bash
