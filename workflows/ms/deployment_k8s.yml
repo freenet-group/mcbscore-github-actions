@@ -1,5 +1,5 @@
 name: K8s Deployment
-#Name fuer den workflow. Wichtig bei mehreren workflows im selben Workflow um die workflows zu unterscheiden. 
+#Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im ations unterscheiden zu koennen. 
 run-name: K8s Deployment von ${{ github.event.inputs.component }}
 
 on:
@@ -318,6 +318,12 @@ jobs:
           < kubernetes-secrets-all.generated.json \
           | tee kubernetes-secrets.generated.json
 
+
+      # Wird fuer Kubernetes Login step benoetigt    
+      - name: Install unzip
+        run: |
+          apt-get update && \
+          apt-get install unzip -y 
       # Kubernetes Login
       - name: 'Login k8s/helm'
         uses: freenet-actions/prepare-k8s-env@v1
