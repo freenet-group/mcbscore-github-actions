@@ -46,8 +46,19 @@ jobs:
 
       - name: DB Changes kopieren
         shell: bash
+        env:
+          GH_INPUT_COMPONENT: ${{ inputs.component }}
+          GH_INPUT_COMPONENT_VERSION: ${{ inputs.componentVersion }}
+          GH_INPUT_TAG_PREFIX: ${{ inputs.tagPrefix }}
         run: |
-          cp -Rv source/${{ env.DB_CHANGES_BASE_DIRECTORY }}${{ env.DB_CHANGES_DIRECTORY }}/* target/${{ github.event.inputs.component }}/${{ env.DB_CHANGES_DIRECTORY }}
+          # Pfade in Array laden
+          IFS=',' read -r -a array <<< "$DB_CHANGES_PATHS"
+          
+          # Alle Inhalte der Pfade aus dem Array kopieren
+          for path in "${array[@]}"
+          do
+            cp -Rv source/$DB_CHANGES_BASE_DIRECTORY$path/* target/$GH_INPUT_COMPONENT/$path
+          done
           
           cd target
           git config user.name github-actions
@@ -58,9 +69,9 @@ jobs:
           if [ -n "$changesDetected" ]
           then
             git add .
-            git commit -m "[Releasebuild] db-changes ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}"
+            git commit -m "[Releasebuild] db-changes $GH_INPUT_TAG_PREFIX$GH_INPUT_COMPONENT_VERSION"
             git push
           fi
 
-          git tag -f -a sql-${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }} -m "tagging sql-${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}"
+          git tag -f -a sql-$GH_INPUT_TAG_PREFIX$GH_INPUT_COMPONENT_VERSION -m "tagging sql-$GH_INPUT_TAG_PREFIX$GH_INPUT_COMPONENT_VERSION"
           git push --tags -f
