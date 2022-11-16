@@ -25,6 +25,7 @@ runs:
         component: ${{ inputs.component }}
         branchName: ${{ env.BRANCH_NAME }}
         versionByComponentList: ${{ inputs.versionByComponentList }}
+        included_components: ${{ inputs.included_components }}
 
     # COMPONENT_VERSION Umgebungsvariable setzen
     - name: Set component version
@@ -44,6 +45,7 @@ runs:
       if: ${{ inputs.component == '' }}
       shell: bash
       run: |
+        echo "${{ included_components }}"
         # letztes Tag ermitteln
         LAST_VERSION=`git describe --abbrev=0 --tags --match "[0-9]*"`
         echo "last version : ${LAST_VERSION}"
