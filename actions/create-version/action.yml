@@ -139,7 +139,8 @@ runs:
             "${{inputs.component}}" \
             "branch_issues.txt" \
             "${{inputs.jiraUrl}}" \
-            "${{inputs.jiraCredentials}}"
+            "${{inputs.jiraCredentials}}" \
+            "${{ inputs.included_components }}"
         fi
         
         # Output-Variablen belegen
