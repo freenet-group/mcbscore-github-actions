@@ -1,6 +1,6 @@
 name: K8s Deployment
 #Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im ations unterscheiden zu koennen. 
-run-name: K8s Deployment von ${{ github.event.inputs.component }}
+run-name: K8s Deployment von ${{ github.event.inputs.component }} - ${{ github.event.inputs.componentVersion }} nach ${{ github.event.inputs.environment }}
 
 on:
   workflow_dispatch:
