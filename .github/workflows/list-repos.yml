@@ -25,20 +25,8 @@ jobs:
         uses: ./actions/init-workflow
         with:
           installGithubCli: true
-          installJq: true
 
       - name: List Repos
-        shell: bash
-        run: |
-          gh api \
-            -H "Accept: application/vnd.github+json" \
-            -X GET /orgs/freenet-group/teams/mcbs-core/repos \
-            -F "per_page=50" > data.json
-          jq '.[].html_url' data.json
-        env:
-          GH_TOKEN: ${{ env.TOKEN }}
-
-      - name: List Repos II
         shell: bash
         run: |
           for ((p=1;;p++)); do 
