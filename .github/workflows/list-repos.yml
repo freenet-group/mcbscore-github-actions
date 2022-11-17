@@ -53,3 +53,5 @@ jobs:
                 }
               }
             }'
+        env:
+          GH_TOKEN: ${{ env.TOKEN }}
