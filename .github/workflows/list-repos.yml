@@ -31,8 +31,8 @@ jobs:
         shell: bash
         run: |
           gh api \
-            -H "Accept: application/vnd.github+json" -F per_page=50 \
-            /orgs/freenet-group/teams/mcbs-core/repos > data.json
+            -H "Accept: application/vnd.github+json" \
+            /orgs/freenet-group/teams/mcbs-core/repos -F per_page=50 > data.json
           jq '.[].html_url' data.json
         env:
           GH_TOKEN: ${{ env.TOKEN }}
