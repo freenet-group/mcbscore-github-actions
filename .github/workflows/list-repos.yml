@@ -42,16 +42,32 @@ jobs:
         shell: bash
         run: |
           gh api graphql --paginate -f query='
-            query($endCursor: String) {
-              viewer {
-                repositories(owner: "freenet-group/mcbs-core", first: 100, after: $endCursor) {
-                  nodes { url }
-                  pageInfo {
-                    hasNextPage
-                    endCursor
+            query {
+              organization(login: "freenet-group") {
+                team(slug:"mcbs-core"){
+                  name
+                  repositories(first:3){
+                    edges {
+                      permission
+                      node {
+                        name
+                      }
+                    }
                   }
                 }
               }
             }'
+
+#            query($endCursor: String) {
+#              viewer {
+#                repositories(owner: "freenet-group/mcbs-core", first: 100, after: $endCursor) {
+#                  nodes { url }
+#                  pageInfo {
+#                    hasNextPage
+#                    endCursor
+#                  }
+#                }
+#              }
+#            }'
         env:
           GH_TOKEN: ${{ env.TOKEN }}
