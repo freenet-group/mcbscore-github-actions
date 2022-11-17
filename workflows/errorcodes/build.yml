@@ -72,6 +72,7 @@ jobs:
         with:
           installJava: true
           installNodeJs: true
+          installGithubCli: true
 
       - name: Install mocha
         run: npm install -g mocha
@@ -151,14 +152,17 @@ jobs:
       - name: Create Release
         id: create_release
         if: env.BUILD_TYPE == 'RELEASE'
-        uses: actions/create-release@v1
+        run: |
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          /repos/${{ github.repository }}/releases \
+          -f tag_name='${{ env.COMPONENT_VERSION }}' \
+          -f name='${{ env.COMPONENT_VERSION }}' \
+          -F draft=false \
+          -F prerelease=false
         env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
-        with:
-          tag_name: '${{ env.COMPONENT_VERSION }}'
-          release_name: '${{ env.COMPONENT_VERSION }}'
-          draft: false
-          prerelease: false
+          GH_TOKEN: ${{ env.TOKEN }}
 
       # Release JAR hinzufügen
       - name: Upload Release JAR

@@ -74,6 +74,7 @@ jobs:
           installJava: true
           installJq: true
           installNodeJs: true
+          installGithubCli: true
 
       - run: npm install
 
@@ -116,14 +117,17 @@ jobs:
       - name: Create Release
         id: create-release
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: actions/create-release@v1
+        run: |
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          /repos/${{ github.repository }}/releases \
+          -f tag_name='${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}' \
+          -f name='${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}' \
+          -F draft=${{ env.DRAFT }} \
+          -F prerelease=false
         env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
-        with:
-          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          release_name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-          prerelease: false
+          GH_TOKEN: ${{ env.TOKEN }}
 
       # Release ZIP hinzufügen
       - name: Upload Release ZIP

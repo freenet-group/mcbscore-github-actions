@@ -83,6 +83,7 @@ jobs:
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
+          installGithubCli: true
 
       # ##################################################################################
       # Version ermitteln
@@ -155,14 +156,17 @@ jobs:
       - name: Create Release
         id: create_release
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: actions/create-release@v1
+        run: |
+          gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          /repos/${{ github.repository }}/releases \
+          -f tag_name='${{ env.COMPONENT_VERSION }}' \
+          -f name='${{ env.COMPONENT_VERSION }}' \
+          -F draft=${{ env.DRAFT }} \
+          -F prerelease=false
         env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
-        with:
-          tag_name: ${{ env.COMPONENT_VERSION }}
-          release_name: ${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-          prerelease: false
+          GH_TOKEN: ${{ env.TOKEN }}
 
       # Release ZIP hinzufügen
       - name: Upload Release ZIP
