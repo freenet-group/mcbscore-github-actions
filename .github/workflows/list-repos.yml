@@ -46,7 +46,9 @@ jobs:
               organization(login: "freenet-group") {
                 team(slug: "mcbs-core"){
                   repositories(first:3){
-                    url
+                    nodes {
+                    }
+                    totalCount
                   }
                 }
               }
