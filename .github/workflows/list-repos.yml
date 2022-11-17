@@ -44,7 +44,7 @@ jobs:
           gh api graphql --paginate -f query='
             query($endCursor: String) {
               viewer {
-                repositories(owner: $owner, first: 100, after: $endCursor) {
+                repositories(owner: freenet-group/mcbs-core, first: 100, after: $endCursor) {
                   nodes { url }
                   pageInfo {
                     hasNextPage
@@ -53,8 +53,5 @@ jobs:
                 }
               }
             }
-            variables {
-              "owner": "freenet-group/mcbs-core"
-            }'
         env:
           GH_TOKEN: ${{ env.TOKEN }}
