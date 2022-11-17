@@ -16,8 +16,8 @@ jobs:
         name: Read AWS Secrets
         uses: ./actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
-          awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
