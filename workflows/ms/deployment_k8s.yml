@@ -353,7 +353,7 @@ jobs:
           environment='${{ github.event.inputs.environment }}'
           timeout='${{ github.event.inputs.timeout }}'
           dryRun=${{ github.event.inputs.dryRun }}
-          # Github run welche als label zur Identifikation in k8s gesetzt wird.
+          # Github run id welche als label zur Identifikation in k8s gesetzt wird.
           runId='${{ github.run_id }}'
 
           helmOpts=()
