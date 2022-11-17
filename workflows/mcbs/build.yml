@@ -156,6 +156,7 @@ jobs:
         with:
           component: ${{ env.JIRA_COMPONENT }}
           versionByComponentList: true
+          includedComponents: ${{ env.INCLUDED_COMPONENTS }}
 
       # component_Version ggf. manuell übersteuern, sofern eine Eingabe vorliegt
       - name: manualVersion
