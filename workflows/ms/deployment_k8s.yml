@@ -354,7 +354,7 @@ jobs:
           timeout='${{ github.event.inputs.timeout }}'
           dryRun=${{ github.event.inputs.dryRun }}
           # Github run welche als label zur Identifikation in k8s gesetzt wird.
-          runId='${{ github.run_id }
+          runId='${{ github.run_id }}'
 
           helmOpts=()
           if $dryRun; then helmOpts=(--dry-run); fi
