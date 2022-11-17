@@ -37,3 +37,19 @@ jobs:
           jq '.[].html_url' data.json
         env:
           GH_TOKEN: ${{ env.TOKEN }}
+
+      - name: List Repos II
+        shell: bash
+        run: |
+          gh api graphql --paginate -f query='
+            query($endCursor: String) {
+              viewer {
+                repositories(first: 100, after: $endCursor) {
+                  nodes { nameWithOwner }
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                }
+              }
+            }'
