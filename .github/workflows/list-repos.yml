@@ -47,12 +47,7 @@ jobs:
                 team(slug:"mcbs-core"){
                   name
                   repositories(first:3){
-                    edges {
-                      permission
-                      node {
-                        name
-                      }
-                    }
+                    nodes { url }
                   }
                 }
               }
