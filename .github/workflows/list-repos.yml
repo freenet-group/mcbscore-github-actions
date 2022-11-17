@@ -8,7 +8,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Initialize Workflow
-        uses: ./actions/init-workflow
-        with:
-          installGithubCli: true
+      - name: Github CLI installieren
+        uses: freenet-actions/setup-github-cli@v2
