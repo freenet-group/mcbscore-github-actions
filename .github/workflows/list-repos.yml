@@ -1,0 +1,14 @@
+name: List MCBS Core Repos
+
+on:
+  workflow_dispatch:
+
+jobs:
+  list-repos:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Initialize Workflow
+        uses: ./actions/init-workflow
+        with:
+          installGithubCli: true
