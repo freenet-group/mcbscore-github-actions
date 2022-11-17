@@ -41,30 +41,13 @@ jobs:
       - name: List Repos II
         shell: bash
         run: |
-          gh api graphql --paginate -f query='
-            query {
-              organization(login: "freenet-group") {
-                team(slug: "mcbs-core"){
-                  repositories(first:3){
-                    nodes {
-                      url
-                    }
-                    totalCount
-                  }
-                }
-              }
-            }'
-
-#            query($endCursor: String) {
-#              viewer {
-#                repositories(owner: "freenet-group/mcbs-core", first: 100, after: $endCursor) {
-#                  nodes { url }
-#                  pageInfo {
-#                    hasNextPage
-#                    endCursor
-#                  }
-#                }
-#              }
-#            }'
+          for ((p=1;;p++)); do 
+            o=$(gh api --method=GET orgs/freenet-group/teams/mcbs-core/repos --field=per_page=100 --field=page=$p | jq -r '.[].html_url');
+            if [ -n "$o" ]; then 
+              printf '%s\n' "$o"; 
+            else 
+              break;
+            fi;
+          done
         env:
           GH_TOKEN: ${{ env.TOKEN }}
