@@ -45,7 +45,6 @@ jobs:
             query {
               organization(login: "freenet-group") {
                 team(slug:"mcbs-core"){
-                  name
                   repositories(first:3){
                     nodes { url }
                   }
