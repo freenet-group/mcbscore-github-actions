@@ -44,9 +44,9 @@ jobs:
           gh api graphql --paginate -f query='
             query {
               organization(login: "freenet-group") {
-                team(slug: "MCBS Core"){
+                team(slug: "mcbs-core"){
                   repositories(first:3){
-                    nodes { url }
+                    url
                   }
                 }
               }
