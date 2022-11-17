@@ -11,9 +11,20 @@ jobs:
       - name: Github CLI installieren
         uses: freenet-actions/setup-github-cli@v2
 
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
+          awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
       - name: List Repos
         shell: bash
         run: |
           gh api \
             -H "Accept: application/vnd.github+json" \
             /orgs/freenet-group/teams/mcbs-core/repos
+        env:
+          GH_TOKEN: ${{ env.TOKEN }}
