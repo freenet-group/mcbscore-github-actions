@@ -45,7 +45,7 @@ jobs:
             query($endCursor: String) {
               viewer {
                 repositories(first: 100, after: $endCursor) {
-                  nodes { nameWithOwner }
+                  nodes { url }
                   pageInfo {
                     hasNextPage
                     endCursor
