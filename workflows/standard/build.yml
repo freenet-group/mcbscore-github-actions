@@ -78,6 +78,7 @@ jobs:
         with:
           installJava: true
           installGithubCli: true
+          installJq: true
 
       # ##################################################################################
       # Version ermitteln
@@ -119,17 +120,11 @@ jobs:
       - name: Create Release
         id: create_release
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        run: |
-          gh api \
-          --method POST \
-          -H "Accept: application/vnd.github+json" \
-          /repos/${{ github.repository }}/releases \
-          -f tag_name='${{ env.COMPONENT_VERSION }}' \
-          -f name='${{ env.COMPONENT_VERSION }}' \
-          -F draft=${{ env.DRAFT }} \
-          -F prerelease=false
-        env:
-          GH_TOKEN: ${{ env.TOKEN }}
+        uses: ./mcbscore/github/actions/create-release
+        with:
+          tagName: ${{ env.COMPONENT_VERSION }}
+          releaseName: ${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
 
       # Release JAR hinzufügen
       - name: Upload Release JAR
