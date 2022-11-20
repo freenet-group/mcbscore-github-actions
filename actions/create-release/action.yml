@@ -49,4 +49,4 @@ runs:
         outVarUploadUrl=`jq .upload_url  <<< "$resultJson"`
         echo "upload_url=$outVarUploadUrl" >> $GITHUB_OUTPUT
       env:
-        GH_TOKEN: ${{ env.TOKEN }}
+        GITHUB_TOKEN: ${{ env.TOKEN }}

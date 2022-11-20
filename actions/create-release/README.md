@@ -1,7 +1,6 @@
 # create-release
 
-Aktion zum Erstellen von Releases über die GitHub-Release-API, insbesondere den Endpunkt „Release erstellen“ 
-https://docs.github.com/en/rest/releases/releases#create-a-release
+Aktion zum Erstellen von Releases über den Endpunkt [Release erstellen](https://docs.github.com/en/rest/releases/releases#create-a-release) der GitHub-Release-API.
 
 ## Parameter:
 ### tagName:
