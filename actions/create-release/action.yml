@@ -40,13 +40,13 @@ runs:
           -f name='${{inputs.releaseName}}' \
           -F draft=${{inputs.draft}}`
         
-        outVarId=`jq .id <<< $resultJson`
+        outVarId=`jq -r .id <<< $resultJson`
         echo "id=$outVarId" >> $GITHUB_OUTPUT
         
-        outVarHtmlUrl=`jq .html_url <<< $resultJson`
+        outVarHtmlUrl=`jq -r .html_url <<< $resultJson`
         echo "html_url=$outVarHtmlUrl" >> $GITHUB_OUTPUT
 
-        outVarUploadUrl=`jq .upload_url  <<< $resultJson`
+        outVarUploadUrl=`jq -r .upload_url  <<< $resultJson`
         echo $outVarUploadUrl
         echo "upload_url=$outVarUploadUrl" >>$GITHUB_OUTPUT
       env:
