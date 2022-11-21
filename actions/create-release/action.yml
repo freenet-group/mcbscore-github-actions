@@ -47,6 +47,6 @@ runs:
         echo "html_url=$outVarHtmlUrl" >> $GITHUB_OUTPUT
 
         outVarUploadUrl=`jq .upload_url  <<< $resultJson`
-        echo "upload_url=$outVarUploadUrl" >> $GITHUB_OUTPUT
+        echo upload_url=$outVarUploadUrl >> $GITHUB_OUTPUT
       env:
         GITHUB_TOKEN: ${{ env.TOKEN }}
