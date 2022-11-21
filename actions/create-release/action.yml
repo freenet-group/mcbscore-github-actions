@@ -31,7 +31,7 @@ runs:
     - id: create-release
       shell: bash
       run: |
-        resultJson=`
+       resultJson=`
         gh api \
           --method POST \
           -H "Accept: application/vnd.github+json" \
@@ -40,14 +40,12 @@ runs:
           -f name='${{inputs.releaseName}}' \
           -F draft=${{inputs.draft}}`
         
-        outVarId=`jq -r .id <<< $resultJson`
+        outVarId=`jq -r .id <<< "$resultJson"`
         echo "id=$outVarId" >> $GITHUB_OUTPUT
         
-        outVarHtmlUrl=`jq -r .html_url <<< $resultJson`
+        outVarHtmlUrl=`jq -r .html_url <<< "$resultJson"`
         echo "html_url=$outVarHtmlUrl" >> $GITHUB_OUTPUT
-
-        outVarUploadUrl=`jq -r .upload_url  <<< $resultJson`
-        echo $outVarUploadUrl
-        echo "upload_url=$outVarUploadUrl" >>$GITHUB_OUTPUT
+        outVarUploadUrl=`jq -r .upload_url  <<< "$resultJson"`
+        echo "upload_url=$outVarUploadUrl" >> $GITHUB_OUTPUT
       env:
         GITHUB_TOKEN: ${{ env.TOKEN }}
