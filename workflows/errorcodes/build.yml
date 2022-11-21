@@ -72,6 +72,8 @@ jobs:
         with:
           installJava: true
           installNodeJs: true
+          installGithubCli: true
+          installJq: true
 
       - name: Install mocha
         run: npm install -g mocha
@@ -151,14 +153,10 @@ jobs:
       - name: Create Release
         id: create_release
         if: env.BUILD_TYPE == 'RELEASE'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: ./mcbscore/github/actions/create-release
         with:
-          tag_name: '${{ env.COMPONENT_VERSION }}'
-          release_name: '${{ env.COMPONENT_VERSION }}'
-          draft: false
-          prerelease: false
+          tagName: ${{ env.COMPONENT_VERSION }}
+          releaseName: ${{ env.COMPONENT_VERSION }}
 
       # Release JAR hinzufügen
       - name: Upload Release JAR

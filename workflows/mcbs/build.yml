@@ -241,14 +241,11 @@ jobs:
       - name: Create Release
         id: create_release
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: ./mcbscore/github/actions/create-release
         with:
-          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          release_name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
-          prerelease: false
 
       # Release JAR hinzufügen
       - name: Upload Release JAR

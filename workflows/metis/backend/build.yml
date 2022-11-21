@@ -81,6 +81,8 @@ jobs:
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
+          installGithubCli: true
+          installJq: true
 
       # ##################################################################################
       # Version ermitteln
@@ -157,14 +159,11 @@ jobs:
         id: create-release
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         # Diese Action definiert einen Output "upload_url".
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: ./mcbscore/github/actions/create-release
         with:
-          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          release_name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
-          prerelease: false
 
       # Release Upload pirun
       - name: Read build.properties (pirun)
