@@ -353,6 +353,8 @@ jobs:
           environment='${{ github.event.inputs.environment }}'
           timeout='${{ github.event.inputs.timeout }}'
           dryRun=${{ github.event.inputs.dryRun }}
+          # Github run id welche als label zur Identifikation in k8s gesetzt wird.
+          runId='${{ github.run_id }}'
 
           helmOpts=()
           if $dryRun; then helmOpts=(--dry-run); fi
@@ -430,7 +432,8 @@ jobs:
             --set='aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}' \
             --set='aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
-            --set="version=$componentVersion"
+            --set="version=$componentVersion" \
+            --set="runId='$runId'"
 
       - name: Cleanup
         if: ${{ always() }}
