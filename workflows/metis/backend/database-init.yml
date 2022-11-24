@@ -102,7 +102,7 @@ jobs:
           GH_INPUT_LOAD_TEST_DATA: ${{ inputs.loadTestData }}
         run: |
           commands=( resetTestData stacktrace )
-          if "${GH_INPUT_LOAD_TEST_DATA:-true}"; then
+          if "${GH_INPUT_LOAD_TEST_DATA:=true}"; then
             commands=(
               "${commands[@]}"
               "loadTestData --inputFileName '${REPOSITORY_PATH}/metis-rest/src/main/resources/testDataSetFULL.xml'"
