@@ -154,6 +154,8 @@ jobs:
           - { name: ms-usageprices, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
           - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
           - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s, ../encoding, postBuild" }
+          - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, dbChanges, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment, ./developerPortal", ../encoding, postBuild }
+
     steps:
       - uses: actions/checkout@v3
         with:
