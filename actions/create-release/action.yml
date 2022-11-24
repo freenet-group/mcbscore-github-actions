@@ -1,0 +1,51 @@
+name: Create Release
+description: Aktion zum Erstellen von Releases über die GitHub-Release-API
+
+inputs:
+  tagName:
+    description: Der Name des Tags
+    required: true
+  releaseName:
+    description: Der Name des Releases
+    required: true
+  draft:
+    description: true (unveröffentlichten) Release-Entwurf zu erstellen, \
+      false, um einen veröffentlichten Release zu erstellen. \
+    required: false
+    default:  false
+
+outputs:
+  id:
+    description: Die Release-ID.
+    value: ${{ steps.create-release.outputs.id }}
+  html_url:
+    description:  Die URL, zu der Benutzer navigieren können, um die Version anzuzeigen.
+    value: ${{ steps.create-release.outputs.html_url }}
+  upload_url:
+    description: Die URL zum Hochladen von Assets in die Version, die von GitHub Actions für zusätzliche Zwecke verwendet werden könnte.
+    value: ${{ steps.create-release.outputs.upload_url }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: create-release
+      shell: bash
+      run: |
+       resultJson=`
+        gh api \
+          --method POST \
+          -H "Accept: application/vnd.github+json" \
+          /repos/${{ github.repository }}/releases \
+          -f tag_name='${{inputs.tagName}}' \
+          -f name='${{inputs.releaseName}}' \
+          -F draft=${{inputs.draft}}`
+        
+        outVarId=`jq -r .id <<< "$resultJson"`
+        echo "id=$outVarId" >> $GITHUB_OUTPUT
+        
+        outVarHtmlUrl=`jq -r .html_url <<< "$resultJson"`
+        echo "html_url=$outVarHtmlUrl" >> $GITHUB_OUTPUT
+        outVarUploadUrl=`jq -r .upload_url  <<< "$resultJson"`
+        echo "upload_url=$outVarUploadUrl" >> $GITHUB_OUTPUT
+      env:
+        GITHUB_TOKEN: ${{ env.TOKEN }}

@@ -156,6 +156,7 @@ jobs:
         with:
           component: ${{ env.JIRA_COMPONENT }}
           versionByComponentList: true
+          includedComponents: ${{ env.INCLUDED_COMPONENTS }}
 
       # component_Version ggf. manuell übersteuern, sofern eine Eingabe vorliegt
       - name: manualVersion
@@ -224,6 +225,7 @@ jobs:
       # Existierende Draft Releases löschen
       - name: Delete draft releases
         if: ${{ env.BUILD_TYPE == 'DEVELOP' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
+        continue-on-error: true
         shell: bash
         run: |
           gh release list | sed 's/|/ /' | awk '{print $0, $8}' | while read -r line; do
@@ -240,14 +242,11 @@ jobs:
       - name: Create Release
         id: create_release
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: ./mcbscore/github/actions/create-release
         with:
-          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          release_name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
-          prerelease: false
 
       # Release JAR hinzufügen
       - name: Upload Release JAR
@@ -349,7 +348,7 @@ jobs:
             {
               "component": "${{ matrix.product.name }}",
               "releaseVersion": "${{ env.COMPONENT_VERSION }}",
-              "issueList": "${{ env.issueList }}",
+              "issueList": "${{ env.ISSUE_LIST }}",
               "epic": "${{ env.EPIC }}",
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             } 
@@ -365,7 +364,7 @@ jobs:
             {
               "component": "${{ matrix.product.id }}",
               "releaseVersion": "${{ env.COMPONENT_VERSION }}",
-              "issueList": "${{ env.issueList }}",
+              "issueList": "${{ env.ISSUE_LIST }}",
               "epic": "${{ env.EPIC }}",
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             }
@@ -381,7 +380,7 @@ jobs:
             {
               "component": "${{ matrix.product.id }}",
               "releaseVersion": "${{ env.COMPONENT_VERSION }}",
-              "issueList": "${{ env.issueList }}",
+              "issueList": "${{ env.ISSUE_LIST }}",
               "epic": "${{ env.EPIC }}",
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             }

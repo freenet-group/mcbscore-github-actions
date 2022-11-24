@@ -1,4 +1,6 @@
 name: K8s Deployment
+#Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu koennen. 
+run-name: K8s Deployment von ${{ github.event.inputs.component }} - ${{ github.event.inputs.componentVersion }} nach ${{ github.event.inputs.environment }}
 
 on:
   workflow_dispatch:
@@ -316,9 +318,18 @@ jobs:
           < kubernetes-secrets-all.generated.json \
           | tee kubernetes-secrets.generated.json
 
+
+      # Wird fuer Kubernetes Login step benoetigt    
+      - name: Install unzip
+        run: |
+          apt-get update && \
+          apt-get install unzip -y 
       # Kubernetes Login
-      - name: Login
-        run: /root/init-kubectl-auth.sh 'https://${{ env.K8S_CLUSTER }}' '${{ env.K8S_TOKEN }}'
+      - name: 'Login k8s/helm'
+        uses: freenet-actions/prepare-k8s-env@v1
+        with:
+         k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
+         k8s-token: ${{ env.K8S_TOKEN }}   
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -342,6 +353,8 @@ jobs:
           environment='${{ github.event.inputs.environment }}'
           timeout='${{ github.event.inputs.timeout }}'
           dryRun=${{ github.event.inputs.dryRun }}
+          # Github run id welche als label zur Identifikation in k8s gesetzt wird.
+          runId='${{ github.run_id }}'
 
           helmOpts=()
           if $dryRun; then helmOpts=(--dry-run); fi
@@ -419,7 +432,8 @@ jobs:
             --set='aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}' \
             --set='aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
-            --set="version=$componentVersion"
+            --set="version=$componentVersion" \
+            --set="runId='$runId'"
 
       - name: Cleanup
         if: ${{ always() }}
