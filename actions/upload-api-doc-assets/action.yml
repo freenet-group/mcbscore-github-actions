@@ -32,8 +32,6 @@ runs:
           uploadUrl=${uploadUrl/\{?name,label\}/?name=$assetName}
 
           # Upload the file
-          echo "...upload the file ..."
-          echo "${uploadUrl}"
           curl \
           -f \
           -sSL \
@@ -47,7 +45,7 @@ runs:
 
         parser=". | map(select(.tag_name == \"${{ inputs.componentVersion }}\"))[0].upload_url"
         asset_upload_url=`gh_curl -s ${{ github.api_url }}/repos/${{ github.repository }}/releases | jq "$parser"`
-        echo "Upload_URL : ${ asset_upload_URL}"
+        
 
         IFS=', ' read -r -a apiDocPaths <<< "${{ inputs.apiDocYmlPattern }}"
 
@@ -57,7 +55,6 @@ runs:
 
           for asset in $(find . -type f -wholename "${apiDocPath}");
           do
-            echo "${asset}"
             uploadAsset $asset $asset_upload_url
           done
 
