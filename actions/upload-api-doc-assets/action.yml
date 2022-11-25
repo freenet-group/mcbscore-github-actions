@@ -33,7 +33,7 @@ runs:
 
           # Upload the file
           echo "...upload the file ..."
-          echo "${uploadUrl}
+          echo "${uploadUrl}"
           curl \
           -f \
           -sSL \
@@ -47,7 +47,7 @@ runs:
 
         parser=". | map(select(.tag_name == \"${{ inputs.componentVersion }}\"))[0].upload_url"
         asset_upload_url=`gh_curl -s ${{ github.api_url }}/repos/${{ github.repository }}/releases | jq "$parser"`
-        echo "Upload_URL : ${ asset_upload_URL}
+        echo "Upload_URL : ${ asset_upload_URL}"
 
         IFS=', ' read -r -a apiDocPaths <<< "${{ inputs.apiDocYmlPattern }}"
 
