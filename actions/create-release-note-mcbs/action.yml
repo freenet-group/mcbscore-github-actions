@@ -49,7 +49,7 @@ runs:
         cd markdown
         # Übersicht
         today=`date +%d-%m-%Y`
-        echo -e "| $today |[$release](${{ env.GITHUB_SERVER_URL }}${{ env.REPOSITORY }}/wiki/$release)| |" >> ${{ inputs.component }}-Releases.md
+        echo -e "| $today |[$release](${{ github.REPOSITORY }}/wiki/$release)| |" >> ${{ inputs.component }}-Releases.md
         # echo -e "\n|A|AA|" >> ${{ inputs.component }}-Releases.md
         # cat ${{ inputs.component }}-Releases.md
         # Releasepage
@@ -108,9 +108,9 @@ runs:
         
         echo "## Downloads" >> $release.md
         echo "gitHub :  " >> $release.md
-        echo " ${{ inputs.releaseUrl }}" >> $release.md
+        echo " ${{ inputs.releaseUrl }}  " >> $release.md
         echo "Artifactory : " >> $release.md
-        echo "https://artifactory.mobilcom.de/artifactory/simple/md-release/de/md/mcbs/${{ inputs.componentVersion }}/"
+        echo "https://artifactory.mobilcom.de/artifactory/simple/md-release/de/md/mcbs/${{ inputs.componentVersion }}/"  >> $release.md
         echo "##  " >> $release.md
         echo "ImplementedIssues: $issueList" >> $release.md
         
