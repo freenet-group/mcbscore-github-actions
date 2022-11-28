@@ -269,7 +269,6 @@ jobs:
       matrix:
         repository:
           - { name: mcbscore-billingaccount-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-businesstransaction-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-contentprovider-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-contractservice-resttemplate, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-contractservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
