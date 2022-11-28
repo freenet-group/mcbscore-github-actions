@@ -45,6 +45,7 @@ runs:
 
         parser=". | map(select(.tag_name == \"${{ inputs.componentVersion }}\"))[0].upload_url"
         asset_upload_url=`gh_curl -s ${{ github.api_url }}/repos/${{ github.repository }}/releases | jq "$parser"`
+        
 
         IFS=', ' read -r -a apiDocPaths <<< "${{ inputs.apiDocYmlPattern }}"
 
