@@ -14,6 +14,6 @@ Dafür sollte im Zielrepository die Probotapp aktiviert sein und im <code>.githu
 _extends: freenet-group/mcbscore-github-actions/config/probot/ms/base-settings.yml
 ```
 
-#Custom
+# Custom
 Muss für ein Repository speziellere Regeln gelten, können diese hier unter dem custom-ordner hinterlegt werden.
 
