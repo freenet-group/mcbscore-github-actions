@@ -66,7 +66,7 @@ runs:
         cd markdown
         # Übersicht
         today=`date +%d-%m-%Y`
-        echo -e "| $today |[$release](${{ env.GITHUB_SERVER_URL }}${{ env.REPOSITORY }}/wiki/$release)| |" >> ${{ inputs.component }}-Releases.md
+        echo -e "| $today |[$release](${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/wiki/$release)| |" >> ${{ inputs.component }}-Releases.md
         # echo -e "\n|A|AA|" >> ${{ inputs.component }}-Releases.md
         # cat ${{ inputs.component }}-Releases.md
         # Releasepage
