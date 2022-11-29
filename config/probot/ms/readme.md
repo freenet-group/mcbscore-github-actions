@@ -11,9 +11,9 @@
   <br>
   <code>_extends: freenet-group/mcbscore-github-actions/config/probot/base-settings.yml</code>
   <br>
-  Mit Anpassungen:
+  Mit Anpassungen Bespiel eines Microservices:
   <br>
- <code>_extends: freenet-group/mcbscore-github-actions/config/probot/ms/ms-{anwendungsname}.yml</code> 
+ <code>_extends: freenet-group/mcbscore-github-actions/config/probot/custom/ms/ms-{anwendungsname}.yml</code> 
   
   ## Anpassungen in mcbscore-github-actions
   Erstellen von <code>config/probot/ms/ms-{anwendungsname}.yml</code> 
