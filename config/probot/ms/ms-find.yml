@@ -1,0 +1,2 @@
+#Custom-Probot settings fuer probot fuer ms-find
+_extends: freenet-group/mcbscore-github-actions/config/base-settings.yml
