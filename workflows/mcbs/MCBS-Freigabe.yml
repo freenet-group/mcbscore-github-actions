@@ -215,8 +215,8 @@ jobs:
         id: freigabestatement
         run: |
           cd markdown
-          echo "## Produktionsfreigabe :" >> MCBS_${{ github.event.inputs.releaseVersion }}
-          echo "Freigabe für PROD zum ${{ steps.read_ibn-date.outputs.value }} am "$(date "+%d.%m.%y") >> MCBS_${{ github.event.inputs.releaseVersion }}
-          git add MCBS_${{ github.event.inputs.releaseVersion }}
+          echo "## Produktionsfreigabe :  " >> MCBS_${{ github.event.inputs.releaseVersion }}.yml
+          echo "Freigabe für PROD zum ${{ steps.read_ibn-date.outputs.value }} am "$(date "+%d.%m.%y")   >> MCBS_${{ github.event.inputs.releaseVersion }}.yml
+          git add MCBS_${{ github.event.inputs.releaseVersion }}.yml
           git diff-index --quiet HEAD || git commit -m "Freigabe"
           git push
