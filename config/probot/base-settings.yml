@@ -1,5 +1,5 @@
 # Generische Probot settings die fuer alle Repos  gelten sollen.
-# Können im der entsprechenden custom yml des repos ueberschrieben werden.
+# Können in der entsprechenden custom yml des repos ueberschrieben werden.
 
 branches:
   - name: develop
