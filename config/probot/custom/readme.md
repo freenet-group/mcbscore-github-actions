@@ -1,6 +1,6 @@
 # custom Repository Settings
   Hier können einzelne spezielle settings Dateien für die einzelnen Repos angelegt werden.
-  Falls man für ein Repository kein speziellen Anpassungen möchte. kann auch die base-settings.yml direkt eingebunden werden.
+  Falls man für ein Repository keine speziellen Anpassungen möchte. kann auch die base-settings.yml direkt eingebunden werden.
   
   Für ein Anpassen ist folgendes Nötig:
   
