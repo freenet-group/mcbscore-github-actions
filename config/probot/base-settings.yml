@@ -1,9 +1,8 @@
 # Generische Probot settings die fuer alle Repos  gelten sollen.
 # Können in der entsprechenden custom yml des repos ueberschrieben werden.
 
-repository:
-  branches:
-    - name: develop
-      protection:
+branches:
+  - name: develop
+    protection:
       required_pull_request_reviews:
         required_approving_review_count: 2
