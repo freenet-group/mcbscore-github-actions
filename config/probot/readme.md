@@ -1,6 +1,6 @@
 # Proboteinstellungen
 
-Die Proboteinstellungen steuern steuern die Einstellungen für ein Repository direkt.
+Die Proboteinstellungen steuern die Einstellungen für ein Repository direkt.
 Infos welche Einstellungsmöglichkeiten es gibt finden sich hier:
 https://github.com/repository-settings/app
 
