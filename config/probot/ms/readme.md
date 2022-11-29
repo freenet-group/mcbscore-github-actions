@@ -22,6 +22,6 @@
   <br>
   <code>_extends: freenet-group/mcbscore-github-actions/config/probot/baseSettings.yml</code>
   <br>
-  Nach dem <code>_extends</code> Eintrag Einstellngen hinzufügen die für dieses Repository überschrieben werden sollen.
+  Nach dem <code>_extends</code> Eintrag Einstellungen hinzufügen die für dieses Repository überschrieben oder hinzugefügt werden sollen.
   
   
