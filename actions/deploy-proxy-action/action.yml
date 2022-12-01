@@ -20,6 +20,9 @@ inputs:
   deploymentUser:
     description: 'Der Benutzer für das Deployment'
     required: true
+  sshKey:
+    description: 'Der SSH Schlüssel'
+    required: true
   externalProxy:
     description: Flag für externes Deployment
     type: boolean
@@ -43,6 +46,14 @@ runs:
           echo "PROXY_BASE_PATH=${{ inputs.company }}" >> $GITHUB_ENV
         fi
 
+    # ssh Konfig
+    - name: Setup ssh
+      shell: bash
+      run: |
+        printf '' > id_rsa
+        chmod 600 id_rsa
+        printf %s "${{ inputs.sshKey }}" >> id_rsa
+
     - name: Deploy Proxy
       shell: bash
       run: |
@@ -54,9 +65,9 @@ runs:
           replaceCmd=''
         fi
         
-        scp -r ./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz"
+        scp -i id_rsa -r ./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz"
 
-        ssh 'zxrestapi@${{ inputs.host }}' bash -e -s <<-SSH
+        ssh -i id_rsa '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
           cd '/etc/nginx/$proxyPath/${{ env.PROXY_BASE_PATH }}'
           sudo rm -rf -- '${{ inputs.proxyName }}' || echo "Kein Proxy vorhanden"
           sudo mkdir '/var/log/proxies/${{ inputs.proxyName }}' || echo "Logverzeichnis existiert"
@@ -66,3 +77,9 @@ runs:
           sudo service nginx reload
           rm '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz'
         SSH
+
+    # ssh Konfig aufräumen
+    - name: Remove ssh key
+      if: always()
+      shell: bash
+      run: rm -v id_rsa
