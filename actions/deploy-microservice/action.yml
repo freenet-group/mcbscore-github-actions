@@ -23,6 +23,9 @@ inputs:
   deploymentUser:
     description: Der Benutzer für das Deployment
     required: true
+  sshKey:
+    description: Der SSH Schlüssel
+    required: false
   dockerRegistryToken:
     description: |
       Ein Github Token zum Lesen (pull) des Docker Images aus der Github-Container-Registry; nur
@@ -55,10 +58,11 @@ runs:
         DOCKER_IMAGE='${{ inputs.dockerImage }}'
         DOCKER_LOGIN_ENABLED=$(if [ -n "$dockerRegistryToken" ]; then echo y; fi)
         DEPLOYMENT_USER='${{ inputs.deploymentUser }}'
+        SSH_KEY='${{ inputs.sshKey }}'
         CHECK_MK_USER='${{ inputs.checkMkUser }}'
         CHECK_MK_SECRET='${{ inputs.checkMkSecret }}'
 
-        export COMPONENT STAGE DOCKER_IMAGE DOCKER_LOGIN_ENABLED DEPLOYMENT_USER CHECK_MK_USER CHECK_MK_SECRET
+        export COMPONENT STAGE DOCKER_IMAGE DOCKER_LOGIN_ENABLED DEPLOYMENT_USER SSH_KEY CHECK_MK_USER CHECK_MK_SECRET
 
         echo "Starte Deployment"
         if [ -n "$dockerRegistryToken" ]; then
