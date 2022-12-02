@@ -83,6 +83,6 @@ runs:
 
     # ssh Konfig aufräumen
     - name: Remove ssh key
-      if: always()
+      if: ${{ always() && inputs.sshKey != '' }}
       shell: bash
       run: rm -v id_rsa
