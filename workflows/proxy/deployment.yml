@@ -93,7 +93,7 @@ jobs:
 
   deploy:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted, vm]
+    runs-on: [self-hosted, k8s]
     needs: create-deployment
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
@@ -129,7 +129,8 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/deployment_user = DEPLOYMENT_USER
+            /github/secrets/deployment_user = DEPLOYMENT_USER,
+            /github/secrets/ssh/apigw/zxrestapi_ppk = SSH_KEY
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -219,6 +220,7 @@ jobs:
           componentVersion: ${{ inputs.componentVersion }}
           host: ${{ inputs.deploymentTarget }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
+          sshKey: ${{ env.SSH_KEY }}
           externalProxy: ${{ inputs.externalProxy }}
           additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
@@ -234,6 +236,7 @@ jobs:
           componentVersion: ${{ inputs.componentVersion }}
           host: ${{ inputs.additionalDeploymentTarget }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
+          sshKey: ${{ env.SSH_KEY }}
           externalProxy: ${{ inputs.externalProxy }}
           additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
@@ -260,7 +263,7 @@ jobs:
 
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted, vm]
+    runs-on: [self-hosted, k8s]
     needs: deploy
     if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && inputs.bambiNotification == 'true' }}
     steps:

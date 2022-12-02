@@ -74,8 +74,6 @@ runs:
           keyParameter=''
         fi
         
-        echo "Key Param: $keyParameter"
-        
         scp $keyParameter \
           -r ./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz \
           "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz"
