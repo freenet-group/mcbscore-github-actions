@@ -66,6 +66,16 @@ runs:
           replaceCmd=''
         fi
         
+        if [[ '${{ inputs.sshKey }}' != '' ]]; then
+          echo "key"
+          keyParameter='-o StrictHostKeyChecking=no -i id_rsa'
+        else
+          echo "no key"
+          keyParameter=''
+        fi
+        
+        echo "Key Param: $keyParameter"
+        
         scp -o StrictHostKeyChecking=no -i id_rsa \
           -r ./release/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz \
           "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz"
