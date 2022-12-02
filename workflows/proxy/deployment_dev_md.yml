@@ -1,5 +1,5 @@
 name: DEV MD Deployment
-#Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
+#Name fÃ¼r den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu kÃ¶nnen.
 run-name: DEV MD Deployment ${{ github.event.inputs.componentVersion }}
 
 on:
