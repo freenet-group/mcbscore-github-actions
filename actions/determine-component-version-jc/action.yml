@@ -1,4 +1,4 @@
-name: Determine Component Version
+name: Determine Component Version (JC)
 description: Ermittelt die Version der Komponente basierend auf den Commits und dem Branch
 inputs:
   component:
@@ -22,8 +22,10 @@ runs:
       if: ${{ inputs.component != '' }}
       uses: ./mcbscore/github/actions/create-version
       with:
-        jiraUrl: ${{ env.JIRA_API_URL }}
-        jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+        # jiraUrl: ${{ env.JIRA_API_URL }}
+        jiraUrl: ${{ env.JIRA_JCU }}
+        # jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+        jiraCredentials: ${{ env.MCBSTEST_JCC }}
         tagPattern: ${{ env.TAG_PATTERN }}
         atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
         component: ${{ inputs.component }}
