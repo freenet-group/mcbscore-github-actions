@@ -1,4 +1,6 @@
 name: DB Changes
+#Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
+run-name: DB Changes ${{ github.event.inputs.componentVersion }}
 
 on:
   workflow_dispatch:

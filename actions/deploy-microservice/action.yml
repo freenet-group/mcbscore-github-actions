@@ -23,6 +23,9 @@ inputs:
   deploymentUser:
     description: Der Benutzer für das Deployment
     required: true
+  sshKey:
+    description: Der SSH Schlüssel
+    required: false
   dockerRegistryToken:
     description: |
       Ein Github Token zum Lesen (pull) des Docker Images aus der Github-Container-Registry; nur
@@ -41,6 +44,15 @@ runs:
     # Make checkNginxUpstream.sh executable
     - run: chmod +x ./${{ inputs.componentConfigPath }}/scripts/microservice/checkNginxUpstream.sh
       shell: bash
+
+    # ssh Konfig
+    - name: Setup ssh
+      if: ${{ inputs.sshKey != '' }}
+      shell: bash
+      run: |
+        printf '' > ./${{ inputs.componentConfigPath }}/id_rsa
+        chmod 600 ./${{ inputs.componentConfigPath }}/id_rsa
+        printf %s "${{ inputs.sshKey }}" >> ./${{ inputs.componentConfigPath }}/id_rsa
 
     - id: standard_or_domain_deployment
       shell: bash
@@ -68,3 +80,9 @@ runs:
         fi
         
         cd -- "$workingDirectory"
+
+    # ssh Konfig aufräumen
+    - name: Remove ssh key
+      if: ${{ always() && inputs.sshKey != '' }}
+      shell: bash
+      run: rm -v ./${{ inputs.componentConfigPath }}/id_rsa

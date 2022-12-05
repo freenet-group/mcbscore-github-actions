@@ -1,4 +1,6 @@
 name: PostBuild ZAP
+#Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
+run-name: PostBuild ZAP ${{ github.event.inputs.releaseVersion }}
 
 on:
   workflow_dispatch:
