@@ -50,8 +50,8 @@ runs:
       if: ${{ inputs.sshKey != '' }}
       shell: bash
       run: |
-        printf '' > id_rsa
-        chmod 600 id_rsa
+        printf '' > ./${{ inputs.componentConfigPath }}/id_rsa
+        chmod 600 ./${{ inputs.componentConfigPath }}/id_rsa
         printf %s "${{ inputs.sshKey }}" >> ./${{ inputs.componentConfigPath }}/id_rsa
 
     - id: standard_or_domain_deployment
