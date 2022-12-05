@@ -23,9 +23,9 @@ runs:
       uses: ./mcbscore/github/actions/create-version
       with:
         # jiraUrl: ${{ env.JIRA_API_URL }}
-        jiraUrl: ${{ env.JC_U }}
+        jiraUrl: ${{ env.JIRA_JCU }}
         # jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-        jiraCredentials: ${{ env.JC_C }}
+        jiraCredentials: ${{ env.MCBSTEST_JCC }}
         tagPattern: ${{ env.TAG_PATTERN }}
         atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
         component: ${{ inputs.component }}
