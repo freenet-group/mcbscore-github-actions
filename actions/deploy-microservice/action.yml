@@ -45,6 +45,15 @@ runs:
     - run: chmod +x ./${{ inputs.componentConfigPath }}/scripts/microservice/checkNginxUpstream.sh
       shell: bash
 
+    # ssh Konfig
+    - name: Setup ssh
+      if: ${{ inputs.sshKey != '' }}
+      shell: bash
+      run: |
+        printf '' > id_rsa
+        chmod 600 id_rsa
+        printf %s "${{ inputs.sshKey }}" >> ./${{ inputs.componentConfigPath }}/id_rsa
+
     - id: standard_or_domain_deployment
       shell: bash
       run: |
@@ -72,3 +81,9 @@ runs:
         fi
         
         cd -- "$workingDirectory"
+
+    # ssh Konfig aufräumen
+    - name: Remove ssh key
+      if: ${{ always() && inputs.sshKey != '' }}
+      shell: bash
+      run: rm -v ./${{ inputs.componentConfigPath }}/id_rsa
