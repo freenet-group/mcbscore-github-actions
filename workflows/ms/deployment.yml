@@ -1,4 +1,6 @@
 name: Deployment
+#Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
+run-name: Deployment ${{ github.event.inputs.componentVersion }} auf ${{ github.event.inputs.environment }}
 
 on:
   workflow_dispatch:
