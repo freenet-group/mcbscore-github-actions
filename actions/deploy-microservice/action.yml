@@ -51,7 +51,7 @@ runs:
       shell: bash
       run: |
         printf '' > ./${{ inputs.componentConfigPath }}/id_rsa
-        chmod 600 ./${{ inputs.componentConfigPath }}/id_rsa
+        chmod 700 ./${{ inputs.componentConfigPath }}/id_rsa
         printf %s "${{ inputs.sshKey }}" >> ./${{ inputs.componentConfigPath }}/id_rsa
 
     - id: standard_or_domain_deployment
@@ -67,11 +67,10 @@ runs:
         DOCKER_IMAGE='${{ inputs.dockerImage }}'
         DOCKER_LOGIN_ENABLED=$(if [ -n "$dockerRegistryToken" ]; then echo y; fi)
         DEPLOYMENT_USER='${{ inputs.deploymentUser }}'
-        SSH_KEY='${{ inputs.sshKey }}'
         CHECK_MK_USER='${{ inputs.checkMkUser }}'
         CHECK_MK_SECRET='${{ inputs.checkMkSecret }}'
 
-        export COMPONENT STAGE DOCKER_IMAGE DOCKER_LOGIN_ENABLED DEPLOYMENT_USER SSH_KEY CHECK_MK_USER CHECK_MK_SECRET
+        export COMPONENT STAGE DOCKER_IMAGE DOCKER_LOGIN_ENABLED DEPLOYMENT_USER CHECK_MK_USER CHECK_MK_SECRET
 
         echo "Starte Deployment"
         if [ -n "$dockerRegistryToken" ]; then
