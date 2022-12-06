@@ -1,4 +1,6 @@
 name: Deployment
+#Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
+run-name: Deployment ${{ github.event.inputs.componentVersion }} auf ${{ github.event.inputs.environment }}
 
 on:
   workflow_dispatch:
@@ -73,7 +75,7 @@ jobs:
 
   deploy:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted, vm]
+    runs-on: [self-hosted, k8s]
     needs: create-deployment
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
@@ -109,6 +111,7 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/deployment_user = DEPLOYMENT_USER,
+            /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY,
             /github/secrets/checkmk_user = CHECKMK_USER, 
             /github/secrets/checkmk_password = CHECKMK_PW
 
@@ -163,6 +166,7 @@ jobs:
           checkMkUser: ${{ env.CHECKMK_USER }}
           checkMkSecret: ${{ env.CHECKMK_PW }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
+          sshKey: ${{ env.SSH_KEY }}
           dockerRegistryToken: ${{ env.TOKEN }}
 
       # Custom Deployment
@@ -177,6 +181,7 @@ jobs:
           checkMkUser: ${{ env.CHECKMK_USER }}
           checkMkSecret: ${{ env.CHECKMK_PW }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
+          sshKey: ${{ env.SSH_KEY }}
 
       # Deployment als erfolgreich markieren
       - name: Update deployment status (success)
@@ -201,7 +206,7 @@ jobs:
 
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted, vm]
+    runs-on: [self-hosted, k8s]
     needs: deploy
     if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
