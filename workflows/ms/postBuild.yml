@@ -61,7 +61,7 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/jira/api_url = JIRA_API_URL, 
-            /github/common/jira/url = JIRA_WEB_URL,
+            /github/common/jira/jira_cloud_web_url = JIRA_CLOUD_WEB_URL,
             /github/common/sonar/api_url = SONAR_API_URL,
             /github/common/JIRA_URL2 = JIRA_URL2,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
@@ -230,7 +230,7 @@ jobs:
         with:
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
-          jiraWebUrl: ${{ env.JIRA_WEB_URL }}
+          jiraWebUrl: ${{ env.JIRA_CLOUD_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasDependencies: NEIN
