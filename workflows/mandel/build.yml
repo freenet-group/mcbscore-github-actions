@@ -57,7 +57,10 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER, 
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
-            /github/common/jira/api_url = JIRA_API_URL
+            /github/common/jira/api_url = JIRA_API_URL,
+            /github/common/jira/jira_cloud_web_url = JIRA_CLOUD_WEB_URL,
+            /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL 
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -90,7 +93,7 @@ jobs:
 
       - id: determine-component-version
         name: Determine Component Version
-        uses: ./mcbscore/github/actions/determine-component-version-v2
+        uses: ./mcbscore/github/actions/determine-component-version-jc
         with:
           component: ${{ env.JIRA_COMPONENT }}
           included_components: ${{ env.INCLUDED_COMPONENTS }}
