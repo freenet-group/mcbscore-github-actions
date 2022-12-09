@@ -62,7 +62,9 @@ jobs:
             /github/common/jira/api_url = JIRA_API_URL, 
             /github/common/jira/url = JIRA_WEB_URL,
             /github/common/sonar/api_url = SONAR_API_URL,
-            /github/common/JIRA_URL2 = JIRA_URL2 
+            /github/common/jira/jira_cloud_web_url = JIRA_CLOUD_WEB_URL,
+            /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL 
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -86,11 +88,10 @@ jobs:
       # Erzeugen von Version / ComponentVersion in JIRA
       # ##################################################################################
       - name: jiraConfig
-        uses: ./mcbscore/github/actions/jira-configuration
+        uses: ./mcbscore/github/actions/jira-configuration-jc
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraUrl2: ${{ env.JIRA_URL2 }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: METIS
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
@@ -103,8 +104,8 @@ jobs:
       - name: fetchIssueInfos
         uses: ./mcbscore/github/actions/fetch-issue-information
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -125,14 +126,15 @@ jobs:
       # Eintrag der fixVersion
       # ##################################################################################
       - name: setFixVersions
-        uses: ./mcbscore/github/actions/set-fix-version
+        uses: ./mcbscore/github/actions/set-fix-version-jc
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          included_components: ${{ env.INCLUDED_COMPONENTS }} 
 
       # ##################################################################################
       # set Issues "done"
@@ -140,8 +142,8 @@ jobs:
       - name: setIssueListDone
         uses: ./mcbscore/github/actions/set-issue-list-done
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD__URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -151,8 +153,8 @@ jobs:
       - name: setIssueComment
         uses: ./mcbscore/github/actions/set-issue-comment
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -164,8 +166,8 @@ jobs:
         id: fetch-additional-information
         uses: ./mcbscore/github/actions/fetch-additional-information
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -187,8 +189,8 @@ jobs:
           jiraWebUrl: ${{ env.JIRA_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
-          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
-          dependentIssues: ${{ steps.fetch-additional-information.outputs.dependentIssues }}
+          hasDependencies: "NEIN"
+          dependentIssues: "keine"
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           releaseUrl: '${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar'
           junitResultUrl: '${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases'
@@ -203,8 +205,8 @@ jobs:
         id: determine-going-live-date
         uses: ./mcbscore/github/actions/determine-going-live-date
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           epic: ${{ github.event.inputs.epic }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -220,7 +222,7 @@ jobs:
           issueList: issue_info.csv
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
-          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          hasDependencies: "NEIN"
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
           webhookUri: ${{ env.TEAMS_MAIL }}
