@@ -59,8 +59,9 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/jira/api_url = JIRA_API_URL, 
-            /github/common/jira/url = JIRA_WEB_URL,
-            /github/common/JIRA_URL2 = JIRA_URL2 
+            /github/common/jira/jira_cloud_web_url = JIRA_CLOUD_WEB_URL,
+            /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -84,11 +85,10 @@ jobs:
       # Erzeugen von Version / ComponentVersion in JIRA
       # ##################################################################################
       - name: jiraConfig-MCBS
-        uses: ./mcbscore/github/actions/jira-configuration
+        uses: ./mcbscore/github/actions/jira-configuration-jc
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraUrl2: ${{ env.JIRA_URL2 }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
@@ -101,8 +101,8 @@ jobs:
       - name: fetchIssueInfos
         uses: ./mcbscore/github/actions/fetch-issue-information
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -110,10 +110,10 @@ jobs:
       # Eintrag der fixVersion
       # ##################################################################################
       - name: setFixVersions
-        uses: ./mcbscore/github/actions/set-fix-version-v2
+        uses: ./mcbscore/github/actions/set-fix-version-jc
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           issueList: ${{ github.event.inputs.issueList }}
@@ -126,8 +126,8 @@ jobs:
       - name: setIssueListDone
         uses: ./mcbscore/github/actions/set-issue-list-done
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -137,8 +137,8 @@ jobs:
       - name: setIssueComment
         uses: ./mcbscore/github/actions/set-issue-comment
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -161,8 +161,8 @@ jobs:
         if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
         uses: ./mcbscore/github/actions/create-sonar-issue
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
@@ -177,8 +177,8 @@ jobs:
         id: fetch-additional-information
         uses: ./mcbscore/github/actions/fetch-additional-information
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -197,11 +197,11 @@ jobs:
         with:
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
-          jiraWebUrl: ${{ env.JIRA_WEB_URL }}
+          jiraWebUrl: ${{ env.JIRA_CLOUD_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
-          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
-          dependentIssues: ${{ steps.fetch-additional-information.outputs.dependentIssues }}
+          hasDependencies: "NEIN"
+          dependentIssues: "keine"
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.JIRA_COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
           junitResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
@@ -216,8 +216,8 @@ jobs:
         id: determine-going-live-date
         uses: ./mcbscore/github/actions/determine-going-live-date
         with:
-          jiraUrl: ${{ env.JIRA_API_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           epic: ${{ github.event.inputs.epic }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -233,7 +233,7 @@ jobs:
           issueList: issue_info.csv
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
-          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          hasDependencies: "NEIN"
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
           webhookUri: ${{ env.TEAMS_MAIL }}
