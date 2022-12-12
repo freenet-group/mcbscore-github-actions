@@ -29,7 +29,10 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-
+      RELEASE_ASSETS_PATH: release
+      METIS_REPOSITORY_PATH: metis
+      COMPONENT_VERSION: 4.0.24
+      
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
@@ -68,6 +71,15 @@ jobs:
           path: ${{ env.ACTIONS_PATH }}
           ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
+      - name: Checkout freenet-group/metis Repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ env.TOKEN }}
+          fetch-depth: 0
+          repository: ${{ env.METIS_REPOSITORY }}
+          ref: ${{ inputs.metisRepositoryBranch }}
+          path: ${{ env.METIS_REPOSITORY_PATH }}
+
       # ##################################################################################
       # Initialize Workflow
       # ##################################################################################
@@ -76,6 +88,24 @@ jobs:
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installNodeJs: true
+          installJava: true
+          installJq: true
+          
+
+      # Make download executable
+      - run: chmod +x ${{ env.ACTIONS_PATH }}/actions/download-release-assets/download.sh
+        shell: bash
+
+      - name: download_asset
+        shell: bash
+        run: ${{ env.ACTIONS_PATH }}/actions/download-release-assets/download.sh
+        env:
+          REPOSITORY: ${{ env.METIS_REPOSITORY }}
+          VERSION: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          PATTERN: metis-shell-${{ env.COMPONENT_VERSION }}.jar
+          TOKEN: ${{ env.TOKEN }}
+          TARGET_PATH: ${{ env.RELEASE_ASSETS_PATH }}
+      - run: chmod +x ./${{ env.RELEASE_ASSETS_PATH }}/metis-shell-${{ env.COMPONENT_VERSION }}.jar
 
       # Testumgebung konfigurieren
       - name: Configure environment
@@ -88,32 +118,34 @@ jobs:
           npm install
       
       # Backend Service Testen
-      - name: Datenbank Initialisierung
-        if: ${{ github.event.inputs.serviceToTest == 'backend' || github.event.inputs.serviceToTest == 'all' }}
-        uses: ./mcbscore/github/workflows/metis/common/database-init.yml
-        with: 
-          componentVersion: "4.0.24"
-          environment: "dev (=> Datenbank wie im dev Profil konfiguriert)"
-          loadTestData: "true"
-
       - name: Start Backend Test
         shell: bash
         if: ${{ github.event.inputs.serviceToTest == 'backend' || github.event.inputs.serviceToTest == 'all' }}
-        run: node_modules/gulp/bin/gulp.js testRest
+        env:
+          LOAD_TEST_DATA: true
+          REPOSITORY_PATH: ${{ env.METIS_REPOSITORY_PATH }}
+          RELEASE_PATH: ${{ env.RELEASE_ASSETS_PATH }}
+          COMPONENT_VERSION: ${{ env.COMPONENT_VERSION }}
+          SPRING_PROFILE: dev
+        run: |
+          chmod +x ./mcbscore/github/workflows/metis/common/database-init.sh
+          ./mcbscore/github/workflows/metis/common/database-init.sh
+          node_modules/gulp/bin/gulp.js testRest
 
       # Frontend Test starten und Ergebnisse ins XML und HTML- Format konvertieren
-      - name: Datenbank Initialisierung
-        if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
-        uses: ./mcbscore/github/workflows/metis/common/database-init.yml
-        with: 
-          componentVersion: "4.0.24"
-          environment: "dev (=> Datenbank wie im dev Profil konfiguriert)"
-          loadTestData: "true"
-          
       - name: Frontend Test vorbereiten
         if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
         shell: bash
+        env:
+          LOAD_TEST_DATA: true
+          REPOSITORY_PATH: ${{ env.METIS_REPOSITORY_PATH }}
+          RELEASE_PATH: ${{ env.RELEASE_ASSETS_PATH }}
+          COMPONENT_VERSION: 4.0.24
+          SPRING_PROFILE: dev
         run: |
+          chmod +x ./mcbscore/github/workflows/metis/common/database-init.sh
+          ./mcbscore/github/workflows/metis/common/database-init.sh
+          
           sed -i 's%{TRUsed}%${{ inputs.updateTestRail }}%' ./test/testrail-conf.js
           sed -i 's%{TRProject}%MEA%' ./test/testrail-conf.js
           sed -i 's%{TRSuiteName}%METIS-GUI v3.6%' ./test/testrail-conf.js
