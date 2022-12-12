@@ -111,7 +111,7 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: jiraConfig-MCBS
-        uses: ./mcbscore/github/actions/jira-configuration
+        uses: ./mcbscore/github/actions/jira-configuration-jc
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           # jiraUrl2: ${{ env.JIRA_URL2 }}
