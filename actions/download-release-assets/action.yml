@@ -14,7 +14,11 @@ inputs:
   token:
     description: Ein Github Token
     required: true
-
+  repository:
+    description: Assets Repository
+    required: true
+    default: ${{ github.repository }}
+    
 outputs:
   release:
     value: ${{ steps.download_asset.outputs.assetName }}
@@ -31,7 +35,7 @@ runs:
       shell: bash
       run: ${{ github.action_path }}/download.sh
       env:
-        REPOSITORY: ${{ github.repository }}
+        REPOSITORY: ${{ inputs.repository }}
         VERSION: ${{ inputs.version }}
         PATTERN: ${{ inputs.assetPattern }}
         TOKEN: ${{ inputs.token }}
