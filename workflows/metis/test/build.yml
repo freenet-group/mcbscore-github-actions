@@ -83,41 +83,37 @@ jobs:
         run: |
           sed -i 's%{restServerUrl}%https:\/\/metis-dev.md-abr-np.k8s.freenet-group.de\/metis-rest%' ./test/config/testConfig.js
           sed -i 's%{frontendUrl}%https:\/\/metis-ui-dev.md-abr-np.k8s.freenet-group.de%' ./test/config/testConfig.js
-  
           cat ./test/config/testConfig.js
-
-      - run: npm install
+         
+          npm install
       
       # Backend Service Testen
+      - name: Datenbank Initialisierung
+        if: ${{ github.event.inputs.serviceToTest == 'backend' || github.event.inputs.serviceToTest == 'all' }}
+        uses: ./mcbscore/github/workflows/metis/common/database-init.yml
+        with: 
+          componentVersion: "4.0.24"
+          environment: "dev (=> Datenbank wie im dev Profil konfiguriert)"
+          loadTestData: "true"
+
       - name: Start Backend Test
         shell: bash
         if: ${{ github.event.inputs.serviceToTest == 'backend' || github.event.inputs.serviceToTest == 'all' }}
-        # Test-Datenbank initialisieren, test starten und Ergebnisse ins XML und HTML- Format konvertieren
-        run: |
-          result=`curl -X POST https://metis-dev.md-abr-np.k8s.freenet-group.de/actuator/initDB/load -d "testDataSet=testDataSetFULL.xml"`
-          echo $result
-          grep -q "successfully" <<< "$result"
-          if [ $? -ne 0 ]
-            then
-            exit 1  # Erfolglos beenden
-          fi
+        run: node_modules/gulp/bin/gulp.js testRest
 
-          node_modules/gulp/bin/gulp.js testRest
-
-      # Frontend Testen
-      - name: Start Frontend Test
+      # Frontend Test starten und Ergebnisse ins XML und HTML- Format konvertieren
+      - name: Datenbank Initialisierung
+        if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
+        uses: ./mcbscore/github/workflows/metis/common/database-init.yml
+        with: 
+          componentVersion: "4.0.24"
+          environment: "dev (=> Datenbank wie im dev Profil konfiguriert)"
+          loadTestData: "true"
+          
+      - name: Frontend Test vorbereiten
         if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
         shell: bash
-        # Test-Datenbank initialisieren, test starten und Ergebnisse ins XML und HTML- Format konvertieren
         run: |
-          result=`curl -X POST https://metis-dev.md-abr-np.k8s.freenet-group.de/actuator/initDB/load -d "testDataSet=testDataSetFULL.xml"`
-          echo $result
-          grep -q "successfully" <<< "$result"
-          if [ $? -ne 0 ]
-            then
-            exit 1  # Erfolglos beenden
-          fi
-          
           sed -i 's%{TRUsed}%${{ inputs.updateTestRail }}%' ./test/testrail-conf.js
           sed -i 's%{TRProject}%MEA%' ./test/testrail-conf.js
           sed -i 's%{TRSuiteName}%METIS-GUI v3.6%' ./test/testrail-conf.js
@@ -134,13 +130,13 @@ jobs:
         if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
         uses: browser-actions/setup-chrome@latest
       
-        # Test starten
       - name: Start Frontend Test
         if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
         shell: bash
         run: |
           node_modules/gulp/bin/gulp.js testFrontend --browserPath=$(which chrome)
          
+      # Testergebnisse ins XML und HTML- Format konvertieren
       - name: Publish Unit Test Results
         if: ${{ always() }}
         uses: EnricoMi/publish-unit-test-result-action@v2
