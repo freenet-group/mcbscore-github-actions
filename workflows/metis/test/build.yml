@@ -113,7 +113,7 @@ jobs:
           cat ./test/config/testConfig.js
           
           # Datei ausfuehrbar machen
-          chmod +x ./${{ env.ACTIONS_PATH }}/workflows/metis/common/database-init.sh
+          chmod +x ./${ACTIONS_PATH}/workflows/metis/common/database-init.sh
          
           npm install
       
@@ -125,10 +125,9 @@ jobs:
           LOAD_TEST_DATA: true
           REPOSITORY_PATH: ${{ env.METIS_REPOSITORY_PATH }}
           RELEASE_PATH: ${{ env.RELEASE_ASSETS_PATH }}
-          COMPONENT_VERSION: ${{ env.COMPONENT_VERSION }}
           SPRING_PROFILE: dev
         run: |
-          ./${{ env.ACTIONS_PATH }}/workflows/metis/common/database-init.sh
+          ./${ACTIONS_PATH}/workflows/metis/common/database-init.sh
 
           node_modules/gulp/bin/gulp.js testRest
 
@@ -140,10 +139,9 @@ jobs:
           LOAD_TEST_DATA: true
           REPOSITORY_PATH: ${{ env.METIS_REPOSITORY_PATH }}
           RELEASE_PATH: ${{ env.RELEASE_ASSETS_PATH }}
-          COMPONENT_VERSION: ${{ env.COMPONENT_VERSION }}
           SPRING_PROFILE: dev
         run: |
-          ./mcbscore/${{ env.ACTIONS_PATH }}/metis/common/database-init.sh
+          ./mcbscore/${ACTIONS_PATH}/metis/common/database-init.sh
           
           sed -i 's%{TRUsed}%${{ inputs.updateTestRail }}%' ./test/testrail-conf.js
           sed -i 's%{TRProject}%MEA%' ./test/testrail-conf.js
