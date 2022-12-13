@@ -96,12 +96,10 @@ jobs:
         shell: bash
         env:
           LOAD_TEST_DATA: ${{ inputs.loadTestData }}
-          REPOSITORY_PATH: ${{ env.REPOSITORY_PATH }}
           RELEASE_PATH: release
           COMPONENT_VERSION: ${{ inputs.componentVersion }}
-          SPRING_PROFILE: ${{ env.SPRING_PROFILE }}
         run: |
           # Datei ausfuehrbar machen
-          chmod +x ./${{ env.ACTIONS_PATH }}/workflows/metis/common/database-init.sh
+          chmod +x ./${ACTIONS_PATH}/workflows/metis/common/database-init.sh
 
-          ./${{ env.ACTIONS_PATH }}/workflows/metis/common/database-init.sh
+          ./${ACTIONS_PATH}/workflows/metis/common/database-init.sh
