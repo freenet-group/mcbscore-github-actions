@@ -16,7 +16,7 @@ inputs:
     required: true
   repository:
     description: Assets Repository
-    required: true
+    required: false
     default: ${{ github.repository }}
     
 outputs:
