@@ -17,7 +17,7 @@ Github Action zum Download aller Release Assets, die dem Muster entsprechen. Die
     required: true
   ### repository
     description: Assets Repository
-    required: true
+    required: false
     default: ${{ github.repository }}
 
 ---
