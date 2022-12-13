@@ -95,27 +95,13 @@ jobs:
       - name: Start metis-shell
         shell: bash
         env:
-          GH_INPUT_COMPONENT_VERSION: ${{ inputs.componentVersion }}
-          GH_INPUT_LOAD_TEST_DATA: ${{ inputs.loadTestData }}
+          LOAD_TEST_DATA: ${{ inputs.loadTestData }}
+          REPOSITORY_PATH: ${{ env.REPOSITORY_PATH }}
+          RELEASE_PATH: release
+          COMPONENT_VERSION: ${{ inputs.componentVersion }}
+          SPRING_PROFILE: ${{ env.$SPRING_PROFILE }}
         run: |
-          commands=( resetTestData stacktrace )
-          if "${GH_INPUT_LOAD_TEST_DATA:=true}"; then
-            commands=(
-              "${commands[@]}"
-              "loadTestData --inputFileName '${REPOSITORY_PATH}/metis-rest/src/main/resources/testDataSetFULL.xml'"
-              stacktrace
-            )
-          fi
+          # Datei ausfuehrbar machen
+          chmod +x ./${{ env.ACTIONS_PATH }}/workflows/metis/common/database-init.sh
 
-          printf 'Spring-shell commands:\n'; printf '\t%s\n' "${commands[@]}"
-          printf '%s\n' "${commands[@]}" \
-          | (set -x; java -Xmx2g -Dfile.encoding=UTF-8 "-Dspring.profiles.active=$SPRING_PROFILE" \
-            -jar "release/metis-shell-${GH_INPUT_COMPONENT_VERSION}.jar") \
-          | tee metis-shell.out
-
-          # Status prüfen (Exceptions führen leider nicht zu Spring Shell Exit Status != 0):
-          checkMessage() {
-            if ! grep -q "$@" -- metis-shell.out; then echo "Erwartete Meldung (grep $@) nicht gefunden" >&2; return 1; fi
-          }
-          checkMessage -P '\bresetTestData succeeded\b'
-          if "$GH_INPUT_LOAD_TEST_DATA"; then checkMessage -P '\bloadTestData succeeded\b'; fi
+          ./${{ env.ACTIONS_PATH }}/workflows/metis/common/database-init.sh

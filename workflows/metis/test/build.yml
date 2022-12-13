@@ -21,6 +21,9 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
 
 jobs:
   build:
@@ -29,9 +32,10 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-      RELEASE_ASSETS_PATH: release
+      METIS_REPOSITORY: freenet-group/metis
       METIS_REPOSITORY_PATH: metis
-      COMPONENT_VERSION: 4.0.24
+      RELEASE_ASSETS_PATH: release
+      COMPONENT_VERSION: ${{ inputs.componentVersion }}
       
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -77,7 +81,6 @@ jobs:
           token: ${{ env.TOKEN }}
           fetch-depth: 0
           repository: ${{ env.METIS_REPOSITORY }}
-          ref: ${{ inputs.metisRepositoryBranch }}
           path: ${{ env.METIS_REPOSITORY_PATH }}
 
       # ##################################################################################
@@ -92,20 +95,14 @@ jobs:
           installJq: true
           
 
-      # Make download executable
-      - run: chmod +x ${{ env.ACTIONS_PATH }}/actions/download-release-assets/download.sh
-        shell: bash
-
-      - name: download_asset
-        shell: bash
-        run: ${{ env.ACTIONS_PATH }}/actions/download-release-assets/download.sh
-        env:
-          REPOSITORY: ${{ env.METIS_REPOSITORY }}
-          VERSION: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          PATTERN: metis-shell-${{ env.COMPONENT_VERSION }}.jar
-          TOKEN: ${{ env.TOKEN }}
-          TARGET_PATH: ${{ env.RELEASE_ASSETS_PATH }}
-      - run: chmod +x ./${{ env.RELEASE_ASSETS_PATH }}/metis-shell-${{ env.COMPONENT_VERSION }}.jar
+      - name: Download release
+        uses: ./mcbscore/github/actions/download-release-assets
+        with:
+          version: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          assetPattern: metis-shell-${{ env.COMPONENT_VERSION }}.jar
+          targetPath: ./${{ env.RELEASE_ASSETS_PATH }}
+          token: ${{ env.TOKEN }}
+          repository: ${{ env.METIS_REPOSITORY }}
 
       # Testumgebung konfigurieren
       - name: Configure environment
@@ -114,6 +111,9 @@ jobs:
           sed -i 's%{restServerUrl}%https:\/\/metis-dev.md-abr-np.k8s.freenet-group.de\/metis-rest%' ./test/config/testConfig.js
           sed -i 's%{frontendUrl}%https:\/\/metis-ui-dev.md-abr-np.k8s.freenet-group.de%' ./test/config/testConfig.js
           cat ./test/config/testConfig.js
+          
+          # Datei ausfuehrbar machen
+          chmod +x ./${{ env.ACTIONS_PATH }}/workflows/metis/common/database-init.sh
          
           npm install
       
@@ -128,8 +128,8 @@ jobs:
           COMPONENT_VERSION: ${{ env.COMPONENT_VERSION }}
           SPRING_PROFILE: dev
         run: |
-          chmod +x ./mcbscore/github/workflows/metis/common/database-init.sh
-          ./mcbscore/github/workflows/metis/common/database-init.sh
+          ./${{ env.ACTIONS_PATH }}/workflows/metis/common/database-init.sh
+
           node_modules/gulp/bin/gulp.js testRest
 
       # Frontend Test starten und Ergebnisse ins XML und HTML- Format konvertieren
@@ -140,11 +140,10 @@ jobs:
           LOAD_TEST_DATA: true
           REPOSITORY_PATH: ${{ env.METIS_REPOSITORY_PATH }}
           RELEASE_PATH: ${{ env.RELEASE_ASSETS_PATH }}
-          COMPONENT_VERSION: 4.0.24
+          COMPONENT_VERSION: ${{ env.COMPONENT_VERSION }}
           SPRING_PROFILE: dev
         run: |
-          chmod +x ./mcbscore/github/workflows/metis/common/database-init.sh
-          ./mcbscore/github/workflows/metis/common/database-init.sh
+          ./mcbscore/${{ env.ACTIONS_PATH }}/metis/common/database-init.sh
           
           sed -i 's%{TRUsed}%${{ inputs.updateTestRail }}%' ./test/testrail-conf.js
           sed -i 's%{TRProject}%MEA%' ./test/testrail-conf.js

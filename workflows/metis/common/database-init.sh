@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-
-
 commands=( resetTestData stacktrace )
 if "${LOAD_TEST_DATA:=true}"; then
   commands=(
