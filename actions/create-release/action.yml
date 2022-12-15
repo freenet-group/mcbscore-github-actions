@@ -38,6 +38,7 @@ runs:
           /repos/${{ github.repository }}/releases \
           -f tag_name='${{inputs.tagName}}' \
           -f name='${{inputs.releaseName}}' \
+          -f target_commitish='${{BRANCH_NAME}}' \
           -F draft=${{inputs.draft}}`
         
         outVarId=`jq -r .id <<< "$resultJson"`
