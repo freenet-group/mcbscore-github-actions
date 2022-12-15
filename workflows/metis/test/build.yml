@@ -141,7 +141,7 @@ jobs:
           RELEASE_PATH: ${{ env.RELEASE_ASSETS_PATH }}
           SPRING_PROFILE: dev
         run: |
-          ./${ACTIONS_PATH}/metis/common/database-init.sh
+          ./${ACTIONS_PATH}/workflows/metis/common/database-init.sh
           
           sed -i 's%{TRUsed}%${{ inputs.updateTestRail }}%' ./test/testrail-conf.js
           sed -i 's%{TRProject}%MEA%' ./test/testrail-conf.js
