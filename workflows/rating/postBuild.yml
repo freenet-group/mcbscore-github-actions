@@ -26,7 +26,7 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       MAIL_TEMPLATE: BuildInfoMCBSTemplate.ftl
-      TEAMS_MAIL: 08636abc.freenetgroup.onmicrosoft.com@emea.teams.ms
+      TEAMS_MAIL: 3e0e2102.freenetgroup.onmicrosoft.com@emea.teams.ms
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
