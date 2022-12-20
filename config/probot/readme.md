@@ -6,7 +6,7 @@ https://github.com/repository-settings/app
 
 <br>
 Falls die Einstellungen direkt übernommen werden sollen, kann die base-settings.yml direkt im zielrepo übernommen werden.
-Dafür sollte im Zielrepository die Probotapp aktiviert sein und im <code>.github/settings.yml</code> foglender Inhalt hinterlegt werden
+Dafür sollte im Zielrepository die Probotapp aktiviert sein und im <code>.github/settings.yml</code> folgender Inhalt hinterlegt werden
 
 ```yaml
 # These settings are synced to GitHub by https://probot.github.io/apps/settings/
