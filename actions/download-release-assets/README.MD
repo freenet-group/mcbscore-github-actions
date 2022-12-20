@@ -15,6 +15,10 @@ Github Action zum Download aller Release Assets, die dem Muster entsprechen. Die
   ### token
     description: Ein Github Token
     required: true
+  ### repository
+    description: Assets Repository
+    required: false
+    default: ${{ github.repository }}
 
 ---
 

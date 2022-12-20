@@ -1,16 +1,13 @@
 # Generische Probot settings die fuer alle Repos  gelten sollen.
 # Können in der entsprechenden custom yml des repos ueberschrieben werden.
 
-repository:
-  description: Repository Beschreibung
-
 branches:
   - name: develop
     protection:
      # Required. Require at least one approving review on a pull request, before merging. Set to null to disable.
       required_pull_request_reviews:
         # The number of approvals required. (1-6)
-        required_approving_review_count: 2
+        required_approving_review_count: 1
         # Dismiss approved reviews automatically when a new commit is pushed.
         dismiss_stale_reviews: true
         # Blocks merge until code owners have reviewed.
@@ -28,7 +25,7 @@ branches:
       # Required. Enforce all configured restrictions for administrators. Set to true to enforce required status checks for repository administrators. Set to null to disable.
       enforce_admins: true
       # Prevent merge commits from being pushed to matching branches
-      required_linear_history: true
+      required_linear_history: false
       # Required. Restrict who can push to this branch. Team and user restrictions are only available for organization-owned repositories. Set to null to disable.
       restrictions:
         apps: []
