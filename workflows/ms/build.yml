@@ -32,7 +32,7 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-
+      KEY_SERVER: ${{ secrets.CERT_SERVER }}
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
@@ -65,6 +65,7 @@ jobs:
             /github/common/jira/api_url = JIRA_API_URL,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
+            /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -86,6 +87,18 @@ jobs:
           installJava: true
           installGithubCli: true
           installJq: true
+
+      # ##################################################################################
+      # Keystore-Dateien herunterladen
+      # ##################################################################################
+
+      - name: Copy keystore-files
+        if: env.KEY_SERVER != ''
+        shell: bash
+        run: |
+          certServer='${{ env.KEY_SERVER }}'
+          scp -p "${certServer}:oidc/keys/keystore.jwks" "${certServer}:oidc/keys/samlKeystore.jks" docker/home/oidc/keys/
+          ls -l docker/home/oidc/keys
 
       # ##################################################################################
       # Version ermitteln
@@ -123,6 +136,9 @@ jobs:
             git commit -am "ReleaseVersion in DB Changes eingetragen"
             git push
           fi
+
+          git tag -f -a sql-${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}"
+          git push --tags -f
 
       - id: gradle-build
         name: Gradle Build
@@ -236,7 +252,9 @@ jobs:
           token: ${{ env.TOKEN }}
           inputs: >
             {
-              "componentVersion": "${{ env.COMPONENT_VERSION }}"
+              "component": "${{ env.COMPONENT }}",
+              "componentVersion": "${{ env.COMPONENT_VERSION }}",
+              "tagPrefix": "${{ env.TAG_PREFIX }}"
             }
 
       # Starte postBuild auf RELEASE

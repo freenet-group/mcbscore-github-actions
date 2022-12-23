@@ -146,6 +146,7 @@ jobs:
           - { name: ms-mandel, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_k8s, ../encoding, postBuild" }
           - { name: ms-mark, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
           - { name: ms-note-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
+          - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
           - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild" }
           - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild" }
