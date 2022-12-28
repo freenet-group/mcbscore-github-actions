@@ -48,39 +48,39 @@ runs:
         atlassianToolsDir=./mcbscore/github/atlassian-tools
         
         # Dependencies auswerten      
-        # java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
-        #   -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
-        #   dev_config.GetDependencyKt \
-        #   ${{ inputs.jiraUrl }} \
-        #   ${{ inputs.jiraCredentials }} \
-        #   "${{ inputs.issueList }}"
+         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+           dev_config.GetDependencyKt \
+           ${{ inputs.jiraUrl }} \
+           ${{ inputs.jiraCredentials }} \
+           "${{ inputs.issueList }}"
         
         # Liste / Property-File der Abhängigkeiten auslesen
-        # while IFS='=' read -r key value
-        # do
-        #   eval ${key}=${value}
-        # done < dependendIssues.properties
-        # echo "Dependency       = " ${dependendIssueList}
-        # echo "DEPENDENT_ISSUES=$(echo $dependendIssueList)" >> $GITHUB_ENV
-        echo "DEPENDENT_ISSUES=keine" >> $GITHUB_ENV
+         while IFS='=' read -r key value
+         do
+           eval ${key}=${value}
+         done < dependendIssues.properties
+         echo "Dependency       = " ${dependendIssueList}
+         echo "DEPENDENT_ISSUES=$(echo $dependendIssueList)" >> $GITHUB_ENV
+        # echo "DEPENDENT_ISSUES=keine" >> $GITHUB_ENV
 
         # Liste als Variable bereitstellen
-        # echo "dependentIssues=$dependendIssueList" >> $GITHUB_OUTPUT
-        echo "dependentIssues=keine" >> $GITHUB_OUTPUT
+         echo "dependentIssues=$dependendIssueList" >> $GITHUB_OUTPUT
+        # echo "dependentIssues=keine" >> $GITHUB_OUTPUT
         
         # Dependencies TRUE || FALSE
-        # while IFS='=' read -r key value
-        # do
-        #   eval ${key}=${value}
-        # done < dependency.properties
-        # if [ "$dependency" = "true" ]; then dependency="JA"; else dependency="NEIN"; fi 
-        # echo "Dependency       = " ${dependency}
-        # echo "DEPENDENCY=$(echo $dependency)" >> $GITHUB_ENV
-        echo "DEPENDENCY=NEIN" >> $GITHUB_ENV
+         while IFS='=' read -r key value
+         do
+           eval ${key}=${value}
+         done < dependency.properties
+         if [ "$dependency" = "true" ]; then dependency="JA"; else dependency="NEIN"; fi 
+         echo "Dependency       = " ${dependency}
+         echo "DEPENDENCY=$(echo $dependency)" >> $GITHUB_ENV
+        # echo "DEPENDENCY=NEIN" >> $GITHUB_ENV
 
         # Variable bereitstellen
-        # echo "dependency=$dependency" >> $GITHUB_OUTPUT
-        echo "dependency=NEIN" >> $GITHUB_OUTPUT
+         echo "dependency=$dependency" >> $GITHUB_OUTPUT
+        # echo "dependency=NEIN" >> $GITHUB_OUTPUT
         
         # DB-Changes auswerten
         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
