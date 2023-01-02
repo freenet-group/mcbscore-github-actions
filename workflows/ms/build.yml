@@ -64,7 +64,7 @@ jobs:
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/jira/api_url = JIRA_API_URL,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
             /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
 
       # Die internen Actions auschecken
