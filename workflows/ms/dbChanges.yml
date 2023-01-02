@@ -5,9 +5,15 @@ run-name: DB Changes ${{ github.event.inputs.componentVersion }}
 on:
   workflow_dispatch:
     inputs:
+      component:
+        description: Der Name der Komponente
+        required: true
       componentVersion:
         description: Die Version der Komponente
         required: true
+      tagPrefix:
+        description: Der Präfix des Tags
+        required: false
       dbChangesRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore_db-changes
         required: false
@@ -47,8 +53,11 @@ jobs:
 
       - name: DB Changes kopieren
         shell: bash
+        env:
+          GH_INPUT_COMPONENT_VERSION: ${{ inputs.componentVersion }}
+          GH_INPUT_TAG_PREFIX: ${{ inputs.tagPrefix }}
         run: |
-          cp -Rv source/${{ env.DB_CHANGES_DIRECTORY }}/* target/${{ env.COMPONENT }}/${{ env.DB_CHANGES_DIRECTORY }}
+          cp -Rv source/$DB_CHANGES_DIRECTORY/* target/$COMPONENT/$DB_CHANGES_DIRECTORY
           
           cd target
           git config user.name github-actions
@@ -59,9 +68,9 @@ jobs:
           if [ -n "$changesDetected" ]
           then
             git add .
-            git commit -m "[Releasebuild] db-changes ${{ env.COMPONENT }}-${{ github.event.inputs.componentVersion }}"
+            git commit -m "[Releasebuild] db-changes $GH_INPUT_TAG_PREFIX$GH_INPUT_COMPONENT_VERSION"
             git push
           fi
 
-          git tag -f -a ${{ env.COMPONENT }}-${{ github.event.inputs.componentVersion }} -m "tagging ${{ env.COMPONENT }}-${{ github.event.inputs.componentVersion }}"
+          git tag -f -a sql-$GH_INPUT_TAG_PREFIX$GH_INPUT_COMPONENT_VERSION -m "tagging sql-$GH_INPUT_TAG_PREFIX$GH_INPUT_COMPONENT_VERSION"
           git push --tags -f
