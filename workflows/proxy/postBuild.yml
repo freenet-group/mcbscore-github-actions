@@ -132,7 +132,7 @@ jobs:
       - name: createBambi-Entry
         run: |
            echo "Create BAMBI-Entry : "
-           http_response=$(curl -w "%{http_code}\n" --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild' --header 'Content-Type: application/json' --data-raw '{    "componentName": "${{ env.JIRA_COMPONENT }}",    "versionNo": "${{ github.event.inputs.releaseVersion }}",    "buildUser": "mcbstest",    "issueList": "${{ github.event.inputs.issueList }}"}')
+           http_response=$(curl -w "%{http_code}\n" --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild' --header 'Content-Type: application/json' --data-raw '{    "componentName": "${{ env.DACOMPONENT }}",    "versionNo": "${{ github.event.inputs.releaseVersion }}",    "buildUser": "mcbstest",    "issueList": "${{ github.event.inputs.issueList }}"}')
            echo "Response : ${http_response} \n"
            http_code=$(echo $http_response |  cut -d '}' -f 2)
            if [ $http_code != 200 ] ; then
