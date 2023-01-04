@@ -130,12 +130,16 @@ jobs:
       # Erzeugen der BAMBI-Einträge via D&A-Docker-Container
       # ##################################################################################
       - name: createBambi-Entry
-        uses: addnab/docker-run-action@v3
-        with:
-          image: docker.mobilcom.de/dua/microservices/init-abrms-build-data:latest
-          options: --workdir /app --rm -e JOXREPDB=JOXP -e MD_ENV=PROD
-          run: perl /app/initInsertBambiTables.pl -p -c '${{ env.DACOMPONENT }}' -v '${{ github.event.inputs.releaseVersion }}' -u '${{ github.actor }}' -i '${{ github.event.inputs.issueList }}'
-
+        run: |
+           echo "Create BAMBI-Entry : "
+           http_response=$(curl -w "%{http_code}\n" --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild' --header 'Content-Type: application/json' --data-raw '{    "componentName": "${{ env.JIRA_COMPONENT }}",    "versionNo": "${{ github.event.inputs.releaseVersion }}",    "buildUser": "mcbstest",    "issueList": "${{ github.event.inputs.issueList }}"}')
+           echo "Response : ${http_response} \n"
+           http_code=$(echo $http_response |  cut -d '}' -f 2)
+           if [ $http_code != 200 ] ; then
+             echo "ErrorCode : $http_code"
+             exit 1
+           fi
+           
       # ##################################################################################
       # Eintrag der fixVersion
       # ##################################################################################
