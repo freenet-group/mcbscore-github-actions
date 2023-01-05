@@ -1,6 +1,6 @@
 name: K8s Deployment
-#Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu koennen. 
-run-name: K8s Deployment von ${{ github.event.inputs.component }} - ${{ github.event.inputs.componentVersion }} nach ${{ github.event.inputs.environment }}
+#Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu koennen.
+run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.component }} ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
 
 on:
   workflow_dispatch:
@@ -34,11 +34,13 @@ on:
 
 #Nur ein k8s Workflow darf gleichzeitg gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.inputs.component }}
+  group: ${{ github.workflow }}-${{ github.event.inputs.component }}-${{ github.event.inputs.dryRun }}
   cancel-in-progress: false
 env:
   DEPLOYMENT_PATH: mcbscore/deployment
   JAVA_VERSION: 11
+  GENERATED_SSH_KEY_FILE: id_rsa
+  KEY_SERVER: ${{ secrets.CERT_SERVER }}
 
 jobs:
   build-matrix:
@@ -97,14 +99,14 @@ jobs:
             if [ -z "$domains" -a -e "$f" ]; then
               echo "Prüfe domains in $f"
               domains=$(
-                if [[ "$f" == \.json$ ]]; then
+                if [[ "$f" == *.json ]]; then
                   cat -- "$f"
                 else
                   ./${{ env.DEPLOYMENT_PATH }}/scripts/common/properties_to_json.sh < "$f"
                 fi \
                 | jq -c -r 'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
                 # ^ ohne Domains: Leerstring => jq -r gibt nichts aus => if [ -z "$domains" ] bleibt true.
-                # mit Domains: jq split Ergebnis ist Array (z.B. ["km","mc"]); jq igoniert -r.
+                # mit Domains: jq split Ergebnis ist Array (z.B. ["km","mc"]); jq ignoriert -r.
               )
             fi
           done
@@ -169,7 +171,8 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
-            /github/secrets/mcbs_token = GITHUB_TOKEN
+            /github/secrets/mcbs_token = GITHUB_TOKEN,
+            /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY
 
       # Auschecken des Deployment Repositories
       - name: Checkout Deployment Data / Scripts
@@ -184,6 +187,42 @@ jobs:
       - name: Setup jq
         uses: freenet-actions/setup-jq@v2
 
+      # Installationen: unzip wird fuer Kubernetes Login Step benötigt; ssh für das scp der Keystore Dateien
+      - name: Install unzip, scp
+        shell: bash
+        run: |
+          apt-get update
+          apt-get install --yes unzip
+          if [ -n "$KEY_SERVER" ]; then
+            apt-get install --yes ssh
+          fi
+
+      # ssh Konfig
+      - name: Setup ssh
+        if: env.SSH_KEY != ''
+        shell: bash
+        run: |
+          printf '' > "$GENERATED_SSH_KEY_FILE"
+          chmod 600 -- "$GENERATED_SSH_KEY_FILE"
+          printf %s "$SSH_KEY" >> "$GENERATED_SSH_KEY_FILE"
+          ls -lAF -- "$GENERATED_SSH_KEY_FILE"
+
+      # Keystore-Dateien herunterladen
+      # Werden vom Workflow selbst nicht gebraucht, aber evtl per kubernetes-deployment*.json als
+      # Quelle von "sourceType": "FILE" Secrets.
+      - name: Copy keystore files
+        if: env.KEY_SERVER != ''
+        shell: bash
+        run: |
+          certServer='${{ secrets.CERT_SERVER }}'
+          if scp -i "$GENERATED_SSH_KEY_FILE" -o StrictHostKeyChecking=no -p \
+              "${certServer}:oidc/keys/keystore.jwks" "${certServer}:oidc/keys/samlKeystore.jks" \
+              docker/home/oidc/keys/; then
+            ls -lA docker/home/oidc/keys
+          else
+            echo 'Keine Keystore-Dateien kopiert (aber vielleicht ja gar nicht gefordert)'
+          fi
+
       # kubernetes-deployment JSON einlesen
       - name: Read kubernetes-deployment.json
         shell: bash
@@ -193,7 +232,7 @@ jobs:
 
           # Das letzte JSON-Objekt (Datei mit -${environment}) gewinnt in jq add.
           {
-            printf '{ "secrets": [] }\n'  # Default hier beimischen ist einfacher als immer ohne "secrets" auszukommen.
+            printf '{ "secrets": [] }\n'  # Default hier beimischen ist einfacher als immer auch ohne "secrets" auszukommen.
             for f in "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json"; do
               printf '%s existiert' "$f" >&2
               if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
@@ -272,7 +311,7 @@ jobs:
           # Beispiel (Fortsetzung): aws-ssm-getparameters-action hat dann Umgebungsvariablen gesetzt:
           # - DYNAMIC_AWS_PARAM_PAIRS1 mit dem Wert X für "/config/ms/homer/homer.prince.license",
           # - DYNAMIC_AWS_PARAM_PAIRS2 mit dem Wert Y für "/config/ms/application/test".
-          # Daraus machen wir jetzt kubernetes-secrets.generated.json in dem im Helm Chart erwarteten Format:
+          # Daraus machen wir jetzt kubernetes-secrets-aws.generated.json in dem im Helm Chart erwarteten Format:
           # {
           # 	"secrets": [
           # 		{
@@ -306,30 +345,81 @@ jobs:
               ]
               | { "secrets": . }' \
           < kubernetes-deployment.generated.json \
-          > kubernetes-secrets-all.generated.json
+          > kubernetes-secrets-aws-all.generated.json
           # ^ Das ".value" in with_entries(select(.value != null)) ist nicht der "value" Key, sondern bei with_entries
           # der jeweilige JSON Value! Damit unterdrücken wir neben "value": null Einträgen z.B. auch "conversion": null.
 
           # Der Fall "value" == null (d.h. env["AWS_DYNAMIC_PARAM_NAME<n>"] null, d.h. Param-Name $x.source nicht im AWS
-          # gefunden, kommt jetzt: Warnen und in Endergebnis kubernetes-secrets.generated.json weglassen:
-          missingParams=$(jq -r '[.secrets[].MISSING_AWS_DYNAMIC_PARAM_NAME | select(. != null)] | join(", ")' < kubernetes-secrets-all.generated.json)
+          # gefunden, kommt jetzt: Warnen und in Endergebnis kubernetes-secrets-aws.generated.json weglassen:
+          missingParams=$(jq -r '[.secrets[].MISSING_AWS_DYNAMIC_PARAM_NAME | select(. != null)] | join(", ")' < kubernetes-secrets-aws-all.generated.json)
           if [ -n "$missingParams" ]; then printf '::warning::Nicht im AWS ParameterStore gefunden: %s\n' "$missingParams" >&2; fi
           jq '[.secrets[] | select(.value != null)] | { "secrets": . }' \
-          < kubernetes-secrets-all.generated.json \
-          | tee kubernetes-secrets.generated.json
+          < kubernetes-secrets-aws-all.generated.json \
+          | tee kubernetes-secrets-aws.generated.json
 
-
-      # Wird fuer Kubernetes Login step benoetigt    
-      - name: Install unzip
+      # Secrets in Dateien in JSON für Helm umwandeln
+      - name: Secret files to Helm JSON
+        shell: bash
         run: |
-          apt-get update && \
-          apt-get install unzip -y 
+          # secretFiles := bash Array der .source Werte wo .sourceType == "FILE"
+          # command substitution $(…) und eval separat, um ggf jq Fehlerstatus zu beachten
+          secretFiles=$(jq --raw-output '.secrets[] | select(.sourceType == "FILE") | .source | @sh' < kubernetes-deployment.generated.json)
+          eval "secretFiles=( $secretFiles )"
+
+          # Inhalte der geheimen Dateien Base64-kodiert, Space-separiert
+          secretFilesB64Data=''
+          for ((i=0;i<${#secretFiles[@]};i++)) do
+            secretFile=${secretFiles[i]}
+            if [ ! -e "$secretFile" ]; then
+              echo "Datei $secretFile existiert nicht. Bitte Step 'Copy keystore files' prüfen." >&2
+              exit 2
+            fi
+
+            b64Data=$(base64 --wrap=0 < "$secretFile")
+
+            # im Log maskieren [https://www.aaron-powell.com/posts/2022-07-14-working-with-add-mask-and-github-actions/]
+            printf '::add-mask::%s\n' "$b64Data"
+
+            printf '[%s] <%d Zeichen Base64 aus %s>\n' $i ${#b64Data} "$secretFile" >&2
+            secretFilesB64Data=${secretFilesB64Data}${secretFilesB64Data:+ }${b64Data}
+          done
+
+          # analog AWS: konfigurierte { "sourceType": …, "source": …, "targetType": …, "target": … } Objekte auf
+          # vom Helm Chart erwartete { "type": …, "key: …, "value: …, "conversion: … } mappen
+          jq --arg secretFilesB64Data "$secretFilesB64Data" '
+              ($secretFilesB64Data | split(" ")) as $secretFilesB64DataArray
+              | [
+                [.secrets[] | select(.sourceType == "FILE")]
+                | foreach .[] as $x (
+                    -1;
+                    . + 1;
+                    { "type": $x.targetType, "key": $x.target, "value": $secretFilesB64DataArray[.], "conversion": "b64dec" }
+                  )
+              ]
+              | { "secrets": . }' \
+          < kubernetes-deployment.generated.json \
+          | tee >(jq '.secrets = (.secrets | map(.value = "… length " + (.value | length | tostring)))') \
+          > kubernetes-secrets-files.generated.json
+          # ↑ tee >(jq …): Debug-Ausgabe mit maskierten .secrets.value, aber aussagekräftiger als
+          # ganz maskiert durch add-mask
+
+      # kubernetes-secrets.generated.json := kubernetes-secrets-files.generated.json + kubernetes-secrets-aws.generated.json
+      - name: Merge generated Helm JSON Secret files
+        shell: bash
+        run: |
+          cat kubernetes-secrets-files.generated.json kubernetes-secrets-aws.generated.json \
+          | jq '.secrets[]' | jq --slurp '{ "secrets": . }' \
+          | tee >(jq '.secrets = (.secrets | map(.value = "… length " + (.value | length | tostring)))') \
+          > kubernetes-secrets.generated.json
+          # ↑ tee >(jq …): Debug-Ausgabe mit maskierten .secrets.value, aber aussagekräftiger als
+          # ganz maskiert durch add-mask
+
       # Kubernetes Login
       - name: 'Login k8s/helm'
         uses: freenet-actions/prepare-k8s-env@v1
         with:
          k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
-         k8s-token: ${{ env.K8S_TOKEN }}   
+         k8s-token: ${{ env.K8S_TOKEN }}
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -363,12 +453,14 @@ jobs:
           if [ "$domain" = '-' ]; then
             name=$K8S_COMPONENT_NAME
             helmOpts=( "${helmOpts[@]}" "--set=hostname=${component}-${environment}" )
+          # bei domain in component (z.B. component=oidc-km) den domain-Anteil entfernen,
+          # um Doppelung wie "oidc-km-km" zu vermeiden
           else
             name=${K8S_COMPONENT_NAME}-${domain}
             helmOpts=(
               "${helmOpts[@]}"
               "--set=domain=$domain"
-              "--set=hostname=${component}-${domain}-${environment}"
+              "--set=hostname=${component%-$domain}-${domain}-${environment}"
             )
           fi
 
@@ -394,7 +486,6 @@ jobs:
           maxWait=${maxWait//h/hour}; maxWait=${maxWait//m/min}; maxWait=${maxWait//s/sec}
           maxWaitTimestamp=$(date -d "now +$maxWait" +%s)
           helmExit=0
-          
           if  helm list --namespace="$K8S_NAMESPACE" | cut -d ' ' -f 1 | grep -Fxq -- "$K8S_COMPONENT_NAME"; then
               while [ "$(date +%s)" -lt "$maxWaitTimestamp" ]; do
                   helmStatus=$(helm status --output=json --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" | jq -r .info.status)
@@ -439,4 +530,5 @@ jobs:
         if: ${{ always() }}
         run: |
           set +e
+          rm -rfv -- docker/home/oidc/keys *.generated.json
           rm -rf /__w/_tool/*
