@@ -98,12 +98,8 @@ jobs:
           do
             if [ -z "$domains" -a -e "$f" ]; then
               echo "Prüfe domains in $f"
-              if [[ "$f" == *".json" ]]; then
-                echo "domains in $f"
-                cat -- "$f" | jq -c -r 'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
-              fi
               domains=$(
-                if [[ "$f" == *".json" ]]; then
+                if [[ "$f" == *.json ]]; then
                   cat -- "$f"
                 else
                   ./${{ env.DEPLOYMENT_PATH }}/scripts/common/properties_to_json.sh < "$f"
@@ -196,7 +192,10 @@ jobs:
         shell: bash
         run: |
           apt-get update
-          apt-get install --yes unzip ssh
+          apt-get install --yes unzip
+          if [ -n "$KEY_SERVER" ]; then
+            apt-get install --yes ssh
+          fi
 
       # ssh Konfig
       - name: Setup ssh
@@ -360,7 +359,6 @@ jobs:
 
       # Secrets in Dateien in JSON für Helm umwandeln
       - name: Secret files to Helm JSON
-        if: env.KEY_SERVER != ''
         shell: bash
         run: |
           # secretFiles := bash Array der .source Werte wo .sourceType == "FILE"
@@ -407,7 +405,6 @@ jobs:
 
       # kubernetes-secrets.generated.json := kubernetes-secrets-files.generated.json + kubernetes-secrets-aws.generated.json
       - name: Merge generated Helm JSON Secret files
-        if: env.KEY_SERVER != ''
         shell: bash
         run: |
           cat kubernetes-secrets-files.generated.json kubernetes-secrets-aws.generated.json \
@@ -456,15 +453,14 @@ jobs:
           if [ "$domain" = '-' ]; then
             name=$K8S_COMPONENT_NAME
             helmOpts=( "${helmOpts[@]}" "--set=hostname=${component}-${environment}" )
-          elif [ -z "${component##*-$domain*}" ]; then
-            name=${K8S_COMPONENT_NAME}-${domain}
-            helmOpts=( "${helmOpts[@]}" "--set=hostname=${component}-${environment}" )
+          # bei domain in component (z.B. component=oidc-km) den domain-Anteil entfernen,
+          # um Doppelung wie "oidc-km-km" zu vermeiden
           else
             name=${K8S_COMPONENT_NAME}-${domain}
             helmOpts=(
               "${helmOpts[@]}"
               "--set=domain=$domain"
-              "--set=hostname=${component}-${domain}-${environment}"
+              "--set=hostname=${component%-$domain}-${domain}-${environment}"
             )
           fi
 
@@ -535,4 +531,4 @@ jobs:
         run: |
           set +e
           rm -rfv -- docker/home/oidc/keys *.generated.json
-          rm -rfv /__w/_tool/*
+          rm -rf /__w/_tool/*
