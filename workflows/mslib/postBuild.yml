@@ -216,8 +216,8 @@ jobs:
           jiraWebUrl: ${{ env.JIRA_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
-          hasDependencies: "NEIN"
-          dependentIssues: "keine"
+          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          dependentIssues: ${{ steps.fetch-additional-information.outputs.dependentIssues }}
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
           junitResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
@@ -249,7 +249,7 @@ jobs:
           issueList: issue_info.csv
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
-          hasDependencies: "NEIN"
+          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
           webhookUri: ${{ env.TEAMS_MAIL }}

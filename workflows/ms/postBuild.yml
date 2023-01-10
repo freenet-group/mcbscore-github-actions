@@ -130,15 +130,26 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
-      # Erzeugen der BAMBI-Einträge via D&A-Docker-Container
+      # Erzeugen der BAMBI-Einträge
       # ##################################################################################
-      - name: createBambi-Entry
-        uses: addnab/docker-run-action@v3
-        with:
-          image: docker.mobilcom.de/dua/microservices/init-abrms-build-data:latest
-          options: --workdir /app --rm -e JOXREPDB=JOXP -e MD_ENV=PROD
-          run: perl /app/initInsertBambiTables.pl -p -c '${{ env.JIRA_COMPONENT }}' -v '${{ github.event.inputs.releaseVersion }}' -u '${{ github.actor }}' -i '${{ github.event.inputs.issueList }}'
-
+      - name: convert issueList
+        run: |
+          OUTPUT=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
+          echo "IL=$(echo $OUTPUT)" >> $GITHUB_ENV
+               
+      
+      - name: write bambi-entry
+        run: |
+           echo "Create BAMBI-Entry : "
+           echo "${{ env.IL }}"
+           http_response=$(curl -w "%{http_code}\n" --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild' --header 'Content-Type: application/json' --data-raw '{    "componentName": "${{ env.JIRA_COMPONENT }}",    "versionNo": "${{ github.event.inputs.releaseVersion }}",    "buildUser": "mcbstest",    "issueList": "${{ env.IL }}"  }' )
+           echo "Response : ${http_response} \n"
+           http_code=$(echo $http_response |  cut -d '}' -f 2)
+           if [ $http_code != 200 ] ; then
+             echo "ErrorCode : $http_code"
+             exit 1
+           fi
+           
       # ##################################################################################
       # Eintrag der fixVersion
       # ##################################################################################
@@ -233,8 +244,8 @@ jobs:
           jiraWebUrl: ${{ env.JIRA_CLOUD_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
-          hasDependencies: NEIN
-          dependentIssues: keine
+          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          dependentIssues: ${{ steps.fetch-additional-information.outputs.dependentIssues }}
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           releaseUrl: '${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.JIRA_COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar'
           junitResultUrl: '${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases'
@@ -266,7 +277,7 @@ jobs:
           issueList: issue_info.csv
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
-          hasDependencies: NEIN
+          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
           webhookUri: ${{ env.TEAMS_MAIL }}

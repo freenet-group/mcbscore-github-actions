@@ -97,6 +97,8 @@ jobs:
         if: env.BUILD_TYPE == 'RELEASE'
         shell: bash
         run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
           git commit -am "[tagging] ${{ env.COMPONENT_VERSION }}"
           git push
 
