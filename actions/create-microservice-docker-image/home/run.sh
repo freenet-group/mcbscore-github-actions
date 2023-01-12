@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
+set -e
+set -o pipefail
+
 appInstance=$(hostname)
 heapDumpDir=dumps/${SERVICE_NAME}
-heapDumpPath=${heapDumpDir}/${appInstance}_${SERVICE_VERSION}_$(date +"%Y-%m-%dT%H%M%S").hprof
+heapDumpFile=${appInstance}_${SERVICE_VERSION}_$(date +"%Y-%m-%dT%H%M%S").hprof
 
-mkdir -p -- "$heapDumpDir"
-
-# Paranoia: Falls $heapDumpPath existiert, auch noch PID ergänzen (vor dem Punkt).
+# (Per NFS gemountetes) Oberverzeichnis könnte readonly sein (=> mkdir scheitert)
+# oder Verzeichnis selbst schon existieren aber readonly (=> test -w scheitert).
+# In beiden Fällen Fallback auf /tmp.
+mkdir -p -- "$heapDumpDir" && test -w "$heapDumpDir" || {
+	echo "WARN: $heapDumpDir nicht schreibbar, Fallback /tmp" >&2
+	heapDumpDir=/tmp
+}
+# Paranoia: Falls $heapDumpFile existiert, auch noch PID ergänzen (vor dem Punkt).
 # (Falls die auch existiert, wird Java nichts schreiben.)
-heapDumpPath=$(f="$heapDumpPath" pid=$$ flock -- "$heapDumpDir" bash -c '
+heapDumpFile=$(cd -- "$heapDumpDir" && f="$heapDumpFile" pid=$$ flock -- . bash -c '
 	if [ -e "$f" ]; then
 		printf "%s\\n" "${f%.*}_${pid}.${f##*.}"
 	else
@@ -16,6 +24,6 @@ heapDumpPath=$(f="$heapDumpPath" pid=$$ flock -- "$heapDumpDir" bash -c '
 ')
 
 exec java \
-	 -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError "-XX:HeapDumpPath=$heapDumpPath" \
+	 -XX:+ExitOnOutOfMemoryError -XX:+HeapDumpOnOutOfMemoryError "-XX:HeapDumpPath=$heapDumpDir/$heapDumpFile" \
 	 ${JAVA_OPTS} ${SPRING_OPTS} \
 	 -jar "${SERVICE_NAME}.jar"
