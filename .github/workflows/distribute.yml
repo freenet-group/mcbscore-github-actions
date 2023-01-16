@@ -329,7 +329,6 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-bot, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-compare-cp-contract-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
