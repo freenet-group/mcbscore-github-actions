@@ -17,8 +17,8 @@ runs:
       shell: bash
       run: |
         if [ "${ENVIRONMENT^^}" = PROD ]; then
-          awsAccessKeyId=${AWS_ACCESS_KEY_ID_PROD:-$AWS_ACCESS_KEY_ID}
-          awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY_PROD:-$AWS_SECRET_ACCESS_KEY}
+          awsAccessKeyId=${AWS_ACCESS_KEY_ID_PROD}
+          awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY_PROD}
         else
           awsAccessKeyId=${AWS_ACCESS_KEY_ID}
           awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY}
