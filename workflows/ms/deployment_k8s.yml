@@ -249,6 +249,7 @@ jobs:
               "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
               "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
               "K8S_COMPONENT_NAME=" + (.componentName // ("componentName fehlt" | halt_error)) + "\n" +
+              "HELM_CHART="         + (.helmChart     // ms)                                   + "\n" +
               ""' \
             < kubernetes-deployment.generated.json \
           | tee -a -- "$GITHUB_ENV"
@@ -463,9 +464,8 @@ jobs:
               "--set=hostname=${component%-$domain}-${domain}-${environment}"
             )
           fi
-
-          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$component"
-          if [ ! -d "$chartDir" ]; then chartDir=${{ env.DEPLOYMENT_PATH }}/helm/ms; fi
+          
+          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$HELM_CHART"
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.
