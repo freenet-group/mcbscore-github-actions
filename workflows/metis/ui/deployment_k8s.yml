@@ -43,11 +43,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-github-aws-secrets
+        with:
+          environment: ${{ inputs.environment }}
+
       - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = GITHUB_TOKEN
 
