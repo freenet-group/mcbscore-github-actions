@@ -43,6 +43,9 @@ env:
   KEY_SERVER: ${{ secrets.CERT_SERVER }}
 
 jobs:
+  ################################################################################
+  # Job build-matrix
+  ################################################################################
   build-matrix:
     runs-on: ubuntu-latest
     steps:
@@ -52,25 +55,9 @@ jobs:
           fetch-depth: 0
 
       - name: Select Github Secrets for AWS
-        env:
-          ENVIRONMENT: ${{ inputs.environment }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_ACCESS_KEY_ID_PROD: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY_PROD: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
-        shell: bash
-        run: |
-          if [ "${ENVIRONMENT^^}" = PROD ]; then
-            awsAccessKeyId=${AWS_ACCESS_KEY_ID_PROD:-$AWS_ACCESS_KEY_ID}
-            awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY_PROD:-$AWS_SECRET_ACCESS_KEY}
-          else
-            awsAccessKeyId=${AWS_ACCESS_KEY_ID}
-            awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY}
-          fi
-          printf '%s=%s\n' \
-              "AWS_ACCESS_KEY_ID"     "$awsAccessKeyId" \
-              "AWS_SECRET_ACCESS_KEY" "$awsSecretAccessKey" \
-            >> "$GITHUB_ENV"
+        uses: ./.github/actions/select-github-aws-secrets
+        with:
+          environment: ${{ inputs.environment }}
 
       - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
@@ -160,6 +147,9 @@ jobs:
       deployment-enabled: ${{ steps.deployment-check.outputs.deploymentEnabled }}
       domain-matrix: ${{ steps.set-matrix.outputs.domainMatrix }}
 
+  ################################################################################
+  # Job helm-deployment
+  ################################################################################
   helm-deployment:
     needs: build-matrix
     if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
@@ -187,25 +177,9 @@ jobs:
           fetch-depth: 0
 
       - name: Select Github Secrets for AWS
-        env:
-          ENVIRONMENT: ${{ inputs.environment }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_ACCESS_KEY_ID_PROD: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SECRET_ACCESS_KEY_PROD: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
-        shell: bash
-        run: |
-          if [ "${ENVIRONMENT^^}" = PROD ]; then
-            awsAccessKeyId=${AWS_ACCESS_KEY_ID_PROD:-$AWS_ACCESS_KEY_ID}
-            awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY_PROD:-$AWS_SECRET_ACCESS_KEY}
-          else
-            awsAccessKeyId=${AWS_ACCESS_KEY_ID}
-            awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY}
-          fi
-          printf '%s=%s\n' \
-              "AWS_ACCESS_KEY_ID"     "$awsAccessKeyId" \
-              "AWS_SECRET_ACCESS_KEY" "$awsSecretAccessKey" \
-            >> "$GITHUB_ENV"
+        uses: ./.github/actions/select-github-aws-secrets
+        with:
+          environment: ${{ inputs.environment }}
 
       - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
