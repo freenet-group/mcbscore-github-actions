@@ -25,6 +25,28 @@ on:
           - test
 
 jobs:
+  aws:
+    if: ${{ github.event.inputs.group == 'aws' || github.event.inputs.group == 'ALL' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: aws-ms-events, branch: main, group: aws, workflows: "build, deployment, remove" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
   errorcodes:
     if: ${{ github.event.inputs.group == 'errorcodes' || github.event.inputs.group == 'ALL' }}
     runs-on: ubuntu-latest
