@@ -90,9 +90,11 @@ jobs:
 
       # Secrets aus AWS auslesen 2
       - name: Read AWS Parameters 2
-        uses: dkershner6/aws-ssm-getparameters-action@v1
+        uses: ./.github/actions/read-aws-secrets
         with:
-          parameterPairs: |
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
             /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
             /kubernetes/github-packages/token = K8S_REGISTRY
 
