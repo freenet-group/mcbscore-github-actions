@@ -56,7 +56,6 @@ runs:
         ISSUE_FILE: issue_info.csv
       shell: bash
       run: |
-             
         # Releasenote schreiben
         # Setzen des Releasenote-Namens
         release="${{ inputs.component }}_${{inputs.componentVersion}}"
@@ -108,7 +107,6 @@ runs:
           
         echo "## Downloads" >> $release.md
         echo " ${{ inputs.releaseUrl }}" >> $release.md
-
         echo "##  " >> $release.md
         echo "ImplementedIssues: $issueList" >> $release.md
         
