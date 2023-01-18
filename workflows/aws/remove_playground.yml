@@ -1,0 +1,19 @@
+name: Von der Spielwiese entfernen
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.GH_MCBS_TOKEN }}
+
+    steps:
+      # Starte "von Spielwiese entfernen"
+      - name: Invoke remove workflow for playground
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Von Umgebung entfernen
+          token: ${{ env.TOKEN }}
+          inputs: '{ "stage": "dev", "aws_key_name": "AWS_KEY_PLAYGROUND", "aws_secret_name": "AWS_SECRET_PLAYGROUND" }'

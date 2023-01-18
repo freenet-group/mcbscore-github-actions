@@ -1,0 +1,23 @@
+name: Auf GIT Umgebung deployen
+
+on:
+  workflow_dispatch:
+    inputs:
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.GH_MCBS_TOKEN }}
+
+    steps:
+      # Starte "Auf GIT Umgebung deployen"
+      - name: Invoke deployment workflow for GIT
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "stage": "git", "aws_key_name": "AWS_KEY_NON_PROD", "aws_secret_name": "AWS_SECRET_NON_PROD", "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
