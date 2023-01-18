@@ -96,7 +96,7 @@ runs:
         done
 
         # Manche Actions müssen in jedes Repo.
-        for action in select-github-aws-secrets read-aws-secrets; do
+        for action in select-aws-github-secrets read-aws-secrets; do
           sourceRelative=actions/$action/action.yml
           source=$workingDirectory/$sourceRelative
           target=.github/actions/$action/action.yml
