@@ -249,7 +249,7 @@ jobs:
               "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
               "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
               "K8S_COMPONENT_NAME=" + (.componentName // ("componentName fehlt" | halt_error)) + "\n" +
-              "HELM_CHART="         + (.helmChart     // ms)                                   + "\n" +
+              "HELM_CHART="         + (.helmChart     // \"ms\")                               + "\n" +
               ""' \
             < kubernetes-deployment.generated.json \
           | tee -a -- "$GITHUB_ENV"
