@@ -1,6 +1,9 @@
 name: Distribute
 
 on:
+  schedule:
+    # jeden Sonntag, 05:00h
+    - cron: "0 5 * * 6"
   workflow_dispatch:
     inputs:
       group:
