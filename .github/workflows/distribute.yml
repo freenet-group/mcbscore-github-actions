@@ -13,6 +13,7 @@ on:
         default: ALL
         options:
           - ALL
+          - aws
           - errorcodes
           - mandel
           - mcbs
@@ -28,6 +29,28 @@ on:
           - test
 
 jobs:
+  aws:
+    if: ${{ github.event.inputs.group == 'aws' || github.event.inputs.group == 'ALL' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: aws-ms-events, branch: main, group: aws, workflows: "build, deployment, deployment_dev, deployment_git, deployment_playground, deployment_prod, remove, remove_dev, remove_git, remove_playground, remove_prod" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
   errorcodes:
     if: ${{ github.event.inputs.group == 'errorcodes' || github.event.inputs.group == 'ALL' }}
     runs-on: ubuntu-latest
@@ -149,7 +172,7 @@ jobs:
           - { name: ms-mandel, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_k8s, ../encoding, postBuild" }
           - { name: ms-mark, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
           - { name: ms-note-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
-          - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
+          - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, ../developerPortal, postBuild" }
           - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild" }
           - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild" }
