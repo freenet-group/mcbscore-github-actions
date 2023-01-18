@@ -80,7 +80,7 @@ jobs:
             "K8S_ENVIRONMENT=" + .environment + "\n" +
             "K8S_NAMESPACE=" + .namespace + "\n" +
             "K8S_COMPONENT_NAME=" + .componentName + "\n" +
-            "HELM_CHART=" + (.helmChart // ms) + "\n" +          
+            "HELM_CHART=" + (.helmChart // \"ms\") + "\n" +          
             "K8S_JAR_NAME=" + .jarName)' \
           | tee -a -- "$GITHUB_ENV"
 
