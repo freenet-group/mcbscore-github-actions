@@ -56,9 +56,7 @@ runs:
         ISSUE_FILE: issue_info.csv
       shell: bash
       run: |
-        
-        cat ${{ ISSUE_FILE }}
-        
+             
         # Releasenote schreiben
         # Setzen des Releasenote-Namens
         release="${{ inputs.component }}_${{inputs.componentVersion}}"
