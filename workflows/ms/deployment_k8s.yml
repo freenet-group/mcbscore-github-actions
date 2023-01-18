@@ -134,6 +134,10 @@ jobs:
           )
 
           echo "deploymentEnabled=$enabled" >> $GITHUB_OUTPUT
+          
+          if [ $enabled -eq false ]; then
+              exit 1
+          fi
 
     outputs:
       deployment-enabled: ${{ steps.deployment-check.outputs.deploymentEnabled }}
