@@ -1,0 +1,84 @@
+name: Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Die Ziel Stage'
+        required: true
+      aws_key_name:
+        description: 'Der Name des AWS Key Secrets'
+        required: true
+      aws_secret_name:
+        description: 'Der Name des AWS Secret Secrets'
+        required: true
+      componentVersion:
+        description: 'Die Release Version. Wenn nicht angegeben, wird vom gewählten Branch deployed'
+        required: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.GH_MCBS_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        if: ${{ github.event.inputs.componentVersion != null }}
+        uses: actions/checkout@v2
+        with:
+          repository: freenet-group/mcbscore_actions
+          token: ${{ env.TOKEN }}
+          path: mcbscore/actions
+          ref: main
+
+      - name: Set serverless.yml for release
+        if: ${{ github.event.inputs.componentVersion != null }}
+        shell: bash
+        run: |
+          echo "SERVERLESS_YML=/release/serverless.yaml" >> $GITHUB_ENV
+
+      - name: Download release
+        id: downloadRelease
+        if: ${{ github.event.inputs.componentVersion != null }}
+        uses: ./mcbscore/actions/download-release-assets-action
+        with:
+          version: ${{ github.event.inputs.componentVersion }}
+          assetPattern: 'serverless-${{ github.event.inputs.componentVersion }}.tar.gz'
+          targetPath: './release'
+          token: ${{ env.TOKEN }}
+
+      - name: Unzip release
+        id: unzipRelease
+        if: ${{ github.event.inputs.componentVersion != null }}
+        shell: bash
+        run: |
+          cd release
+          tar -xvzf serverless-${{ github.event.inputs.componentVersion }}.tar.gz
+
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless
+
+      - name: Serverless AWS authentication
+        run: sls config credentials --provider aws --key ${{ secrets[github.event.inputs.aws_key_name] }} --secret ${{ secrets[github.event.inputs.aws_secret_name] }}
+
+      - name: Install NPM dependencies
+        run: npm install
+
+      - name: Deploy Lambda functions from Release
+        if: ${{ github.event.inputs.componentVersion != null }}
+        run: |
+          export COMPONENT_VERSION=${{ github.event.inputs.componentVersion }}
+          sls deploy --config release/serverless.yaml --stage ${{ github.event.inputs.stage }}
+
+      - name: Deploy Lambda functions from Branch
+        if: ${{ github.event.inputs.componentVersion == null }}
+        run: sls deploy --stage ${{ github.event.inputs.stage }}

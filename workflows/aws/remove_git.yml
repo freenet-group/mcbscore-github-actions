@@ -1,0 +1,19 @@
+name: Von GIT Umgebung entfernen
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.GH_MCBS_TOKEN }}
+
+    steps:
+      # Starte "von GIT Umgebung entfernen"
+      - name: Invoke remove workflow for GIT
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Von Umgebung entfernen
+          token: ${{ env.TOKEN }}
+          inputs: '{ "stage": "git", "aws_key_name": "AWS_KEY_NON_PROD", "aws_secret_name": "AWS_SECRET_NON_PROD" }'

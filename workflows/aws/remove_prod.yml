@@ -1,0 +1,19 @@
+name: Von PROD Umgebung entfernen
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      TOKEN: ${{ secrets.GH_MCBS_TOKEN }}
+
+    steps:
+      # Starte "von PROD Umgebung entfernen"
+      - name: Invoke remove workflow for PROD
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Von Umgebung entfernen
+          token: ${{ env.TOKEN }}
+          inputs: '{ "stage": "prod", "aws_key_name": "AWS_KEY_PROD", "aws_secret_name": "AWS_SECRET_PROD" }'
