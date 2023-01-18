@@ -17,9 +17,11 @@ runs:
       shell: bash
       run: |
         if [ "${ENVIRONMENT^^}" = PROD ]; then
+          echo 'Benutze secrets.AWS_ACCESS_KEY_ID_PROD, secrets.AWS_SECRET_ACCESS_KEY_PROD.'
           awsAccessKeyId=${AWS_ACCESS_KEY_ID_PROD}
           awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY_PROD}
         else
+          echo 'Benutze secrets.AWS_ACCESS_KEY_ID, secrets.AWS_SECRET_ACCESS_KEY.'
           awsAccessKeyId=${AWS_ACCESS_KEY_ID}
           awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY}
         fi
