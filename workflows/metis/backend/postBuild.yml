@@ -88,7 +88,7 @@ jobs:
           installJava: true
 
       # ##################################################################################
-      # Erzeugen von Version / ComponentVersion in JIRA
+      # Erzeugen der Version in JIRA
       # ##################################################################################
       - name: jiraConfig
         uses: ./mcbscore/github/actions/jira-configuration-jc
@@ -101,9 +101,6 @@ jobs:
           componentList: ${{ env.COMPONENT_LIST }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           
-      # ##################################################################################
-      # Erzeugen von Version / ComponentVersion in JIRA
-      # ##################################################################################
       - name: jiraConfig
         uses: ./mcbscore/github/actions/jira-configuration-jc
         with:
@@ -115,9 +112,6 @@ jobs:
           componentList: ${{ env.COMPONENT_LIST }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           
-      # ##################################################################################
-      # Erzeugen von Version / ComponentVersion in JIRA
-      # ##################################################################################
       - name: jiraConfig
         uses: ./mcbscore/github/actions/jira-configuration-jc
         with:
@@ -139,7 +133,14 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-
+                
+      - name: listIssueInfos
+        run: |
+          ls -l
+          echo "Issue-Infos :"
+          cat issue_info.csv
+               
+      
       # ##################################################################################
       # Eintrag der fixVersion
       # ##################################################################################
