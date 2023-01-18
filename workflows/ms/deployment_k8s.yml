@@ -80,6 +80,17 @@ jobs:
       - name: Setup jq
         uses: freenet-actions/setup-jq@v2
 
+      # Prüft, ob ein Verzeichnis für die Komponente in /deployment/properties/ existiert
+      - name: Check whether a directory for the component exists in /deployment/properties/
+        id: component-check
+        shell: bash
+        run: |
+          component='${{ github.event.inputs.component }}'
+          if [ ! -d "./${{ env.DEPLOYMENT_PATH }}/properties/${component}" ]; then
+              printf 'Der Name der Komponente "%s" existiert nicht\n' "${component}" >&2
+              exit 1
+          fi
+
       # Github Job-Matrix entsprechend domains aus kubernetes-deployment*.json oder deployment*.properties initialisieren
       - name: Init Job Matrix
         id: set-matrix
@@ -114,17 +125,6 @@ jobs:
 
           # Ergebnis: domains JSON Array wie ["km","mc"] oder Default ["-"]
           echo "domainMatrix=${domains:-[\"-\"]}" >> $GITHUB_OUTPUT
-
-      # Prüft, ob ein Verzeichnis für die Komponente in /deployment/properties/ existiert
-      - name: Check whether a directory for the component exists in /deployment/properties/
-        id: component-check
-        shell: bash
-        run: |
-          component='${{ github.event.inputs.component }}'
-          if [ ! -d "./${{ env.DEPLOYMENT_PATH }}/properties/${component}" ]; then
-              printf 'Der Name der Komponente "%s" existiert nicht\n' "${component}" >&2
-              exit 1
-          fi
 
       # Prüft, ob deployed werden soll
       - name: Check for deployment
