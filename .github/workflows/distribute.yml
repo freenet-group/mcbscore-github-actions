@@ -384,12 +384,13 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   test:
-    if: ${{ github.event.inputs.group == 'test' || github.event.inputs.group == 'ALL' }}
+    # nur bei Input "test". Auch bei "ALL" wäre redundant.
+    if: ${{ github.event.inputs.group == 'test' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-github-test-repo, branch: main, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: ms-appcheck, branch: feature/dist-workflows-test, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v3
         with:
