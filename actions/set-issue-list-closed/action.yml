@@ -1,4 +1,4 @@
-name: Set Issue List Closed
+name: setIssueListClosed
 description: Auswertung der Issues eines Repositories seit dem letzten Tag, Bereitstellen von Issue-Infos für eventuelle Release-Notes, Erzeugen einer neuen Version für ein nachfolgendes Releasebuild
 inputs:
   jiraUrl:
