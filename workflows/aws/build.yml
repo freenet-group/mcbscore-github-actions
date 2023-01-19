@@ -1,0 +1,213 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [ self-hosted ]
+    env:
+      TOKEN: ${{ secrets.GH_MCBS_TOKEN }}
+      USER: ${{ secrets.GH_MCBS_USER }}
+
+    steps:
+      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
+      - name: Change Owner to Runner User
+        if: ${{ always() }}
+        run: |
+          docker run --rm -v `pwd`:/target -w /target -t docker-base.mobilcom.de/ubuntu/ubuntu_1804_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
+
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Prüfen auf korrektes UTF-8 Encoding
+      - name: Check for correct UTF-8 encoding
+        run: echo '! find $GITHUB_WORKSPACE -type f -exec file --mime {} \; | grep -v "charset=binary$" | grep -v "charset=us-ascii$" | grep -v "charset=utf-8$"' | bash
+
+      # Branch name ermitteln (wenn kein Pull Request)
+      - name: Get branch name (no pull_request)
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+
+      # Branch name ermitteln (wenn Pull Request)
+      - name: Get branch name (pull request)
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+
+      # Build Type ermitteln (RELEASE / DEVELOP / FEATURE / BUGFIX)
+      - name: Determine build type
+        shell: bash
+        run: |
+          if  [[ $BRANCH_NAME == release* ]] ;
+          then
+            echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
+            echo "DRAFT=false" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == main ]] ;
+          then
+            echo "BUILD_TYPE=DEVELOP" >> $GITHUB_ENV
+            echo "DRAFT=true" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == feature* ]] ;
+          then
+            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+          elif  [[ $BRANCH_NAME == bugfix* ]] ;
+          then
+            echo "BUILD_TYPE=BUGFIX" >> $GITHUB_ENV
+          else
+            # default ist feature
+            echo "BUILD_TYPE=FEATURE" >> $GITHUB_ENV
+          fi
+
+      # Checkout developer-tools (master) in ./devtools
+      - name: checkout atldevtools
+        uses: actions/checkout@v2
+        with:
+          repository: 'freenet-group/atldevtools'
+          token: ${{ env.TOKEN }}
+          path: 'devtools'
+
+      # Deployment: Atlassian Developer Tools Version auslesen
+      - name: Read Atlassian Developer Tools version
+        id: build_atlassian_developer_tools_version
+        uses: christian-draeger/read-properties@1.0.1
+        with:
+          path: './.github/build.properties'
+          property: 'ATLASSIAN_DEVELOPER_TOOLS_VERSION'
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore actions
+        uses: actions/checkout@v2
+        with:
+          repository: 'freenet-group/mcbscore_actions'
+          token: ${{ env.TOKEN }}
+          path: 'mcbscore/actions'
+          ref: main
+
+      # JIRA component auslesen
+      - name: Read JIRA component
+        id: build_jira_component
+        uses: christian-draeger/read-properties@1.0.1
+        with:
+          path: './.github/build.properties'
+          property: 'JIRA_COMPONENT'
+
+      # release prefix auslesen
+      - name: Read release prefix
+        id: build_release_prefix
+        uses: christian-draeger/read-properties@1.0.1
+        with:
+          path: './.github/build.properties'
+          property: 'RELEASE_PREFIX'
+
+      # Tag Pattern auslesen
+      - name: Read tag pattern
+        id: build_read_tag_pattern
+        uses: christian-draeger/read-properties@1.0.1
+        with:
+          path: './.github/build.properties'
+          property: 'TAG_PATTERN'
+
+      # JIRA URL auslesen
+      - name: Read JIRA URL
+        id: build_jira_url
+        uses: christian-draeger/read-properties@1.0.1
+        with:
+          path: './.github/build.properties'
+          property: 'JIRA_URL'
+
+      # JAVA Version auslesen
+      - name: Read JAVA version
+        id: build_java_version
+        uses: christian-draeger/read-properties@1.0.1
+        with:
+          path: './.github/build.properties'
+          property: 'JAVA_VERSION'
+
+      # JAVA installieren
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ steps.build_java_version.outputs.value }}
+
+      # Komponenten Version ermitteln
+      - name: Determine component version
+        id: componentVersion
+        uses: ./mcbscore/actions/createVersion
+        with:
+          JIRA_URL: ${{ steps.build_jira_url.outputs.value }}
+          JIRA_CREDENTIALS: ${{ secrets.MCBSTEST_CREDENTIALS }}
+          MATCH: ${{ steps.build_read_tag_pattern.outputs.value }}
+          ATLASSIAN_DEVELOPER_TOOLS: ${{ steps.build_atlassian_developer_tools_version.outputs.value }}
+          COMPONENT: ${{ steps.build_jira_component.outputs.value }}
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+
+      # COMPONENT_VERSION Umgebungsvariable setzen
+      - name: Set component version
+        shell: bash
+        run: |
+          if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
+          then
+            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}" >> $GITHUB_ENV
+          else
+            echo "COMPONENT_VERSION=${{steps.componentVersion.outputs.newVersion}}-SNAPSHOT" >> $GITHUB_ENV
+          fi
+          echo "issueList=${{ steps.componentVersion.outputs.issueList }}" >> $GITHUB_ENV
+
+      # Existierende Draft Releases löschen
+      - name: Delete draft releases
+        if: env.BUILD_TYPE == 'DEVELOP'
+        uses: hugo19941994/delete-draft-releases@v0.1.0
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+
+      # Release erstellen
+      - name: Create Release
+        id: create_release
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          tag_name: '${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}'
+          release_name: '${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}'
+          draft: '${{ env.DRAFT }}'
+          prerelease: false
+
+      # Release Archive erstellen
+      - name: Create Release Archive
+        id: create_release_archive
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        shell: bash
+        run: |
+          tar -czvf serverless.tar.gz resources serverless.yaml
+
+      # MD Release ZIP hinzufügen
+      - name: Upload Archive
+        id: upload-serverless
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: serverless.tar.gz
+          asset_name: serverless-${{ env.COMPONENT_VERSION }}.tar.gz
+          asset_content_type: application/gzip
+
+      # Starte Deployment auf DEV
+      - name: Invoke deployment workflow
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Deployment
+          token: ${{ env.TOKEN }}
+          inputs: '{ "stage": "dev", "aws_key_name": "AWS_KEY_NON_PROD", "aws_secret_name": "AWS_SECRET_NON_PROD", "componentVersion": "${{ env.COMPONENT_VERSION }}" }'
+

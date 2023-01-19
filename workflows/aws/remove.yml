@@ -1,0 +1,37 @@
+name: Von Umgebung entfernen
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Die Ziel Stage'
+        required: true
+      aws_key_name:
+        description: 'Der Name des AWS Key Secrets'
+        required: true
+      aws_secret_name:
+        description: 'Der Name des AWS Secret Secrets'
+        required: true
+
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+
+      - name: Install Serverless Framework
+        run: npm install -g serverless
+
+      - name: Serverless AWS authentication
+        run: sls config credentials --provider aws --key ${{ secrets[github.event.inputs.aws_key_name] }} --secret ${{ secrets[github.event.inputs.aws_secret_name] }}
+
+      - name: Install NPM dependencies
+        run: npm install
+
+      - name: Remove Lambda functions
+        run: sls remove --stage ${{ github.event.inputs.stage }}

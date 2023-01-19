@@ -38,6 +38,7 @@ concurrency:
   cancel-in-progress: false
 env:
   DEPLOYMENT_PATH: mcbscore/deployment
+  DEPLOYMENT_REPO: freenet-group/ms-deployment
   JAVA_VERSION: 11
   GENERATED_SSH_KEY_FILE: id_rsa
   KEY_SERVER: ${{ secrets.CERT_SERVER }}
@@ -75,7 +76,7 @@ jobs:
       - name: Checkout Deployment Data / Scripts
         uses: actions/checkout@v3
         with:
-          repository: freenet-group/ms-deployment
+          repository: ${{ env.DEPLOYMENT_REPO }}
           token: ${{ env.GITHUB_TOKEN }}
           path: ${{ env.DEPLOYMENT_PATH }}
           ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
@@ -91,6 +92,17 @@ jobs:
       # jq installieren
       - name: Setup jq
         uses: freenet-actions/setup-jq@v2
+
+      # Prüft, ob ein Verzeichnis für die Komponente in /deployment/properties/ existiert
+      - name: Check component name
+        id: component-check
+        shell: bash
+        run: |
+          component='${{ github.event.inputs.component }}'
+          if [ ! -d "./${DEPLOYMENT_PATH}/properties/${component}" ]; then
+              printf 'Der Name der Komponente "%s" existiert nicht\n' "${DEPLOYMENT_REPO}/properties/${component}" >&2
+              exit 1
+          fi
 
       # Github Job-Matrix entsprechend domains aus kubernetes-deployment*.json oder deployment*.properties initialisieren
       - name: Init Job Matrix
@@ -202,7 +214,7 @@ jobs:
       - name: Checkout Deployment Data / Scripts
         uses: actions/checkout@v3
         with:
-          repository: freenet-group/ms-deployment
+          repository: ${{ env.DEPLOYMENT_REPO }}
           token: ${{ env.GITHUB_TOKEN }}
           path: ${{ env.DEPLOYMENT_PATH }}
           ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
@@ -273,6 +285,7 @@ jobs:
               "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
               "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
               "K8S_COMPONENT_NAME=" + (.componentName // ("componentName fehlt" | halt_error)) + "\n" +
+              "HELM_CHART="         + (.helmChart     // "ms")                                 + "\n" +
               ""' \
             < kubernetes-deployment.generated.json \
           | tee -a -- "$GITHUB_ENV"
@@ -487,9 +500,8 @@ jobs:
               "--set=hostname=${component%-$domain}-${domain}-${environment}"
             )
           fi
-
-          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$component"
-          if [ ! -d "$chartDir" ]; then chartDir=${{ env.DEPLOYMENT_PATH }}/helm/ms; fi
+          
+          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$HELM_CHART"
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.

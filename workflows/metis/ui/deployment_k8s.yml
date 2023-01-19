@@ -89,6 +89,7 @@ jobs:
             "K8S_ENVIRONMENT=" + .environment + "\n" +
             "K8S_NAMESPACE=" + .namespace + "\n" +
             "K8S_COMPONENT_NAME=" + .componentName + "\n" +
+            "HELM_CHART=" + (.helmChart // "ms") + "\n" +          
             "K8S_JAR_NAME=" + .jarName)' \
           | tee -a -- "$GITHUB_ENV"
 
@@ -114,7 +115,7 @@ jobs:
           componentVersion='${{ github.event.inputs.componentVersion }}'
           timeout='${{ github.event.inputs.timeout }}'
 
-          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$COMPONENT"
+          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$HELM_CHART"
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.
