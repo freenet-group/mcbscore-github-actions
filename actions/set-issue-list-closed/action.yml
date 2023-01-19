@@ -1,19 +1,19 @@
 name: setIssueListClosed
 description: Auswertung der Issues eines Repositories seit dem letzten Tag, Bereitstellen von Issue-Infos für eventuelle Release-Notes, Erzeugen einer neuen Version für ein nachfolgendes Releasebuild
 inputs:
-  jJIRA_URL:
+  jiraURL:
     description: Organisationsinterne URL des angebundenen JIRA-Systems
     required: true
-  JIRA_CREDENTIALS:
+  jiraCredentials:
     description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
     required: true
-  ISSUES:
+  issueList:
     description: Liste der beteiligten JIRA-Issues
     required: true
-  ATLASSIAN_DEVELOPER_TOOLS:
+  atlassianDeveloperTools:
     description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
     required: true
-  LOGLEVEL:
+  loglevel:
     description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
     required: false
     default: info
@@ -27,9 +27,9 @@ runs:
         echo setIssueListDone ...
         atlassianToolsDir=./mcbscore/github/atlassian-tools
 
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.LOGLEVEL }}.xml \
-          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.ATLASSIAN_DEVELOPER_TOOLS}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.loglevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianDeveloperTools}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           jira_board.SetMS_IssueListClosedKt \
-          "${{inputs.JIRA_URL}}" \
-          "${{inputs.JIRA_CREDENTIALS}}" \
-          "${{inputs.ISSUES}}"
+          "${{inputs.jiraURL}}" \
+          "${{inputs.jiraCredentials}}" \
+          "${{inputs.issueList}}"
