@@ -92,9 +92,9 @@ jobs:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
-          component: ${{ env.COMPONENT }}
+          component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
-          componentList: ${{ env.COMPONENT }}
+          componentList: ${{ env.INCLUDED_COMPONENTS }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -116,7 +116,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          component: ${{ env.COMPONENT }}
+          component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -141,7 +141,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
+          comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -166,7 +166,7 @@ jobs:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
-          component: ${{ env.COMPONENT }}
+          component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           coverageLimit: ${{ env.COVERAGE_LIMIT }}
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
@@ -197,7 +197,7 @@ jobs:
       - name: Create Release Note
         uses: ./mcbscore/github/actions/create-release-note
         with:
-          component: ${{ env.COMPONENT }}
+          component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           jiraWebUrl: ${{ env.JIRA_CLOUD_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
@@ -229,7 +229,7 @@ jobs:
       - name: Send notification as mail
         uses: ./mcbscore/github/actions/releasebuild-notification
         with:
-          component:  ${{ env.COMPONENT }}
+          component:  ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           issueList: issue_info.csv

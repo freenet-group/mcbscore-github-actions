@@ -146,7 +146,7 @@ jobs:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.JIRA_COMPONENT }}
-          included_components: ${{ env.INCLUDED__COMPONENTS }}
+          included_components: ${{ env.INCLUDED_COMPONENTS }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
