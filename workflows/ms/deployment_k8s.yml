@@ -44,6 +44,9 @@ env:
   KEY_SERVER: ${{ secrets.CERT_SERVER }}
 
 jobs:
+  ################################################################################
+  # Job build-matrix
+  ################################################################################
   build-matrix:
     runs-on: ubuntu-latest
     steps:
@@ -52,11 +55,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey:     ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = GITHUB_TOKEN
 
@@ -151,6 +163,9 @@ jobs:
       deployment-enabled: ${{ steps.deployment-check.outputs.deploymentEnabled }}
       domain-matrix: ${{ steps.set-matrix.outputs.domainMatrix }}
 
+  ################################################################################
+  # Job helm-deployment
+  ################################################################################
   helm-deployment:
     needs: build-matrix
     if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
@@ -177,11 +192,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey:     ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = GITHUB_TOKEN,
             /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY
@@ -309,8 +333,8 @@ jobs:
       - name: Read AWS Parameters for K8S Deployment
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             ${{ env.DYNAMIC_AWS_PARAM_PAIRS }}
             /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
@@ -532,8 +556,8 @@ jobs:
             --set="environment=$environment" \
             --set="appName=$K8S_COMPONENT_NAME" \
             --set="docker_config_base64=$K8S_REGISTRY" \
-            --set='aws_access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}' \
-            --set='aws_secret_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}' \
+            --set="aws_access_key_id=$AWS_ACCESS_KEY_ID" \
+            --set="aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
             --set="version=$componentVersion" \
             --set="runId='$runId'"
