@@ -47,6 +47,10 @@ jobs:
         uses: ./.github/actions/select-github-aws-secrets
         with:
           environment: ${{ inputs.environment }}
+          awsAccessKeyId:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey:     ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
 
       - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
