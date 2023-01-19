@@ -44,7 +44,7 @@ jobs:
           fetch-depth: 0
 
       - name: Select Github Secrets for AWS
-        uses: ./.github/actions/select-github-aws-secrets
+        uses: ./.github/actions/select-aws-github-secrets
         with:
           environment: ${{ inputs.environment }}
           awsAccessKeyId:     ${{ secrets.AWS_ACCESS_KEY_ID }}
