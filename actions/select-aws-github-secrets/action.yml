@@ -1,0 +1,41 @@
+name: Select Github Secrets for AWS
+description: Wählt aus den Github Secrets für den AWS Zugriff die zur Umgebung passenden aus und setzt ihre Werte in Umgebungsvariablen
+
+inputs:
+  environment:
+    description: Die Zielumgebung
+    required: true
+  awsAccessKeyIdProd:
+    description: AWS Access Key Id für Zielumgebung prod
+  awsAccessKeyId:
+    description: AWS Access Key Id andere Zielumgebungen
+  awsSecretAccessKeyProd:
+    description: AWS Secret Access Key für Zielumgebung prod
+  awsSecretAccessKey:
+    description: AWS Secret Access Key für andere Zielumgebungen
+runs:
+  using: composite
+  steps:
+    - env:
+        ENVIRONMENT: ${{ inputs.environment }}
+        AWS_ACCESS_KEY_ID: ${{ inputs.awsAccessKeyId }}
+        AWS_ACCESS_KEY_ID_PROD: ${{ inputs.awsAccessKeyIdProd }}
+        AWS_SECRET_ACCESS_KEY: ${{ inputs.awsSecretAccessKey }}
+        AWS_SECRET_ACCESS_KEY_PROD: ${{ inputs.awsSecretAccessKeyProd }}
+      shell: bash
+      run: |
+        if [ "${ENVIRONMENT^^}" = PROD ]; then
+          echo 'Benutze AWS_ACCESS_KEY_ID_PROD, AWS_SECRET_ACCESS_KEY_PROD.'
+          awsAccessKeyId=${AWS_ACCESS_KEY_ID_PROD}
+          awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY_PROD}
+        else
+          echo 'Benutze AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY.'
+          awsAccessKeyId=${AWS_ACCESS_KEY_ID}
+          awsSecretAccessKey=${AWS_SECRET_ACCESS_KEY}
+        fi
+        printf '%s=%s\n' \
+            "AWS_ACCESS_KEY_ID"     "$awsAccessKeyId" \
+            "AWS_SECRET_ACCESS_KEY" "$awsSecretAccessKey" \
+          | tee -a -- "$GITHUB_ENV" \
+          | perl -ple 's{(.*?)=(.*)}{sprintf "%s=(Länge %d)", $1, length($2)}e'
+          # ↑ perl: Name und Laenge loggen
