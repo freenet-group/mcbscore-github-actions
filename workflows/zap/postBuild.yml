@@ -249,7 +249,7 @@ jobs:
       - name: Create BE-Issue
         uses: ./mcbscore/github/actions/create-backend-issue
         with:
-          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraUrl: "https://freenet-group.atlassian.net/rest/api/2/"
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
