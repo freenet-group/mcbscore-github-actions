@@ -1,0 +1,55 @@
+name: Download Release Package
+description: Download eines GitHub-Package-Artefakts anhand der Version, des Paketnamens
+
+inputs:
+  version:
+    description: Die Version des Releases
+    required: true
+  groupId:
+    description: groupId des Artefakts
+    required: true
+  artifactId:
+    description: artifactId des Artefakts
+    required: true
+  organisation:
+    description: Name der organisation
+    required: false
+    default: freenet-group
+  packageName:
+    description: Name des Packages
+    required: true
+  targetPath:
+    description: Ein Zielverzeichnis
+    required: true
+  githubUser:
+    description: Ein GitHub-User
+    required: false
+    default: zzzmcbscore
+  token:
+    description: Ein GitHub-Token
+    required: true
+
+outputs:
+  release:
+    value: ${{ steps.download_asset.outputs.assetName }}
+    description: Das Release Asset
+
+runs:
+  using: "composite"
+  steps:
+    # Make download executable
+    - run: chmod +x ${{ github.action_path }}/download.sh
+      shell: bash
+
+    - id: download_asset
+      shell: bash
+      run: ${{ github.action_path }}/download.sh
+      env:
+        ARTIFACT_ID: ${{ inputs.repository }}
+        VERSION: ${{ inputs.version }}
+        GROUP_ID: ${{ inputs.assetPattern }}
+        PACKAGE: ${{ inputs.packageName }}
+        TOKEN: ${{ inputs.token }}
+        TARGET_PATH: ${{ inputs.targetPath }}
+        ORGANISATION: ${{ inputs.organisation }}
+        GITHUB_USER: ${{ inputs.githubUser }}

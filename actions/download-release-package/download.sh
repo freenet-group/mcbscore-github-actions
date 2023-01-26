@@ -1,12 +1,16 @@
+#!/bin/bash
+# Download v. Artefakten aus GitHub-Packages
+# ben. Umgebungsvariablen:
+# ARTIFACT_ID, GROUP_ID, ORGANISATION, VERSION, TARGET_PATH, GITHUB_USER, TOKEN
+# benutzt sed, Maven
 
-org=freenet-group
-groupId=de.md.mcbs.ms
-#artifactId=ms-commondata
-artifactId=ms-rating
-#version=0.0.0-SNAPSHOT
-version=1.9.6-SNAPSHOT
-#version=0.0.0-20230119.141912-1
-fileName=$artifactId-1.9.6-20230118.143338-13.jar
-repo=$artifactId
+set -e
+# settings.xml anpassen mit Parametern
+echo "konfiguriere settings.xml..."
+sed -iBAK "s/{ARTIFACT_ID}/$ARTIFACT_ID/g;s/{TOKEN}/$TOKEN/g;s/{GITHUB_USER}/$GITHUB_USER/g;s/{ORGANISATION}/$ORGANISATION/g" settings.xml
+# Artefakt herunterladen mit Maven
+echo "lade Artefakt über mvn herunter..."
+mvn --settings ./settings.xml dependency:copy -Dartifact="$GROUP_ID:$ARTIFACT_ID:$VERSION" -DoutputDirectory=./ -Dmdep.stripVersion=true
+# heruntergeladenes Artefakt verschieben
+mv $ARTIFACT_ID.jar $TARGET_PATH/$artifactId-$version.jar
 
-curl -v -O -L "https://_:$token@maven.pkg.github.com/$org/$repo/$groupId/$artifactId/$version/$fileName"
