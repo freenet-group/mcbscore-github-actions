@@ -22,6 +22,10 @@ inputs:
     description: Github CLI installieren?
     type: boolean
     default: false
+  installMaven:
+    description: Maven installieren?
+    type: boolean
+    default: false
   configurationPrefix:
     description: 'Prefix für workflow.properties Dateien. Beispiel: customer-workflow.properties'
     type: string
@@ -78,3 +82,10 @@ runs:
     - name: Setup Github CLI
       if: ${{ inputs.installGithubCli == 'true' }}
       uses: freenet-actions/setup-github-cli@v2
+
+    # Maven installieren
+    - name: Set up Maven
+      if: ${{ inputs.installMaven == 'true' }}
+      uses: stCarolas/setup-maven@v4.5
+      with:
+        maven-version: 3.8.6

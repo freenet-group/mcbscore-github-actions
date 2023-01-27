@@ -28,7 +28,13 @@ inputs:
   token:
     description: Ein GitHub-Token
     required: true
-
+  artifactSuffix:
+    description: Dateiendung, wenn nicht .jar
+    required: false
+    default: jar
+  classifier:
+    description: Artefaktspezifizierung, z.B. apiDoc
+    required: false
 outputs:
   release:
     value: ${{ steps.download_asset.outputs.assetName }}
@@ -45,11 +51,14 @@ runs:
       shell: bash
       run: ${{ github.action_path }}/download.sh
       env:
-        ARTIFACT_ID: ${{ inputs.repository }}
+        ARTIFACT_ID: ${{ inputs.artifactId }}
         VERSION: ${{ inputs.version }}
-        GROUP_ID: ${{ inputs.assetPattern }}
-        PACKAGE: ${{ inputs.packageName }}
+        GROUP_ID: ${{ inputs.groupId }}
+        PACKAGE_NAME: ${{ inputs.packageName }}
         TOKEN: ${{ inputs.token }}
         TARGET_PATH: ${{ inputs.targetPath }}
         ORGANISATION: ${{ inputs.organisation }}
         GITHUB_USER: ${{ inputs.githubUser }}
+        PACKAGE: ${{ inputs.packageName }}
+        SUFFIX: ${{ inputs.artifactSuffix }}
+        CLASSIFIER: ${{ inputs.classifier}}
