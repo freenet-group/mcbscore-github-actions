@@ -111,7 +111,7 @@ jobs:
 
       # Existierende Draft Releases löschen
       - name: Delete draft releases
-        if: env.BUILD_TYPE == 'DEVELOP'
+        if: env.BUILD_TYPE == 'DEVELOP' && env.PACKAGE_NAME == ''
         uses: hugo19941994/delete-draft-releases@v1.0.0
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
@@ -119,17 +119,17 @@ jobs:
       # Release erstellen
       - name: Create Release
         id: create_release
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        if: env.BUILD_TYPE == 'RELEASE' || (env.BUILD_TYPE == 'DEVELOP' && env.PACKAGE_NAME == '')
         uses: ./mcbscore/github/actions/create-release
         with:
           tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
           releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
 
-      # MD Release ZIP hinzufügen
+       # MD Release ZIP zu Assets hinzufügen, wenn PACKAGE_NAME nicht gesetzt
       - name: Upload MD Proxy
         id: upload-md-proxy
-        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-md.tar.gz', env.COMPONENT)) != '' }}
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-md.tar.gz', env.COMPONENT)) != '' }} && env.PACKAGE_NAME == ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
@@ -139,10 +139,10 @@ jobs:
           asset_name: ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}.tar.gz
           asset_content_type: application/gzip
 
-      # KM Release ZIP hinzufügen
+       # KM Release ZIP hinzufügen, wenn PACKAGE_NAME nicht gesetzt
       - name: Upload KM Proxy
         id: upload-km-proxy
-        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-km.tar.gz', env.COMPONENT)) != '' }}
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-km.tar.gz', env.COMPONENT)) != '' }} && env.PACKAGE_NAME == ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
@@ -152,10 +152,10 @@ jobs:
           asset_name: ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
           asset_content_type: application/gzip
 
-      # FM Release ZIP hinzufügen
+      # FM Release ZIP hinzufügen, wenn PACKAGE_NAME nicht gesetzt
       - name: Upload FM Proxy
         id: upload-fm-proxy
-        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-fm.tar.gz', env.COMPONENT)) != '' }}
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-fm.tar.gz', env.COMPONENT)) != '' }} && env.PACKAGE_NAME == ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
@@ -165,10 +165,10 @@ jobs:
           asset_name: ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
           asset_content_type: application/gzip
 
-      # Datei mit Secret Mappings hinzufügen
+      # Datei mit Secret Mappings hinzufügen, wenn PACKAGE_NAME nicht gesetzt
       - name: Upload Secret Mappings
         id: upload-secret-mapping
-        if: (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles('secretMappings.txt') != ''
+        if: (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles('secretMappings.txt') != '' && env.PACKAGE_NAME == ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
@@ -177,6 +177,14 @@ jobs:
           asset_path: secretMappings.txt
           asset_name: secretMappings.txt
           asset_content_type: text/plain
+
+      # Artefakte mit Gradle nach GitHub-Packages publishen, wenn PACKAGE_NAME gesetzt
+      - name: Publish With Gradle
+        id: publish-with-gradle
+        if: (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.PACKAGE_NAME != ''
+        shell: bash
+        run: |
+          sh ./gradlew publish
 
       # ##################################################################################
       # Re-Merge

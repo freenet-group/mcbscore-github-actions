@@ -144,9 +144,22 @@ jobs:
           installNodeJs: true
           installJq: true
 
+      # Artefakte aus Release-Assets holen, wenn PACKAGE_NAME nicht gesetzt ist
       - name: Download Release
         id: downloadRelease
+        if: env.PACKAGE_NAME == ''
         uses: ./mcbscore/github/actions/download-release-assets
+        with:
+          version: ${{ github.event.inputs.componentVersion }}
+          assetPattern: '-${{ github.event.inputs.componentVersion }}.jar'
+          targetPath: './${{ env.DEPLOYMENT_PATH }}/release'
+          token: ${{ env.TOKEN }}
+
+      # Artefakte aus GitHub-Packsges holen, wenn PACKAGE_NAME gesetzt ist
+      - name: Download Release
+        id: downloadRelease
+        if: env.PACKAGE_NAME != ''
+        uses: ./mcbscore/github/actions/download-release-package
         with:
           version: ${{ github.event.inputs.componentVersion }}
           assetPattern: '-${{ github.event.inputs.componentVersion }}.jar'

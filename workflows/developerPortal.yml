@@ -92,9 +92,20 @@ jobs:
           installJq: true
           installNodeJs: true
 
-      # Open API Yaml Dateien aus Release extrahieren
+      # Open API Yaml Dateien aus Release extrahieren, wenn PACKAGE_NAME nicht gesetzt ist
       - name: Download API documentation
+        if: env.PACKAGE_NAME == ''
         uses: ./mcbscore/github/actions/download-release-assets
+        with:
+          version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
+          assetPattern: '.yaml'
+          targetPath: './apiDoc'
+          token: ${{ env.TOKEN }}
+
+      # Open API Yaml Dateien aus GitHub-Packages laden, wenn PACKAGE_NAME gesetzt ist
+      - name: Download API documentation
+        if: env.PACKAGE_NAME != ''
+        uses: ./mcbscore/github/actions/download-release-package
         with:
           version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
           assetPattern: '.yaml'

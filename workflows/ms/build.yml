@@ -174,9 +174,9 @@ jobs:
           releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
 
-      # Release JAR hinzufügen
+      # Release JAR hinzufügen (wenn PACKAGE_NAME nicht gesetzt ist)
       - name: Upload Release JAR
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        if: (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.PACKAGE_NAME == ''
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
@@ -186,13 +186,14 @@ jobs:
           asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           asset_content_type: application/java-archive
 
-      # Vorhandene Open API Yamls als Asset hinzufügen
+      # Vorhandene Open API Yamls als Asset hinzufügen (wenn PACKAGE_NAME nicht gesetzt ist)
       - name: Upload API Doc Assets
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        if: (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.PACKAGE_NAME == ''
         uses: ./mcbscore/github/actions/upload-api-doc-assets
         with:
           componentVersion: ${{ env.COMPONENT_VERSION }}
           apiDocYmlPattern: ${{ env.API_DOC_YAML_PATTERN }}
+      
 
       # ##################################################################################
       # Re-Merge

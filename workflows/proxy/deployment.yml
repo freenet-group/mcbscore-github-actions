@@ -152,7 +152,9 @@ jobs:
           installNodeJs: true
           installJq: true
 
+      # Releaseinhalte aus Assets holen, wenn PACKAGE_NAME nicht gesetzt
       - name: Download Release
+        if: env.PACKAGE_NAME == ''
         uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ inputs.componentVersion }}
@@ -161,12 +163,16 @@ jobs:
           token: ${{ env.TOKEN }}
 
       - name: Download Secret Mappings
+        if: env.PACKAGE_NAME == ''
         uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ inputs.componentVersion }}
           assetPattern: 'secretMappings.txt'
           targetPath: './release'
           token: ${{ env.TOKEN }}
+
+      # Releaseinhalte aus Packages holen, wenn PACKAGE_NAME gesetzt
+
 
       - name: Decompress Release Archive
         if: hashFiles('./release/secretMappings.txt') != ''
