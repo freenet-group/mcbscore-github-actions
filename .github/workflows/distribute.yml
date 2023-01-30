@@ -366,7 +366,7 @@ jobs:
           - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
-          - { name: scaffold-clean-architecture-gradle-plugin, branch: develop, group: simple, workflows: "../check, build, ../encoding" }
+          - { name: scaffold-clean-architecture-gradle-plugin, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v3
         with:
