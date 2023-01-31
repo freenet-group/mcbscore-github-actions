@@ -17,12 +17,24 @@ jobs:
   remove:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Use Node.js 14.x
-        uses: actions/setup-node@v1
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - id: checkout-repository
+        name: Checkout Repository
+        uses: actions/checkout@v3
         with:
-          node-version: 14.x
+          fetch-depth: 0
+          
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - id: init-workflow
+        name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJava: true
+          installGithubCli: true
+          installJq: true
 
       - name: Install Serverless Framework
         run: npm install -g serverless
