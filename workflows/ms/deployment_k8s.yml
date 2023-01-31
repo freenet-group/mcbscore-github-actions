@@ -169,9 +169,7 @@ jobs:
   helm-deployment:
     needs: build-matrix
     if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
-    runs-on: [self-hosted, vm]
-    container:
-      image: docker.mobilcom.de/dpvo/cicd-kubernetes-helm3:latest
+    runs-on: [self-hosted, k8s]
     strategy:
       fail-fast: false
       matrix:
@@ -222,16 +220,6 @@ jobs:
       # jq installieren
       - name: Setup jq
         uses: freenet-actions/setup-jq@v2
-
-      # Installationen: unzip wird fuer Kubernetes Login Step benötigt; ssh für das scp der Keystore Dateien
-      - name: Install unzip, scp
-        shell: bash
-        run: |
-          apt-get update
-          apt-get install --yes unzip
-          if [ -n "$KEY_SERVER" ]; then
-            apt-get install --yes ssh
-          fi
 
       # ssh Konfig
       - name: Setup ssh
