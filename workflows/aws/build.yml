@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - develop
 
 jobs:
   build:
@@ -74,12 +74,6 @@ jobs:
       # ##################################################################################
       # Release bauen
       # ##################################################################################
-
-      - name: Inject Version
-        shell: bash
-        run: |
-          chmod +x ./inject_version.sh
-          ./inject_version.sh ${{ env.COMPONENT_VERSION }}
 
       - name: Commit version
         if: env.BUILD_TYPE == 'RELEASE'
