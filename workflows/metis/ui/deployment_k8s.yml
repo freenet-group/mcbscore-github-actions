@@ -20,9 +20,7 @@ on:
 
 jobs:
   helm-deployment:
-    runs-on: [self-hosted, vm]
-    container:
-      image: docker.mobilcom.de/dpvo/cicd-kubernetes-helm3:latest
+    runs-on: [self-hosted, k8s]
     env:
       COMPONENT: metis-ui
       DEPLOYMENT_PATH: mcbscore/deployment
