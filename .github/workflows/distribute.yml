@@ -1,6 +1,9 @@
 name: Distribute
 
 on:
+  schedule:
+    # jeden Sonntag, 05:00h
+    - cron: "0 5 * * 6"
   workflow_dispatch:
     inputs:
       group:
@@ -331,7 +334,6 @@ jobs:
           - { name: mcbscore-billing-performance-monitor, branch: main, group: simple, workflows: "../encoding" }
           - { name: mcbscore-gatling-compare, branch: main, group: simple, workflows: "../encoding" }
           - { name: mcbscore-yaml-transform-plugin, branch: develop, group: simple, workflows: "../check, build, ../encoding" }
-          - { name: scaffold-clean-architecture-gradle-plugin, branch: develop, group: simple, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -364,6 +366,7 @@ jobs:
           - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
+          - { name: scaffold-clean-architecture-gradle-plugin, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -408,12 +411,13 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   test:
-    if: ${{ github.event.inputs.group == 'test' || github.event.inputs.group == 'ALL' }}
+    # nur bei Input "test". Auch bei "ALL" wäre redundant.
+    if: ${{ github.event.inputs.group == 'test' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-github-test-repo, branch: main, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: ms-appcheck, branch: feature/dist-workflows-test, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v3
         with:

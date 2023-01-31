@@ -108,8 +108,8 @@ jobs:
       - name: Configure environment
         shell: bash
         run: |
-          sed -i 's%{restServerUrl}%https:\/\/metis-dev.md-abr-np.k8s.freenet-group.de\/metis-rest%' ./test/config/testConfig.js
-          sed -i 's%{frontendUrl}%https:\/\/metis-ui-dev.md-abr-np.k8s.freenet-group.de%' ./test/config/testConfig.js
+          sed -i "s%{restServerUrl}%${REST_SERVICE_URL}%" ./test/config/testConfig.js
+          sed -i "s%{frontendUrl}%${FRONTEND_URL}%" ./test/config/testConfig.js
           cat ./test/config/testConfig.js
           
           # Datei ausfuehrbar machen
@@ -143,13 +143,13 @@ jobs:
         run: |
           ./${ACTIONS_PATH}/workflows/metis/common/database-init.sh
           
-          sed -i 's%{TRUsed}%${{ inputs.updateTestRail }}%' ./test/testrail-conf.js
-          sed -i 's%{TRProject}%MEA%' ./test/testrail-conf.js
-          sed -i 's%{TRSuiteName}%METIS-GUI v3.6%' ./test/testrail-conf.js
-          sed -i 's%{TRPlanName}%METIS_GUI_3.6.6%' ./test/testrail-conf.js
-          sed -i 's%{TRRunName}%METIS-GUI v3.6.6%' ./test/testrail-conf.js
-          sed -i 's%{TRUrl}%https:\/\/testrail.mobilcom.de%' ./test/testrail-conf.js
-          sed -i 's%{TRNote}%https:\/\/testrail.mobilcom.de%' ./test/testrail-conf.js
+          sed -i "s%{TRUsed}%${{ inputs.updateTestRail }}%" ./test/testrail-conf.js
+          sed -i "s%{TRProject}%${TR_PROJECT}%" ./test/testrail-conf.js
+          sed -i "s%{TRSuiteName}%${TR_SUITE_NAME}%" ./test/testrail-conf.js
+          sed -i "s%{TRPlanName}%${TR_PLAN_NAME}%" ./test/testrail-conf.js
+          sed -i "s%{TRRunName}%${TR_RUN_NAME}%" ./test/testrail-conf.js
+          sed -i "s%{TRUrl}%${TR_URL}%" ./test/testrail-conf.js
+          sed -i "s%{TRNote}%${TR_NOTE}%" ./test/testrail-conf.js
           cat ./test/testrail-conf.js
           
           # Fehlende Software installieren

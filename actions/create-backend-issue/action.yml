@@ -42,9 +42,6 @@ runs:
           ${{ inputs.jiraUrl }} \
           ${{ inputs.jiraCredentials }} \
           ABRMS \
-          Aufgabe \
-          ${{ github.ACTOR }} \
-          ${{ github.ACTOR }} \
           ${{ inputs.componentVersion }} \
           ${{ inputs.component }} \
           ${{ inputs.epic }} \
