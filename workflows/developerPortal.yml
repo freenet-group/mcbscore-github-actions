@@ -107,10 +107,14 @@ jobs:
         if: env.PACKAGE_NAME != ''
         uses: ./mcbscore/github/actions/download-release-package
         with:
-          version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
-          assetPattern: '.yaml'
-          targetPath: './apiDoc'
+          version: ${{ github.event.inputs.componentVersion }}
+          groupId: ${{ env.GROUP_ID }}
+          artifactId: ${{ env.ARTIFACT_ID }}
+          packageName: ${{ env.PACKAGE_NAME }}
+          targetPath: './${{ env.DEPLOYMENT_PATH }}/release'
+          githubUser: ${{ env.DEPLOYMENT_USER }}
           token: ${{ env.TOKEN }}
+          artifactSuffix: zip
 
       # Developer Portal Upload
       - name: Developer Portal Upload

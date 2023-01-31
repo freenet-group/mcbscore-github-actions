@@ -162,8 +162,11 @@ jobs:
         uses: ./mcbscore/github/actions/download-release-package
         with:
           version: ${{ github.event.inputs.componentVersion }}
-          assetPattern: '-${{ github.event.inputs.componentVersion }}.jar'
+          groupId: ${{ env.GROUP_ID }}
+          artifactId: ${{ env.ARTIFACT_ID }}
+          packageName: ${{ env.PACKAGE_NAME }}
           targetPath: './${{ env.DEPLOYMENT_PATH }}/release'
+          githubUser: ${{ env.DEPLOYMENT_USER }}
           token: ${{ env.TOKEN }}
 
       # Standard Deployment
