@@ -21,6 +21,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Die internen Actions auschecken
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          
       - id: read-aws-secrets
         name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
@@ -35,14 +44,6 @@ jobs:
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
-      # Die internen Actions auschecken
-      - name: checkout mcbscore-github-actions
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ env.ACTIONS_REPOSITORY }}
-          token: ${{ env.TOKEN }}
-          path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
