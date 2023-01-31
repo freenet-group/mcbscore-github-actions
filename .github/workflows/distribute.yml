@@ -35,7 +35,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: aws-ms-events, branch: main, group: aws, workflows: "build, deployment, deployment_dev, deployment_git, deployment_playground, deployment_prod, remove, remove_dev, remove_git, remove_playground, remove_prod" }
+          - { name: aws-ms-events, branch: develop, group: aws, workflows: "build, deployment, deployment_dev, deployment_git, deployment_playground, deployment_prod, remove, remove_dev, remove_git, remove_playground, remove_prod" }
     steps:
       - uses: actions/checkout@v3
         with:
