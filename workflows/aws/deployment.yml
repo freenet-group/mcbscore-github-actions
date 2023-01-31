@@ -45,12 +45,10 @@ jobs:
         run: |
           echo "SERVERLESS_YML=/release/serverless.yaml" >> $GITHUB_ENV
 
-      - name: Download release
-        id: downloadRelease
-        if: ${{ github.event.inputs.componentVersion != null }}
-        uses: ./mcbscore/actions/download-release-assets-action
+      - name: Download Release
+        uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ github.event.inputs.componentVersion }}
+          version: ${{ inputs.componentVersion }}
           assetPattern: 'serverless-${{ github.event.inputs.componentVersion }}.tar.gz'
           targetPath: './release'
           token: ${{ env.TOKEN }}
@@ -63,10 +61,12 @@ jobs:
           cd release
           tar -xvzf serverless-${{ github.event.inputs.componentVersion }}.tar.gz
 
-      - name: Use Node.js 14.x
-        uses: actions/setup-node@v1
+      - id: init-workflow
+        name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
         with:
-          node-version: 14.x
+          installNodeJs: true
+          installJq: true
 
       - name: Install Serverless Framework
         run: npm install -g serverless
