@@ -1,4 +1,6 @@
 name: K8s Deployment
+#Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu koennen.
+run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
 
 on:
   workflow_dispatch:
@@ -17,6 +19,11 @@ on:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
         default: main
+      dryRun:
+        type: boolean
+        description: Nicht deployen, nur Helm Chart Ergebnis anzeigen (helm --dry-run)
+        required: false
+        default: false
 
 jobs:
   helm-deployment:
@@ -87,7 +94,7 @@ jobs:
             "K8S_ENVIRONMENT=" + .environment + "\n" +
             "K8S_NAMESPACE=" + .namespace + "\n" +
             "K8S_COMPONENT_NAME=" + .componentName + "\n" +
-            "HELM_CHART=" + (.helmChart // "ms") + "\n" +          
+            "HELM_CHART=" + (.helmChart // "ms") + "\n" +
             "K8S_JAR_NAME=" + .jarName)' \
           | tee -a -- "$GITHUB_ENV"
 
@@ -102,8 +109,11 @@ jobs:
             /kubernetes/github-packages/token = K8S_REGISTRY
 
       # Kubernetes Login
-      - name: Login
-        run: /root/init-kubectl-auth.sh 'https://${{ env.K8S_CLUSTER }}' '${{ env.K8S_TOKEN }}'
+      - name: 'Login k8s/helm'
+        uses: freenet-actions/prepare-k8s-env@v1
+        with:
+         k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
+         k8s-token: ${{ env.K8S_TOKEN }}
 
       # Helm Deployment
       - name: Helm Deployment
@@ -112,19 +122,21 @@ jobs:
           environment='${{ github.event.inputs.environment }}'
           componentVersion='${{ github.event.inputs.componentVersion }}'
           timeout='${{ github.event.inputs.timeout }}'
+          dryRun=${{ github.event.inputs.dryRun }}
+          helmOpts=()
+          if $dryRun; then helmOpts=(--dry-run); fi
 
           chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$HELM_CHART"
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.
-          valuesHelmOpts=()
           for f in \
               "$chartDir/stages/${environment}.yaml" \
               "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment.json" \
               "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment-${environment}.json"
           do
             if [ -e "$f" ]; then
-              valuesHelmOpts=("${valuesHelmOpts[@]}" "--values=$f")
+              helmOpts=("${helmOpts[@]}" "--values=$f")
             fi
           done
 
@@ -138,7 +150,7 @@ jobs:
           helm upgrade --namespace="$K8S_NAMESPACE" \
             --install --atomic --timeout="$timeout" \
             "$K8S_COMPONENT_NAME" "$chartDir" \
-            "${valuesHelmOpts[@]}" \
+            "${helmOpts[@]}" \
             --set="environment=$environment" \
             --set="hostname=${K8S_COMPONENT_NAME}-${environment}" \
             --set="appName=$K8S_COMPONENT_NAME" \
