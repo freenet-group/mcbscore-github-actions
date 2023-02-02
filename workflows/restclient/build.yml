@@ -130,14 +130,12 @@ jobs:
       - name: Upload Release JAR
         id: upload-release-jar
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./generated/${{ env.COMPONENT }}/build/libs/${{ env.COMPONENT }}-${{ env.COMPONENT_VERSION }}.jar
-          asset_name: ${{ env.COMPONENT }}-${{ env.COMPONENT_VERSION }}.jar
-          asset_content_type: application/java-archive
+          files: ./generated/${{ env.COMPONENT }}/build/libs/${{ env.COMPONENT }}-${{ env.COMPONENT_VERSION }}.jar
+          token: ${{ env.TOKEN }}
+          name:  ${{ env.COMPONENT }}-${{ env.COMPONENT_VERSION }}.jar
+          draft: env.BUILD_TYPE == 'DEVELOP'
 
       # ##################################################################################
       # Re-Merge

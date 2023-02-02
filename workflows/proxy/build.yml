@@ -130,53 +130,45 @@ jobs:
       - name: Upload MD Proxy
         id: upload-md-proxy
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-md.tar.gz', env.COMPONENT)) != '' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.COMPONENT }}-md.tar.gz
-          asset_name: ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}.tar.gz
-          asset_content_type: application/gzip
+          files: ${{ env.COMPONENT }}-md.tar.gz
+          token: ${{ env.TOKEN }}
+          name: ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}.tar.gz
+          draft: env.BUILD_TYPE == 'DEVELOP'
 
       # KM Release ZIP hinzufügen
       - name: Upload KM Proxy
         id: upload-km-proxy
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-km.tar.gz', env.COMPONENT)) != '' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.COMPONENT }}-km.tar.gz
-          asset_name: ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
-          asset_content_type: application/gzip
+          files: ${{ env.COMPONENT }}-km.tar.gz
+          token: ${{ env.TOKEN }}
+          name: ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
+          draft: env.BUILD_TYPE == 'DEVELOP'
 
       # FM Release ZIP hinzufügen
       - name: Upload FM Proxy
         id: upload-fm-proxy
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles(format('**/{0}-fm.tar.gz', env.COMPONENT)) != '' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.COMPONENT }}-fm.tar.gz
-          asset_name: ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
-          asset_content_type: application/gzip
+          files: ${{ env.COMPONENT }}-fm.tar.gz
+          token: ${{ env.TOKEN }}
+          name:  ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
+          draft: env.BUILD_TYPE == 'DEVELOP'
 
       # Datei mit Secret Mappings hinzufügen
       - name: Upload Secret Mappings
         id: upload-secret-mapping
         if: (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && hashFiles('secretMappings.txt') != ''
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: secretMappings.txt
-          asset_name: secretMappings.txt
-          asset_content_type: text/plain
+          files: secretMappings.txt
+          token: ${{ env.TOKEN }}
+          name:  secretMappings.txt
+          draft: env.BUILD_TYPE == 'DEVELOP'
 
       # ##################################################################################
       # Re-Merge

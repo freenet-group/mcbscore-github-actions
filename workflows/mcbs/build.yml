@@ -257,27 +257,23 @@ jobs:
       - name: Upload Release JAR
         id: upload-release-jar
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL')  && matrix.product.group == 'ms' && env.APPLICATION_JAR_NAME != '' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          asset_content_type: application/java-archive
+          files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          token: ${{ env.TOKEN }}
+          name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          draft: env.BUILD_TYPE == 'DEVELOP'
 
       # Release ZIP hinzufügen
       - name: Upload Release ZIP
         id: upload-release-zip
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL')  && matrix.product.group == 'standard' && env.APPLICATION_ZIP_NAME != '' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.APPLICATION_ZIP_PATH }}${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
-          asset_name: ${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
-          asset_content_type: application/zip
+          files: ${{ env.APPLICATION_ZIP_PATH }}${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
+          token: ${{ env.TOKEN }}
+          name: ${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
+          draft: env.BUILD_TYPE == 'DEVELOP'
 
       # Vorhandene Open API Yamls als Asset hinzufügen
       - name: Upload API Doc Assets

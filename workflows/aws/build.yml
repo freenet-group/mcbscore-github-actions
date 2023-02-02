@@ -111,16 +111,13 @@ jobs:
 
       # MD Release ZIP hinzufügen
       - name: Upload Archive
-        id: upload-serverless
+        uses: softprops/action-gh-release@v1
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: serverless.tar.gz
-          asset_name: serverless-${{ env.COMPONENT_VERSION }}.tar.gz
-          asset_content_type: application/gzip
+          files: serverless.tar.gz
+          token: ${{ env.TOKEN }}
+          name: serverless-${{ env.COMPONENT_VERSION }}.tar.gz
+          draft: env.BUILD_TYPE == 'DEVELOP'
 
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow

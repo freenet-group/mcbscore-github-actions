@@ -160,14 +160,11 @@ jobs:
 
       # Release JAR hinzufügen
       - name: Upload Release JAR
-        id: upload-release-jar
+        uses: softprops/action-gh-release@v1
         if: env.BUILD_TYPE == 'RELEASE'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing its ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ./generated/md-error-codes/build/libs/md-error-codes-${{ env.COMPONENT_VERSION }}.jar
-          asset_name: md-error-codes-${{ env.COMPONENT_VERSION }}.jar
-          asset_content_type: application/java-archive
+          files: ./generated/md-error-codes/build/libs/md-error-codes-${{ env.COMPONENT_VERSION }}.jar
+          token: ${{ env.TOKEN }}
+          name:  md-error-codes-${{ env.COMPONENT_VERSION }}.jar
+
 
