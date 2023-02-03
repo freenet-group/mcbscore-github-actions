@@ -91,16 +91,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
-      # Release erstellen
-      - name: Create Release
-        id: create_release
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/github/actions/create-release
-        with:
-          tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-
       # Release Archive erstellen
       - name: Create Release Archive
         id: create_release_archive
@@ -114,10 +104,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         with:
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
           files: serverless.tar.gz
           token: ${{ env.TOKEN }}
-          name: serverless-${{ env.COMPONENT_VERSION }}.tar.gz
-          draft: env.BUILD_TYPE == 'DEVELOP'
+          name:  ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
 
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow

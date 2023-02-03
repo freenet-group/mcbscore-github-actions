@@ -118,26 +118,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
-      # Release erstellen
-      - name: Create Release
-        id: create_release
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/github/actions/create-release
-        with:
-          tagName: ${{ env.COMPONENT_VERSION }}
-          releaseName: ${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-
-      # Release JAR hinzufügen
+      # Release erstellen und Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.COMPONENT_VERSION }}
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
-          name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          draft: env.BUILD_TYPE == 'DEVELOP'
+          name: ${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
 
       # ##################################################################################
       # Re-Merge

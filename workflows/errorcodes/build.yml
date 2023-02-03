@@ -149,22 +149,14 @@ jobs:
           gradleOptions: ${{ github.event.inputs.gradleOptions }}
           gradleDirectory: generated/md-error-codes
 
-      # Release erstellen
-      - name: Create Release
-        id: create_release
-        if: env.BUILD_TYPE == 'RELEASE'
-        uses: ./mcbscore/github/actions/create-release
-        with:
-          tagName: ${{ env.COMPONENT_VERSION }}
-          releaseName: ${{ env.COMPONENT_VERSION }}
-
       # Release JAR hinzufügen
       - name: Upload Release JAR
         uses: softprops/action-gh-release@v1
         if: env.BUILD_TYPE == 'RELEASE'
         with:
+          tag_name:  ${{ env.COMPONENT_VERSION }}
           files: ./generated/md-error-codes/build/libs/md-error-codes-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
-          name:  md-error-codes-${{ env.COMPONENT_VERSION }}.jar
+          name:   ${{ env.COMPONENT_VERSION }}
 
 

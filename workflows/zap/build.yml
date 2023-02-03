@@ -147,36 +147,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
-      # Release erstellen
-      - name: Create Release
-        id: create-release
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/github/actions/create-release
-        with:
-          tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-
-      # Release EAR hinzufügen
-      - name: Upload Release EAR
+      # Release EAR und API hinzufügen
+      - name: Upload Release EAR and API
         id: upload-release-ear
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         uses: softprops/action-gh-release@v1
         with:
-          files: ./${{ env.COMPONENT }}-ear/build/libs/${{ env.COMPONENT }}-ear-${{ env.COMPONENT_VERSION }}.ear
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          files: |
+            ./${{ env.COMPONENT }}-ear/build/libs/${{ env.COMPONENT }}-ear-${{ env.COMPONENT_VERSION }}.ear
+            ./${{ env.COMPONENT }}-api/build/libs/${{ env.COMPONENT }}-api-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
-          name:  ${{ env.COMPONENT }}-ear-${{ env.COMPONENT_VERSION }}.ear
-          draft: env.BUILD_TYPE == 'DEVELOP'
-
-      # Release API hinzufügen
-      - name: Upload Release API
-        id: upload-release-api
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        with:
-          files: ./${{ env.COMPONENT }}-api/build/libs/${{ env.COMPONENT }}-api-${{ env.COMPONENT_VERSION }}.jar
-          token: ${{ env.TOKEN }}
-          name:  ${{ env.COMPONENT }}-api-${{ env.COMPONENT_VERSION }}.jar
-          draft: env.BUILD_TYPE == 'DEVELOP'
+          name:  ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
 
       # ##################################################################################
       # Re-Merge
