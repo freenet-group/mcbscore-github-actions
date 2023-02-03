@@ -101,7 +101,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../ms/deployment_k8s, ../developerPortal, ../encoding, postBuild_MCBS, postBuild_MS, postBuild_ZAP, sonarqube, MCBS-Freigabe, refcalls_deployment" }
+          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../ms/deployment_k8s, ../developerPortal, ../encoding, postBuild_MCBS, postBuild_MS, postBuild_ZAP, sonarqube, MCBS-Freigabe, refcalls_deployment,setPRIssueDone" }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -147,40 +147,40 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-admin-dashboard, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild" }
-          - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, ../encoding, postBuild" }
-          - { name: ms-appcheck, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-authorities-information, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-billingaccount-frontend, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
-          - { name: ms-businesstransaction, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-commondata, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-configserver, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild" }
-          - { name: ms-contentprovider, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
+          - { name: ms-admin-dashboard, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-appcheck, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-authorities-information, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-billingaccount-frontend, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild,setPRIssueDone" }
+          - { name: ms-businesstransaction, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-commondata, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-configserver, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-contentprovider, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
-          - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod,deployment_k8s, ../encoding, postBuild" }
+          - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod,deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-delegate-test, branch: main, group: ms, workflows: "../check, build, ../encoding" }
-          - { name: ms-discovery, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild" }
-          - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, postBuild, deployment_k8s" }
-          - { name: ms-find, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
-          - { name: ms-gateway, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild" }
-          - { name: ms-homer, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s,  ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-invoice, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-mandel, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_k8s, ../encoding, postBuild" }
-          - { name: ms-mark, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-note-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
-          - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, ../developerPortal, postBuild" }
-          - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild" }
-          - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild" }
-          - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild" }
+          - { name: ms-discovery, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, postBuild, deployment_k8s,setPRIssueDone" }
+          - { name: ms-find, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild,setPRIssueDone" }
+          - { name: ms-gateway, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-homer, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s,  ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-invoice, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-mandel, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-mark, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-note-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild,setPRIssueDone" }
+          - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, ../developerPortal, postBuild,setPRIssueDone" }
+          - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild,setPRIssueDone" }
+          - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-tools, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, ../encoding" }
           - { name: ms-usage-importer, branch: develop, group: ms, workflows: "../check, build, deploymentDB" }
-          - { name: ms-usageprices, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild" }
-          - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s, ../encoding, postBuild" }
+          - { name: ms-usageprices, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
     steps:
       - uses: actions/checkout@v3
         with:
