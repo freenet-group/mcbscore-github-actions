@@ -37,7 +37,7 @@ runs:
           
         cat singleComponent.properties
         
-        cat single.properties | grep "single" >> env
+        cat singleComponent.properties | grep "single" >> env
         
         
         
