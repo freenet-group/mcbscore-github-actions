@@ -37,7 +37,7 @@ runs:
           
         cat singleComponent.properties
         
-        cat singleComponent.properties >> $GITHUB_ENV
+        cat single.properties | grep "single" >> env
         
-        // cat ./.github/build.properties >> $GITHUB_ENV
+        
         
