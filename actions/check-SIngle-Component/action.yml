@@ -36,3 +36,5 @@ runs:
           "${{ inputs.issue }}" 
           
         cat singleComponent.properties
+        
+        
