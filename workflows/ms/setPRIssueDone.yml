@@ -87,10 +87,26 @@ jobs:
           echo "Last Log : ${lastlog}"
           
           echo "issue=$(echo $lastlog)" >> $GITHUB_ENV
-                 
+      
+      - name: check for components
+        if: github.event.pull_request.merged == true
+        id: cC
+        uses: ./mcbscore/github/actions/check-SIngle-Component
+        with:
+          jiraURL: $JIRA_CLOUD_URL
+          jiraCredentials: $MCBSTEST_JIRACLOUD_CREDENTIALS
+          issue: ${{ env.issue }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          logLevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }} 
+      
+      - name: check ...
+        if: github.event.pull_request.merged == true
+        run: |
+          echo "SINGLE : ${{ env.SINGLE }}"
     
       - name: set Issue done
-        if: github.event.pull_request.merged == true
+        # if: github.event.pull_request.merged == true
+        if: ${{ (github.event.pull_request.merged == true) && (env.SINGLE == true) }}
         id: sD
         uses: ./mcbscore/github/actions/set-issue-list-done
         with:
@@ -98,7 +114,8 @@ jobs:
           jiraCredentials: $MCBSTEST_JIRACLOUD_CREDENTIALS
           issueList: ${{ env.issue }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          logLevel: info     
+          logLevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}    
+          
 
   kein_issue_state:
     # The type of runner that the job will run on
