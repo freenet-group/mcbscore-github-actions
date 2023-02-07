@@ -35,9 +35,13 @@ runs:
           "${{ inputs.jiraCredentials }}" \
           "${{ inputs.issue }}" 
           
-        cat singleComponent.properties
-        
-        cat singleComponent.properties | grep "single" >> env
+        echo "SINGLE=$( cat singleComponent | grep 'single' | cut -d '=' -f 2)" >> $GITHUB_ENV
+    
+    - id: fetchComponentInfos
+      shell: bash
+      run: |
+        echo "ENV :: ${{ env.SINGLE }}"
+          
         
         
         
