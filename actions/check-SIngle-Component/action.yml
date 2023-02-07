@@ -37,11 +37,3 @@ runs:
           
         echo "SINGLE=$( cat singleComponent.properties | grep 'single' | cut -d '=' -f 2)" >> $GITHUB_ENV
     
-    - id: xyz
-      shell: bash
-      run: |
-        echo "ENV :: ${{ env.SINGLE }}"
-          
-        
-        
-        
