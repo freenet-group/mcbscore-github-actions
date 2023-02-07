@@ -35,7 +35,7 @@ runs:
           "${{ inputs.jiraCredentials }}" \
           "${{ inputs.issue }}" 
           
-        echo "SINGLE=$( cat singleComponent | grep 'single' | cut -d '=' -f 2)" >> $GITHUB_ENV
+        echo "SINGLE=$( cat singleComponent.properties | grep 'single' | cut -d '=' -f 2)" >> $GITHUB_ENV
     
     - id: xyz
       shell: bash
