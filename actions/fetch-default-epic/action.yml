@@ -1,7 +1,5 @@
 name: Fetch Default-Epic
 description: 'Bereitstellen des Default-Epic im Environment'
-inputs:
-  
 
 runs:
   using: "composite"
