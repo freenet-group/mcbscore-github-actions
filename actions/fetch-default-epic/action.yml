@@ -10,7 +10,7 @@ runs:
       shell: bash
       run: |
         echo fetch Defasult-Epic ...
-        echo "DEFAULTEPIC=${{ var.DEFAULTEPIC }}"
+        echo "DEFAULTEPIC=${{ vars.DEFAULTEPIC }}"
           
-        # echo "SINGLE=$( cat singleComponent.properties | grep 'single' | cut -d '=' -f 2)" >> $GITHUB_ENV
+        echo "DEFAULTEPIC=${{ vars.DEFAULTEPIC }}" >> $GITHUB_ENV
     
