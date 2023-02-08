@@ -164,16 +164,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
-      # Release JAR hinzufügen
-      - name: Create and Upload Release JAR
+      # Release erstellen
+      - name: Create Release
+        id: create_release
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: softprops/action-gh-release@v1
+        uses: ./mcbscore/github/actions/create-release
         with:
-          tag_name: ${{ env.COMPONENT_VERSION }}
-          files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          token: ${{ env.TOKEN }}
-          name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          tagName: ${{ env.COMPONENT_VERSION }}
+          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
+
+      # Release JAR hinzufügen
+      - name: Upload Release JAR
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
 
       # Vorhandene Open API Yamls als Asset hinzufügen
       - name: Upload API Doc Assets

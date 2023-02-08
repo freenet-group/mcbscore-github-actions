@@ -118,17 +118,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
+      # Release erstellen
+      - name: Create Release
+        id: create_release
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: ./mcbscore/github/actions/create-release
+        with:
+          tagName: ${{ env.COMPONENT_VERSION }}
+          releaseName: ${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
+
       # Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.APPLICATION_JAR_NAME != '' }}
-        uses: softprops/action-gh-release@v1
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          tag_name: ${{ env.COMPONENT_VERSION }}
-          files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          token: ${{ env.TOKEN }}
-          name:  ${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
 
       # ##################################################################################
       # Re-Merge

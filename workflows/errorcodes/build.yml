@@ -149,14 +149,25 @@ jobs:
           gradleOptions: ${{ github.event.inputs.gradleOptions }}
           gradleDirectory: generated/md-error-codes
 
+      # Release erstellen
+      - name: Create Release
+        id: create_release
+        if: env.BUILD_TYPE == 'RELEASE'
+        uses: ./mcbscore/github/actions/create-release
+        with:
+          tagName: ${{ env.COMPONENT_VERSION }}
+          releaseName: ${{ env.COMPONENT_VERSION }}
+
       # Release JAR hinzufügen
       - name: Upload Release JAR
-        uses: softprops/action-gh-release@v1
+        id: upload-release-jar
         if: env.BUILD_TYPE == 'RELEASE'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          tag_name:  ${{ env.COMPONENT_VERSION }}
-          files: ./generated/md-error-codes/build/libs/md-error-codes-${{ env.COMPONENT_VERSION }}.jar
-          token: ${{ env.TOKEN }}
-          name:   ${{ env.COMPONENT_VERSION }}
-
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing its ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          asset_path: ./generated/md-error-codes/build/libs/md-error-codes-${{ env.COMPONENT_VERSION }}.jar
+          asset_name: md-error-codes-${{ env.COMPONENT_VERSION }}.jar
+          asset_content_type: application/java-archive
 
