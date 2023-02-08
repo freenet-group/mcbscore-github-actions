@@ -1,0 +1,16 @@
+name: Fetch Default-Epic
+description: 'Bereitstellen des Default-Epic im Environment'
+inputs:
+  
+
+runs:
+  using: "composite"
+  steps: 
+    - id: fetchDefaultEpic
+      shell: bash
+      run: |
+        echo fetch Defasult-Epic ...
+        echo "DEFAULTEPIC=${{ var.DEFAULTEPIC }}"
+          
+        # echo "SINGLE=$( cat singleComponent.properties | grep 'single' | cut -d '=' -f 2)" >> $GITHUB_ENV
+    
