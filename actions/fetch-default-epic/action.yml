@@ -8,7 +8,7 @@ runs:
       shell: bash
       run: |
         echo fetch Defasult-Epic ...
-        echo "DEFAULTEPIC=${{ vars.DEFAULTEPIC }}"
+        echo "${{ vars.DEFAULTEPIC }}"
           
-        echo "DEFAULTEPIC=${{ vars.DEFAULTEPIC }}" >> $GITHUB_ENV
+        # echo "DEFAULTEPIC=${{ vars.DEFAULTEPIC }}" >> $GITHUB_ENV
     
