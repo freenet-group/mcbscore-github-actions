@@ -114,11 +114,11 @@ jobs:
           domains=
 
           for f in \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/deployment-${environment}.json" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/deployment-${environment}.properties" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/deployment.properties"
+              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json" \
+              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment.json" \
+              "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.json" \
+              "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.properties" \
+              "./${DEPLOYMENT_PATH}/properties/${component}/deployment.properties"
           do
             if [ -z "$domains" -a -e "$f" ]; then
               echo "Prüfe domains in $f"
@@ -126,7 +126,7 @@ jobs:
                 if [[ "$f" == *.json ]]; then
                   cat -- "$f"
                 else
-                  ./${{ env.DEPLOYMENT_PATH }}/scripts/common/properties_to_json.sh < "$f"
+                  "./${DEPLOYMENT_PATH}/scripts/common/properties_to_json.sh" < "$f"
                 fi \
                 | jq -c -r 'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
                 # ^ ohne Domains: Leerstring => jq -r gibt nichts aus => if [ -z "$domains" ] bleibt true.
@@ -149,8 +149,8 @@ jobs:
 
           enabled=$(
             for f in \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json"
+              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment.json" \
+              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json"
             do
               printf '%s existiert' "$f" >&2
               if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
@@ -257,7 +257,10 @@ jobs:
           # Das letzte JSON-Objekt (Datei mit -${environment}) gewinnt in jq add.
           {
             printf '{ "secrets": [] }\n'  # Default hier beimischen ist einfacher als immer auch ohne "secrets" auszukommen.
-            for f in "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment.json" "./${{ env.DEPLOYMENT_PATH }}/properties/${component}/kubernetes-deployment-${environment}.json"; do
+            for f in \
+              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment.json" \
+              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json"
+            do
               printf '%s existiert' "$f" >&2
               if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
             done \
@@ -456,7 +459,7 @@ jobs:
       - name: Deployment Properties to JSON
         shell: bash
         run: |
-          ./${{ env.DEPLOYMENT_PATH }}/scripts/microservice/ms_properties_to_json.sh '${{ github.event.inputs.component }}' '${{ github.event.inputs.environment }}' \
+          "./${DEPLOYMENT_PATH}/scripts/microservice/ms_properties_to_json.sh" '${{ github.event.inputs.component }}' '${{ github.event.inputs.environment }}' \
           | tee deployment.generated.json
 
       - name: Helm Deployment
@@ -489,7 +492,7 @@ jobs:
             )
           fi
           
-          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$HELM_CHART"
+          chartDir="${DEPLOYMENT_PATH}/helm/$HELM_CHART"
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.
