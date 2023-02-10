@@ -72,6 +72,7 @@ runs:
       shell: bash
       run: |
         set -e
+        set -x
 
         # Workflows in ein Array überführen
         IFS=',' read -ra workflowList <<< "${{ inputs.workflows }}"
