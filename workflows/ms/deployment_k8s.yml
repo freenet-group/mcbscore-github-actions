@@ -271,11 +271,12 @@ jobs:
         shell: bash
         run: |
           # Umgebungsvariablen setzen
-          jq -r '
+          jq --raw-output '
               "K8S_CLUSTER="        + (.cluster       // ("cluster fehlt"       | halt_error)) + "\n" +
               "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
               "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
               "K8S_COMPONENT_NAME=" + (.componentName // ("componentName fehlt" | halt_error)) + "\n" +
+              "K8S_HOSTNAME="       + (.hostname      // "")                                   + "\n" +
               "HELM_CHART="         + (.helmChart     // "ms")                                 + "\n" +
               ""' \
             < kubernetes-deployment.generated.json \
@@ -480,19 +481,21 @@ jobs:
           # von Domain abhängige Helm Optionen
           if [ "$domain" = '-' ]; then
             name=$K8S_COMPONENT_NAME
-            helmOpts=( "${helmOpts[@]}" "--set=hostname=${component}-${environment}" )
-          # bei domain in component (z.B. component=oidc-km) den domain-Anteil entfernen,
-          # um Doppelung wie "oidc-km-km" zu vermeiden
+            defaultHostname=${component}-${environment}
           else
             name=${K8S_COMPONENT_NAME}-${domain}
-            helmOpts=(
-              "${helmOpts[@]}"
-              "--set=domain=$domain"
-              "--set=hostname=${component%-$domain}-${domain}-${environment}"
-            )
+            # bei domain in component (z.B. component=oidc-km) den domain-Anteil entfernen,
+            # um Doppelung wie "oidc-km-km" zu vermeiden
+            defaultHostname=${component%-$domain}-${domain}-${environment}
+            helmOpts=( "${helmOpts[@]}" "--set=domain=$domain" )
           fi
-          
-          chartDir="${DEPLOYMENT_PATH}/helm/$HELM_CHART"
+          hostnamesJson=$(jq --null-input --compact-output \
+            --arg h1 "${defaultHostname}.{$K8S_CLUSTER}" \
+            --arg h2 "$K8S_HOSTNAME" \
+            '[$h1, $h2 | select(. != "")]')
+          helmOpts=( "${helmOpts[@]}" "--set-json=hostnames=$hostnamesJson" )
+
+          chartDir="${DEPLOYMENT_PATH}/helm/${HELM_CHART}"
 
           # --values Helm Optionen
           # Die letzte Datei gewinnt in helm --values.
