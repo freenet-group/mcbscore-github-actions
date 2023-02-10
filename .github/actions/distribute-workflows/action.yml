@@ -75,7 +75,7 @@ runs:
         set -x
 
         # Workflows in ein Array überführen
-        IFS=',' read -ra workflowList <<< "${{ inputs.workflows }}"
+        IFS=',' read -ra workflowList < <(sed -e 's/^[[:space:]]*//' <<< "${{ inputs.workflows }}")
 
         workingDirectory=$(pwd)
         workflowDirectory=$workingDirectory/${{ inputs.repositoryName }}/.github/workflows
@@ -83,7 +83,6 @@ runs:
         mkdir -p -- "$workflowDirectory"
 
         for workflowName in "${workflowList[@]}"; do
-          workflowName=$(sed -e 's/^[[:space:]]*//' <<< "$workflowName")
           printf 'copying workflow "%s"\n' "$workflowName"
           sourceRelative=workflows/${{ inputs.repositoryGroup }}/$workflowName.yml
           source=$workingDirectory/$sourceRelative
