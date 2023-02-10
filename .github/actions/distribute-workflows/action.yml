@@ -105,7 +105,7 @@ runs:
         for workflowPattern in "${!workflowPatternToActions[@]}"; do
           if ! grep --line-regexp --quiet -- "$workflowPattern" <<<"$workflowName"; then continue; fi
 
-          actions=${workflowPatternToActions["$workflowPattern"]
+          actions=${workflowPatternToActions["$workflowPattern"]}
           for action in $actions; do	# $actions ohne "" (soll an Whitespace zerfallen)
             sourceRelative=actions/$action/action.yml
             source=$workingDirectory/$sourceRelative
