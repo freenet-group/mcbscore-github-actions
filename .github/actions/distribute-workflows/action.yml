@@ -75,7 +75,7 @@ runs:
         set -x
 
         # Workflows in ein Array überführen
-        IFS=',' read -ra workflowList < <(sed -e 's/^[[:space:]]*//g' <<< "${{ inputs.workflows }}")
+        IFS=',' read -ra workflowList < <(sed -e 's/[[:space:]]*//g' <<< "${{ inputs.workflows }}")
 
         workingDirectory=$(pwd)
         workflowDirectory=$workingDirectory/${{ inputs.repositoryName }}/.github/workflows
