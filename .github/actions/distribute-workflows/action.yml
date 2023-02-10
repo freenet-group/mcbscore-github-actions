@@ -83,6 +83,7 @@ runs:
 
         for workflowName in "${workflowList[@]}"; do
           workflowName=$(sed -e 's/^[[:space:]]*//' <<< "$workflowName")
+          printf 'copying workflow %s\n' "$workflowName"
           sourceRelative=workflows/${{ inputs.repositoryGroup }}/$workflowName.yml
           source=$workingDirectory/$sourceRelative
           target=./.github/workflows/$(basename -- "$workflowName.yml")
@@ -107,6 +108,7 @@ runs:
 
           actions=${workflowPatternToActions["$workflowPattern"]}
           for action in $actions; do	# $actions ohne "" (soll an Whitespace zerfallen)
+            printf 'copying action %s\n' "$action"
             sourceRelative=actions/$action/action.yml
             source=$workingDirectory/$sourceRelative
             target=.github/actions/$action/action.yml
