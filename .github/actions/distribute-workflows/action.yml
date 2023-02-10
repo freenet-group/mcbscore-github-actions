@@ -106,7 +106,7 @@ runs:
         for workflowPattern in "${!workflowPatternToActions[@]}"; do
           actions=${workflowPatternToActions["$workflowPattern"]}
           printf 'workflowPattern -> actions: "%s" -> "%s"\n' "$workflowPattern" "$actions"
-          if ! grep --line-regexp --quiet -- "$workflowPattern" <<<"$workflowName"; then continue; fi
+          if ! grep --line-regexp --quiet -- "$workflowPattern" < <(printf '%s\n' "${workflowList[@]}"); then continue; fi
 
           for action in $actions; do	# $actions ohne "" (soll an Whitespace zerfallen)
             printf 'copying action "%s"\n' "$action"
