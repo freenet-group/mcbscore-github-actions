@@ -73,6 +73,7 @@ runs:
       env:
         thisRepository: ${{ github.repository }}
         thisWorkflow: ${{ github.workflow }}
+        repositoryGroup: ${{ inputs.repositoryGroup }}
         workflows: ${{ inputs.workflows }}
         repositoryName: ${{ inputs.repositoryName }}
       shell: bash
