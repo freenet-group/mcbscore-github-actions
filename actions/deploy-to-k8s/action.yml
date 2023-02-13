@@ -295,7 +295,7 @@ runs:
             helmOpts=( "${helmOpts[@]}" "--set=domain=$DOMAIN" )
           fi
           hostnamesJson=$(jq --null-input --compact-output \
-            --arg h1 "${defaultHostname}.{$K8S_CLUSTER}" \
+            --arg h1 "${defaultHostname}.${K8S_CLUSTER}" \
             --arg h2 "$K8S_HOSTNAME" \
             '[$h1, $h2 | select(. != "")]')
           helmOpts=( "${helmOpts[@]}" "--set-json=hostnames=$hostnamesJson" )
