@@ -1,0 +1,362 @@
+name: Deploy to K8s
+description: Deployt nach Kubernetes
+
+inputs:
+  component:
+    description: Der Name der Komponente
+    required: true
+  domain:
+    description: Domain ("mc", …) bei Komponenten mit mehreren Domains
+    required: false
+    default: "-"
+  componentVersion:
+    description: Die Version der Komponente
+    required: true
+  environment:
+    description: Die Zielumgebung
+    required: true
+  dryRun:
+    type: boolean
+    description: Nicht deployen, nur Helm Chart Ergebnis anzeigen (helm --dry-run)
+    required: false
+    default: false
+  timeout:
+    description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
+    required: false
+    default: 10m0s
+  maxWaitForDeployment:
+    description: maximale Zeit, die beim Helm-Statusscheck auf ein Deployment gewartet wird
+    required: true
+    default: 11m0s
+  deploymentPath:
+    description: Verzeichnis, wo ein Klon von Repository ms-deployment zu finden ist. (Checkout macht der Aufrufer.)
+    required: true
+  awsAccessKeyId:
+    description: AWS Access Key Id
+  awsSecretAccessKey:
+    description: AWS Secret Access Key
+
+runs:
+  using: composite
+  steps:
+      # kubernetes-deployment JSON einlesen
+      - name: Read kubernetes-deployment.json
+        env:
+          COMPONENT: ${{ inputs.component }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
+        shell: bash
+        run: |
+
+          # Das letzte JSON-Objekt (Datei mit -${ENVIRONMENT}) gewinnt in jq add.
+          {
+            # Default "secrets" hier beimischen ist bequemer als nachher immer auch den Fall ohne "secrets" zu berücksichtigen.
+            printf '{ "secrets": [] }\n'
+
+            for f in \
+              "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json" \
+              "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
+            do
+              printf '%s existiert' "$f" >&2
+              if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
+            done \
+          } | jq -s add | tee kubernetes-deployment.generated.json
+
+      # kubernetes-deployment JSON auswerten
+      - name: Process kubernetes-deployment.generated.json
+        shell: bash
+        run: |
+          # Umgebungsvariablen setzen
+          jq --raw-output '
+              "K8S_CLUSTER="        + (.cluster       // ("cluster fehlt"       | halt_error)) + "\n" +
+              "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
+              "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
+              "K8S_COMPONENT_NAME=" + (.componentName // ("componentName fehlt" | halt_error)) + "\n" +
+              "K8S_HOSTNAME="       + (.hostname      // "")                                   + "\n" +
+              "HELM_CHART="         + (.helmChart     // "ms")                                 + "\n" +
+              ""' \
+            < kubernetes-deployment.generated.json \
+          | tee -a -- "$GITHUB_ENV"
+
+          # parameterPairs für aws-ssm-getparameters-action ermitteln aus .secrets in kubernetes-deployment.generated.json
+          # Beispiel:
+          # kubernetes-deployment.generated.json enthält:
+          # {
+          # 	...
+          # 	"secrets": [
+          # 		{
+          # 			"sourceType": "AWS_PARAMETER",
+          # 			"source": "/config/ms/homer/homer.prince.license",
+          # 			"targetType": "FILE",
+          # 			"target": "/usr/lib/prince/license/license.dat"
+          # 		},
+          # 		{
+          # 			"sourceType": "AWS_PARAMETER",
+          # 			"source": "/config/ms/application/test",
+          # 			"targetType": "ENV",
+          # 			"target": "TEST_VAR",
+          # 			"conversion": "b64enc"
+          # 		},
+          # 		{
+          # 			"sourceType": "SOMETHING_UNSUPPORTED",
+          # 			"source": "...",
+          # 			"targetType": "...",
+          # 			"target": "..."
+          # 		}
+          # 	]
+          # }
+          # => jq Ergebnis:
+          #   /config/ms/homer/homer.prince.license=AWS_DYNAMIC_PARAM_NAME1,
+          #   /config/ms/application/test=AWS_DYNAMIC_PARAM_NAME2,
+          paramPairs=$(jq -r '
+              [ .secrets[] | select(.sourceType == "AWS_PARAMETER") ]
+              | foreach .[] as $x (0; . + 1; "\($x.source)=AWS_DYNAMIC_PARAM_NAME\(.),")' \
+            < kubernetes-deployment.generated.json)
+
+          # Als (mehrzeilige) Umgebungsvariable DYNAMIC_AWS_PARAM_PAIRS setzen:
+          printf 'DYNAMIC_AWS_PARAM_PAIRS<<...snip...\n%s\n...snip...\n' "$paramPairs" \
+          | tee -a -- "$GITHUB_ENV"
+
+      # Secrets für K8S Deployment aus AWS auslesen
+      - name: Read AWS Parameters for K8S Deployment
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
+          awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
+          awsParameterPairs: |
+            ${{ env.DYNAMIC_AWS_PARAM_PAIRS }}
+            /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
+            /kubernetes/github-packages/token = K8S_REGISTRY,
+            /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
+
+      # AWS Secrets aus Umgebungsvariablen in JSON für Helm umwandeln
+      - name: AWS Parameters to Helm JSON
+        shell: bash
+        run: |
+          # Beispiel (Fortsetzung): aws-ssm-getparameters-action hat dann Umgebungsvariablen gesetzt:
+          # - DYNAMIC_AWS_PARAM_PAIRS1 mit dem Wert X für "/config/ms/homer/homer.prince.license",
+          # - DYNAMIC_AWS_PARAM_PAIRS2 mit dem Wert Y für "/config/ms/application/test".
+          # Daraus machen wir jetzt kubernetes-secrets-aws.generated.json in dem im Helm Chart erwarteten Format:
+          # {
+          # 	"secrets": [
+          # 		{
+          # 			"type": "FILE"
+          # 			"key": "/usr/lib/prince/license/license.dat",
+          # 			"value": "X"
+          # 		},
+          # 		{
+          # 			"type": "ENV",
+          # 			"key": "TEST_VAR",
+          # 			"value": "Y",
+          # 			"conversion": "b64enc"
+          # 		}
+          # 	]
+          # }
+          jq '
+              [
+                [.secrets[] | select(.sourceType == "AWS_PARAMETER")]
+                | foreach .[] as $x (
+                    0;
+                    . + 1;
+                    {
+                      "type": $x.targetType,
+                      "key": $x.target,
+                      "value": env["AWS_DYNAMIC_PARAM_NAME\(.)"],
+                      "MISSING_AWS_DYNAMIC_PARAM_NAME": (if env["AWS_DYNAMIC_PARAM_NAME\(.)"] == null then $x.source else null end),
+                      "conversion": $x.conversion
+                    }
+                  )
+                | with_entries(select(.value != null))
+              ]
+              | { "secrets": . }' \
+          < kubernetes-deployment.generated.json \
+          > kubernetes-secrets-aws-all.generated.json
+          # ^ Das ".value" in with_entries(select(.value != null)) ist nicht der "value" Key, sondern bei with_entries
+          # der jeweilige JSON Value! Damit unterdrücken wir neben "value": null Einträgen z.B. auch "conversion": null.
+
+          # Der Fall "value" == null (d.h. env["AWS_DYNAMIC_PARAM_NAME<n>"] null, d.h. Param-Name $x.source nicht im AWS
+          # gefunden, kommt jetzt: Warnen und in Endergebnis kubernetes-secrets-aws.generated.json weglassen:
+          missingParams=$(jq -r '[.secrets[].MISSING_AWS_DYNAMIC_PARAM_NAME | select(. != null)] | join(", ")' < kubernetes-secrets-aws-all.generated.json)
+          if [ -n "$missingParams" ]; then printf '::warning::Nicht im AWS ParameterStore gefunden: %s\n' "$missingParams" >&2; fi
+          jq '[.secrets[] | select(.value != null)] | { "secrets": . }' \
+          < kubernetes-secrets-aws-all.generated.json \
+          | tee kubernetes-secrets-aws.generated.json
+
+      # Secrets in Dateien nach JSON für Helm umwandeln
+      - name: Secret files to Helm JSON
+        shell: bash
+        run: |
+          # secretFiles := bash Array der .source Werte wo .sourceType == "FILE"
+          # command substitution $(…) und eval separat, um ggf jq Fehlerstatus zu beachten
+          secretFiles=$(jq --raw-output '.secrets[] | select(.sourceType == "FILE") | .source | @sh' < kubernetes-deployment.generated.json)
+          eval "secretFiles=( $secretFiles )"
+
+          # Inhalte der geheimen Dateien Base64-kodiert, Space-separiert
+          secretFilesB64Data=''
+          for ((i=0;i<${#secretFiles[@]};i++)) do
+            secretFile=${secretFiles[i]}
+            if [ ! -e "$secretFile" ]; then
+              echo "Datei $secretFile existiert nicht. Bitte Step 'Copy keystore files' prüfen." >&2
+              exit 2
+            fi
+
+            b64Data=$(base64 --wrap=0 < "$secretFile")
+
+            # im Log maskieren [https://www.aaron-powell.com/posts/2022-07-14-working-with-add-mask-and-github-actions/]
+            printf '::add-mask::%s\n' "$b64Data"
+
+            printf '[%s] <%d Zeichen Base64 aus %s>\n' $i ${#b64Data} "$secretFile" >&2
+            secretFilesB64Data=${secretFilesB64Data}${secretFilesB64Data:+ }${b64Data}
+          done
+
+          # analog AWS: konfigurierte { "sourceType": …, "source": …, "targetType": …, "target": … } Objekte auf
+          # vom Helm Chart erwartete { "type": …, "key: …, "value: …, "conversion: … } mappen
+          jq --arg secretFilesB64Data "$secretFilesB64Data" '
+              ($secretFilesB64Data | split(" ")) as $secretFilesB64DataArray
+              | [
+                [.secrets[] | select(.sourceType == "FILE")]
+                | foreach .[] as $x (
+                    -1;
+                    . + 1;
+                    { "type": $x.targetType, "key": $x.target, "value": $secretFilesB64DataArray[.], "conversion": "b64dec" }
+                  )
+              ]
+              | { "secrets": . }' \
+          < kubernetes-deployment.generated.json \
+          | tee >(jq '.secrets = (.secrets | map(.value = "… length " + (.value | length | tostring)))') \
+          > kubernetes-secrets-files.generated.json
+          # ↑ tee >(jq …): Debug-Ausgabe mit maskierten .secrets.value, aber aussagekräftiger als
+          # ganz maskiert durch add-mask
+
+      # kubernetes-secrets.generated.json := kubernetes-secrets-files.generated.json + kubernetes-secrets-aws.generated.json
+      - name: Merge generated Helm JSON Secret files
+        shell: bash
+        run: |
+          cat kubernetes-secrets-files.generated.json kubernetes-secrets-aws.generated.json \
+          | jq '.secrets[]' | jq --slurp '{ "secrets": . }' \
+          | tee >(jq '.secrets = (.secrets | map(.value = "… length " + (.value | length | tostring)))') \
+          > kubernetes-secrets.generated.json
+          # ↑ tee >(jq …): Debug-Ausgabe mit maskierten .secrets.value, aber aussagekräftiger als
+          # ganz maskiert durch add-mask
+
+      # Kubernetes Login
+      - name: 'Login k8s/helm'
+        uses: freenet-actions/prepare-k8s-env@v1
+        with:
+         k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
+         k8s-token: ${{ env.K8S_TOKEN }}
+
+      # JDK installieren für jrunscript. Version 11, in der noch die Nashorn Engine vorhanden ist.
+      # Muss nicht zur Java-Version passen, in der der Microservice laufen soll.
+      # jrunscript wird in ms_properties_to_json.sh aufgerufen.
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      # deployment.json aus deployment*.properties generieren
+      - name: Deployment Properties to JSON
+        env:
+          COMPONENT: ${{ inputs.component }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
+        shell: bash
+        run: |
+          "./${DEPLOYMENT_PATH}/scripts/microservice/ms_properties_to_json.sh" "$COMPONENT" "$ENVIRONMENT" \
+          | tee deployment.generated.json
+
+      - name: Helm Deployment
+        env:
+          COMPONENT: ${{ inputs.component }}
+          DOMAIN: ${{ inputs.domain }}
+          COMPONENT_VERSION: ${{ inputs.componentVersion }}
+          ENVIRONMENT: ${{ inputs.environment }}
+          TIMEOUT: ${{ inputs.timeout }}
+          DRY_RUN: ${{ inputs.dryRun }}
+          DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
+          # Github run id welche als label zur Identifikation in k8s gesetzt wird.
+          RUN_ID: ${{ github.run_id }}
+        shell: bash
+        run: |
+          helmOpts=()
+          if $DRY_RUN; then helmOpts=(--dry-run); fi
+
+          # von Domain abhängige Helm Optionen
+          if [ "$DOMAIN" = '-' ]; then
+            name=$K8S_COMPONENT_NAME
+            defaultHostname=${COMPONENT}-${ENVIRONMENT}
+          else
+            name=${K8S_COMPONENT_NAME}-${DOMAIN}
+            # bei Domain in COMPONENT (z.B. COMPONENT == "oidc-km") den Domain-Anteil entfernen,
+            # um Doppelung wie "oidc-km-km" zu vermeiden
+            defaultHostname=${COMPONENT%-$DOMAIN}-${DOMAIN}-${ENVIRONMENT}
+
+            helmOpts=( "${helmOpts[@]}" "--set=domain=$DOMAIN" )
+          fi
+          hostnamesJson=$(jq --null-input --compact-output \
+            --arg h1 "${defaultHostname}.${K8S_CLUSTER}" \
+            --arg h2 "$K8S_HOSTNAME" \
+            '[$h1, $h2 | select(. != "")]')
+          helmOpts=( "${helmOpts[@]}" "--set-json=hostnames=$hostnamesJson" )
+
+          chartDir="${DEPLOYMENT_PATH}/helm/${HELM_CHART}"
+
+          # --values Helm Optionen
+          # Die letzte Datei gewinnt in helm --values.
+          for f in \
+              deployment.generated.json \
+              "$chartDir/stages/${ENVIRONMENT}.yaml" \
+              kubernetes-deployment.generated.json \
+              kubernetes-secrets.generated.json
+          do
+            if [ -e "$f" ]; then
+              helmOpts=("${helmOpts[@]}" "--values=$f")
+            fi
+          done
+
+          # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" 
+          # in einer Schleife (10s warten, insgesamt max. maxWaitForDeployment) prüfen
+          maxWait='${{ inputs.maxWaitForDeployment }}'
+          maxWait=${maxWait//h/hour}; maxWait=${maxWait//m/min}; maxWait=${maxWait//s/sec}
+          maxWaitTimestamp=$(date -d "now +$maxWait" +%s)
+          helmExit=0
+          if  helm list --namespace="$K8S_NAMESPACE" | cut -d ' ' -f 1 | grep -Fxq -- "$K8S_COMPONENT_NAME"; then
+              while [ "$(date +%s)" -lt "$maxWaitTimestamp" ]; do
+                  helmStatus=$(helm status --output=json --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" | jq -r .info.status)
+                  if  [[ "${helmStatus#pending}" != "$helmStatus" ]]; then
+                      echo "Helm Status von $K8S_COMPONENT_NAME: $helmStatus, warte $waitPeriod s ..."
+                      sleep 10
+                      helmExit=1
+                  else
+                      echo "Helm Status von $K8S_COMPONENT_NAME: $helmStatus, starte Deployment ..."
+                      maxWaitTimestamp=$(date -d "now" +%s)
+                      helmExit=0
+                  fi
+              done
+              if [ $helmExit -eq 1 ]; then
+                  echo "Wartezeit überschritten, breche ab..."
+                  exit 1
+              fi
+          fi
+
+          # helm Befehl ausgeben, damit man ihn bei Fehler leicht nochmal manuell wiederholen kann
+          # (ohne weiter Github Actions Spam zu senden). Secrets im Log sollte Github ja automatisch
+          # unkenntlich machen.
+          set -x
+
+          # --set="environment=$ENVIRONMENT": Wert aus Workflow Parameter (z.B. "dev") hat Vorrang
+          # vor dem environment (z.B. "np"), das wir für den AWS Parameternamen in
+          # kubernetes-deployment*.json haben.
+          helm upgrade --namespace="$K8S_NAMESPACE" \
+            --install --atomic --timeout="$TIMEOUT" \
+            "$name" "$chartDir" \
+            "${helmOpts[@]}" \
+            --set="environment=$ENVIRONMENT" \
+            --set="appName=$K8S_COMPONENT_NAME" \
+            --set="docker_config_base64=$K8S_REGISTRY" \
+            --set="aws_access_key_id=$AWS_ACCESS_KEY_ID" \
+            --set="aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
+            --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
+            --set="version=$COMPONENT_VERSION" \
+            --set="runId='$RUN_ID'"

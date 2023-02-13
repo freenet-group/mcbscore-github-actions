@@ -78,84 +78,19 @@ jobs:
       - name: Setup jq
         uses: freenet-actions/setup-jq@v2
 
-      # kubernetes-deployment JSON einlesen
-      - name: Read kubernetes-deployment.json
-        shell: bash
-        run: |
-          environment='${{ github.event.inputs.environment }}'
-
-          # Das letzte JSON-Objekt (Datei mit -${environment}) gewinnt in jq add.
-          for f in "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment.json" "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment-${environment}.json"; do
-            printf '%s existiert' "$f" >&2
-            if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
-          done \
-          | jq -s -r 'add | (
-            "K8S_CLUSTER=" + .cluster + "\n" +
-            "K8S_ENVIRONMENT=" + .environment + "\n" +
-            "K8S_NAMESPACE=" + .namespace + "\n" +
-            "K8S_COMPONENT_NAME=" + .componentName + "\n" +
-            "HELM_CHART=" + (.helmChart // "ms") + "\n" +
-            "K8S_JAR_NAME=" + .jarName)' \
-          | tee -a -- "$GITHUB_ENV"
-
-      # Secrets aus AWS auslesen 2
-      - name: Read AWS Parameters 2
-        uses: ./.github/actions/read-aws-secrets
+      # Haupt-Deployment-Action
+      - name: Deploy to K8s
+        uses: ./.github/actions/deploy-to-k8s
         with:
+          component: ${{ env.COMPONENT }}
+          componentVersion: ${{ inputs.componentVersion }}
+          environment: ${{ inputs.environment }}
+          dryRun: ${{ inputs.dryRun }}
+          timeout: ${{ inputs.timeout }}
+          maxWaitForDeployment: ${{ inputs.maxWaitForDeployment }}
+          deploymentPath: ${{ env.DEPLOYMENT_PATH }}
           awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          awsParameterPairs: |
-            /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
-            /kubernetes/github-packages/token = K8S_REGISTRY
-
-      # Kubernetes Login
-      - name: 'Login k8s/helm'
-        uses: freenet-actions/prepare-k8s-env@v1
-        with:
-         k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
-         k8s-token: ${{ env.K8S_TOKEN }}
-
-      # Helm Deployment
-      - name: Helm Deployment
-        shell: bash
-        run: |
-          environment='${{ github.event.inputs.environment }}'
-          componentVersion='${{ github.event.inputs.componentVersion }}'
-          timeout='${{ github.event.inputs.timeout }}'
-          dryRun=${{ github.event.inputs.dryRun }}
-          helmOpts=()
-          if $dryRun; then helmOpts=(--dry-run); fi
-
-          chartDir="${{ env.DEPLOYMENT_PATH }}/helm/$HELM_CHART"
-
-          # --values Helm Optionen
-          # Die letzte Datei gewinnt in helm --values.
-          for f in \
-              "$chartDir/stages/${environment}.yaml" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment.json" \
-              "./${{ env.DEPLOYMENT_PATH }}/properties/${COMPONENT}/kubernetes-deployment-${environment}.json"
-          do
-            if [ -e "$f" ]; then
-              helmOpts=("${helmOpts[@]}" "--values=$f")
-            fi
-          done
-
-          # helm Befehl ausgeben, damit man ihn bei Fehler leicht nochmal manuell wiederholen kann.
-          # Secrets im Log sollte Github ja automatisch unkenntlich machen.
-          set -x
-
-          # --set="environment=$environment": Wert aus Workflow Parameter (z.B. "dev") hat Vorrang
-          # vor dem environment (z.B. "np"), das wir für den AWS Parameternamen in
-          # kubernetes-deployment*.json haben.
-          helm upgrade --namespace="$K8S_NAMESPACE" \
-            --install --atomic --timeout="$timeout" \
-            "$K8S_COMPONENT_NAME" "$chartDir" \
-            "${helmOpts[@]}" \
-            --set="environment=$environment" \
-            --set="hostname=${K8S_COMPONENT_NAME}-${environment}" \
-            --set="appName=$K8S_COMPONENT_NAME" \
-            --set="docker_config_base64=$K8S_REGISTRY" \
-            --set="version=$componentVersion"
 
       - name: Cleanup
         if: ${{ always() }}
