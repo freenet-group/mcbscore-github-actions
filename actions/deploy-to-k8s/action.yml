@@ -270,10 +270,11 @@ runs:
         env:
           COMPONENT: ${{ inputs.component }}
           DOMAIN: ${{ inputs.domain }}
+          COMPONENT_VERSION: ${{ inputs.componentVersion }}
           ENVIRONMENT: ${{ inputs.environment }}
-          DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
           TIMEOUT: ${{ inputs.timeout }}
           DRY_RUN: ${{ inputs.dryRun }}
+          DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
           # Github run id welche als label zur Identifikation in k8s gesetzt wird.
           RUN_ID: ${{ github.run_id }}
         shell: bash
