@@ -105,7 +105,7 @@ runs:
           # Manche Actions müssen in jedes Repo:
           ['.+']='select-aws-github-secrets read-aws-secrets'
           # Actions für bestimmte Workflows:
-          ['deployment_k8s']='deploy-to-k8s'
+          ['(^|.*/)deployment_k8s']='deploy-to-k8s'
         )
         for workflowPattern in "${!workflowPatternToActions[@]}"; do
           actions=${workflowPatternToActions["$workflowPattern"]}
