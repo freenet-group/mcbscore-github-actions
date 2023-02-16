@@ -1,0 +1,39 @@
+name: setProdVersion
+description: Setzen der "Version for Prod" und des Status "geliefert"
+inputs:
+  jiraURL:
+    description: Organisationsinterne URL des angebundenen JIRA-Systems
+    required: true
+  jiraCredentials:
+    description: Organisationsinterne Credentials (user:password) des angebundenen JIRA-Systems
+    required: true
+  version:
+    description: Die zu setzende Version
+    required: true
+  issue:
+    description: Der Issue (i.a. META-xyz) , in dem die Version hinterlegt werden soll
+    required: true  
+  atlassianDeveloperTools:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  loglevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+
+runs:
+  using: "composite"
+  steps: 
+    - id: setProdVersion
+      shell: bash
+      run: |
+        echo setProdVersion ...
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.loglevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{inputs.atlassianDeveloperTools}}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          prod_version.ProdVersionKt \
+          "${{inputs.jiraURL}}" \
+          "${{inputs.jiraCredentials}}" \
+          "${{inputs.version}}" \
+          "${{inputs.issue}}"
