@@ -239,3 +239,17 @@ jobs:
           mailTemplate: ${{ env.MAIL_TEMPLATE }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}
+          
+      # Setzen der Vetrsdion für GIT am EPIC
+      - name: setGitVersion
+        id: sC
+        uses: ./mcbscore/github/actions/set-git-version
+        with:
+          jiraURL: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          version: ${{ github.event.inputs.releaseVersion }}
+          issue: ${{ github.event.inputs.issue }}
+          atlassianDeveloperTools: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          loglevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
+          
+          
