@@ -58,7 +58,9 @@ runs:
         
         if  [[ $BUILD_TYPE == 'RELEASE' ]] ;
         then
-          echo "COMPONENT_VERSION=$(echo $LAST_VERSION | awk -F. -v OFS=. '{$NF++;print}')" >> $GITHUB_ENV
+          nv=`echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}'`
+          echo $nv
+          echo "COMPONENT_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')" >> $GITHUB_ENV
         else
           echo "COMPONENT_VERSION=$(echo ${LAST_VERSION} | awk -F. -v OFS=. '{$NF++;print}')-SNAPSHOT" >> $GITHUB_ENV
         fi
