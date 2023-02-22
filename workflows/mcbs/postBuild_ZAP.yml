@@ -93,7 +93,7 @@ jobs:
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
-          configurationPrefix: ${{ github.event.inputs.component }}_
+          configurationPrefix: zap_
 
       # ##################################################################################
       # Erzeugen von Version / ComponentVersion in JIRA
