@@ -242,6 +242,6 @@ jobs:
           jiraURL: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           version: ${{ github.event.inputs.releaseVersion }}
-          issue: ${{ github.event.inputs.issue }}
+          issue: ${{ github.event.inputs.epic }}
           atlassianDeveloperTools: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           loglevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}          
