@@ -111,7 +111,7 @@ jobs:
       # Existierende Draft Releases löschen
       - name: Delete draft releases
         if: env.BUILD_TYPE == 'DEVELOP'
-        uses: hugo19941994/delete-draft-releases@v1.0.0
+        uses: hugo19941994/delete-draft-releases@v1.0.1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 

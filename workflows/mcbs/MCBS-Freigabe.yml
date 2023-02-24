@@ -211,7 +211,7 @@ jobs:
           
           java -Dlog4j2.configurationFile=./log4j2-info.xml  -cp devtools/apps/atltools/AtlassianDeveloperTools-all-4.0.1.jar:.:devtools/apps/atltools/AtlassianDeveloperTools  mail_info.SendReleaseMailKt MCBS "${{ github.event.inputs.releaseVersion }}" ${{ steps.read_ibn-date.outputs.value }} ${{ steps.read_sql.outputs.value }} "NEIN" "${{ github.event.inputs.iterations }}" "releaseIssues.csv" "${{ env.TEAMS_MAIL }}" "ProdFreigabeMCBSTemplate.ftl"
       # ##################################################################################
-      # Freigabestatement auf der Releasenote
+      # Releasepage holen
       # ##################################################################################
       - name: Checkout wiki code
         uses: actions/checkout@v3
@@ -219,6 +219,9 @@ jobs:
           repository: ${{github.repository}}.wiki
           path: markdown
 
+      # ##################################################################################
+      # Freigabestatement auf der Releasenote
+      # ##################################################################################
       - name: Freigabestatement
         id: freigabestatement
         run: |
@@ -228,3 +231,17 @@ jobs:
           git add MCBS_${{ github.event.inputs.releaseVersion }}.md
           git diff-index --quiet HEAD || git commit -m "Freigabe"
           git push
+      
+      # ##################################################################################
+      # EPIC anpassen
+      # ##################################################################################
+      - name: setProdVersion
+        id: sC
+        uses: ./mcbscore/github/actions/set-prod-version
+        with:
+          jiraURL: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          version: ${{ github.event.inputs.releaseVersion }}
+          issue: ${{ github.event.inputs.epic }}
+          atlassianDeveloperTools: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          loglevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}          
