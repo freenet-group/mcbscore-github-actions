@@ -199,7 +199,7 @@ jobs:
           jiraWebUrl: ${{ env.JIRA_CLOUD_WEB_URL }}
           hasDependencies: NEIN
           dependentIssues: keine
-          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ env.TAG_PREFIX }}${{ github.event.inputs.releaseVersion }}"
+          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/mcbszap.${{ github.event.inputs.releaseVersion }}"
           javaVersion: ${{ env.RELEASENOTES_JAVA_RELEASE }}
           epic: ${{ github.event.inputs.epic }}
 
