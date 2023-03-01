@@ -95,7 +95,7 @@ jobs:
         uses: ./mcbscore/github/actions/determine-component-version-jc
         with:
           component: ${{ env.COMPONENT }}
-          included_components: ${{ env.INCLUDED_COMPONENTS }}
+          includedComponents: ${{ env.INCLUDED_COMPONENTS }}
 
       # ##################################################################################
       # Release bauen
