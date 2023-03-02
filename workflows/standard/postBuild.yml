@@ -27,6 +27,7 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       MAIL_TEMPLATE: B_MS.ftl
+      TEAMS_MAIL: b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms
       JIRA_PROJECT: MCBS
 
     steps:
