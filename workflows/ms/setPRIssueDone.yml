@@ -106,7 +106,7 @@ jobs:
     
       - name: set Issue done
         # if: github.event.pull_request.merged == true
-        if: ${{ (github.event.pull_request.merged == true) && (env.SINGLE == true) }}
+        if: ${{ (github.event.pull_request.merged == true) && (env.SINGLE == 'true') }}
         id: sD
         uses: ./mcbscore/github/actions/set-issue-list-done
         with:

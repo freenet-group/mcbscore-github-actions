@@ -95,7 +95,7 @@ jobs:
         uses: ./mcbscore/github/actions/determine-component-version-jc
         with:
           component: ${{ env.COMPONENT }}
-          included_components: ${{ env.INCLUDED_COMPONENTS }}
+          includedComponents: ${{ env.INCLUDED_COMPONENTS }}
 
       # ##################################################################################
       # Release bauen
@@ -114,7 +114,7 @@ jobs:
       # Existierende Draft Releases löschen
       - name: Delete draft releases
         if: env.BUILD_TYPE == 'DEVELOP'
-        uses: hugo19941994/delete-draft-releases@v1.0.0
+        uses: hugo19941994/delete-draft-releases@v1.0.1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
