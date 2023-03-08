@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TOKEN: ${{ secrets.GH_MCBS_TOKEN }}
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
 
     steps:
       # Repository auschecken unter $GITHUB_WORKSPACE
