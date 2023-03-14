@@ -3,7 +3,8 @@ name: Distribute
 on:
   schedule:
     # jeden Sonntag, 05:00h
-    - cron: "0 5 * * 6"
+    #- cron: "0 5 * * 6"
+    - cron: "20 * * * *"
   workflow_dispatch:
     inputs:
       group:
@@ -52,7 +53,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   errorcodes:
-    if: ${{ github.event.inputs.group == 'errorcodes' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'errorcodes' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
