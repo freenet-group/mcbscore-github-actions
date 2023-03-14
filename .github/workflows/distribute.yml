@@ -3,8 +3,7 @@ name: Distribute
 on:
   schedule:
     # jeden Sonntag, 05:00h
-    #- cron: "0 5 * * 6"
-    - cron: "*/5 * * * *"
+    - cron: "0 5 * * 6"
   workflow_dispatch:
     inputs:
       group:
@@ -31,7 +30,7 @@ on:
 
 jobs:
   aws:
-    if: ${{ github.event.inputs.group == 'aws' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'aws' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -75,7 +74,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   mandel:
-    if: ${{ github.event.inputs.group == 'mandel' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'mandel' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -97,7 +96,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   mcbs:
-    if: ${{ github.event.inputs.group == 'mcbs' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'mcbs' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -119,7 +118,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   metis:
-    if: ${{ github.event.inputs.group == 'metis' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'metis' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -143,7 +142,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   ms:
-    if: ${{ github.event.inputs.group == 'ms' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'ms' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -198,7 +197,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   mslib:
-    if: ${{ github.event.inputs.group == 'mslib' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'mslib' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -221,7 +220,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   proxy:
-    if: ${{ github.event.inputs.group == 'proxy' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'proxy' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -268,7 +267,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   rating:
-    if: ${{ github.event.inputs.group == 'rating' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'rating' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -290,7 +289,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   restclient:
-    if: ${{ github.event.inputs.group == 'restclient' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'restclient' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -325,7 +324,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   simple:
-    if: ${{ github.event.inputs.group == 'simple' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'simple' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -351,7 +350,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   standard:
-    if: ${{ github.event.inputs.group == 'standard' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'standard' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -383,7 +382,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   zap:
-    if: ${{ github.event.inputs.group == 'zap' || github.event.inputs.group == 'ALL' }}
+    if: ${{ github.event.inputs.group == 'zap' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
