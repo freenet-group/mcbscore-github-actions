@@ -4,12 +4,20 @@ on:
   push:
     branches-ignore:
       - release
+      - release-jdk8
   pull_request:
     branches-ignore:
       - release
+      - release-jdk8
       - develop
   workflow_dispatch:
     inputs:
+      manualVersion:
+        description: Eine manuell zu vergebende Versionskennung (xx.yy.zz / ohne prefix) (Überschreibt ausschließlich die Version , keine Issues)
+        required: false
+      manualIssues:
+        description: Eine blank-separierte Liste von Issues für das Patch-Release (Überschreibt ausschließlich die Issues , keine Version)
+        required: false
       gradleOptions:
         description: 'Zusätzliche optionale Gradle Parameter'
         required: false
@@ -96,7 +104,23 @@ jobs:
         with:
           component: ${{ env.COMPONENT }}
           includedComponents: ${{ env.INCLUDED_COMPONENTS }}
-
+      
+      # component_Version ggf. manuell übersteuern, sofern eine Eingabe vorliegt
+      - name: manualVersion
+        if: ${{ github.event.inputs.manualVersion != '' }}
+        shell: bash
+        run: |
+          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}"
+          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}" >> $GITHUB_ENV
+                    
+      # issueList ggf. manuell übersteuern, sofern eine Eingabe vorliegt
+      - name: manualIssues
+        if: ${{ github.event.inputs.manualIssues != '' }}
+        shell: bash
+        run: |
+          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}"
+          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}" >> $GITHUB_ENV
+      
       # ##################################################################################
       # Release bauen
       # ##################################################################################
