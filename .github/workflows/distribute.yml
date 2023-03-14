@@ -4,7 +4,7 @@ on:
   schedule:
     # jeden Sonntag, 05:00h
     #- cron: "0 5 * * 6"
-    - cron: "20 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
     inputs:
       group:
