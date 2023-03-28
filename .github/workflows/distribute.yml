@@ -163,7 +163,7 @@ jobs:
           - { name: ms-delegate-test, branch: main, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-discovery, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
-          - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, postBuild, deployment_k8s,setPRIssueDone" }
+          - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../developerPortal, postBuild, deployment_k8s, setPRIssueDone" }
           - { name: ms-find, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild,setPRIssueDone" }
           - { name: ms-gateway, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
