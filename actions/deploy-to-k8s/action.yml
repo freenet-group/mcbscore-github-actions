@@ -72,7 +72,8 @@ runs:
               "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
               "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
               "K8S_COMPONENT_NAME=" + (.componentName // ("componentName fehlt" | halt_error)) + "\n" +
-              "K8S_HOSTNAME="       + (.hostname      // "")                                   + "\n" +
+              "K8S_VS_HOSTNAME="    + (.virtualService.hostname // "")                         + "\n" +
+              "K8S_VS_GATEWAY="     + (.virtualService.gateway  // "")                         + "\n" +
               "HELM_CHART="         + (.helmChart     // "ms")                                 + "\n" +
               ""' \
             < kubernetes-deployment.generated.json \
@@ -282,6 +283,9 @@ runs:
           helmOpts=()
           if $DRY_RUN; then helmOpts=(--dry-run); fi
 
+          gatewaysJson=$(jq --null-input --compact-output --arg g "$K8S_VS_GATEWAY" '[$g | select(. != "")]')
+          helmOpts=( "${helmOpts[@]}" "--set-json=gateways=$gatewaysJson" )
+
           # von Domain abhängige Helm Optionen
           if [ "$DOMAIN" = '-' ]; then
             name=$K8S_COMPONENT_NAME
@@ -296,7 +300,7 @@ runs:
           fi
           hostnamesJson=$(jq --null-input --compact-output \
             --arg h1 "${defaultHostname}.${K8S_CLUSTER}" \
-            --arg h2 "$K8S_HOSTNAME" \
+            --arg h2 "$K8S_VS_HOSTNAME" \
             '[$h1, $h2 | select(. != "")]')
           helmOpts=( "${helmOpts[@]}" "--set-json=hostnames=$hostnamesJson" )
 
