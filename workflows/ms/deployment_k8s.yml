@@ -221,10 +221,10 @@ jobs:
         run: |
           echo "Cleaning up previous run"
           chown -R "$(id -u):$(id -g)" . || true
+          # verstecke files auch entfernen 
+          # https://askubuntu.com/questions/740805/how-can-i-remove-all-files-from-current-directory-using-terminal
+          shopt -s dotglob
           rm -rf *
-
-      - name: Clean
-        uses: AutoModality/action-clean@v1.1.0
 
       - name: Checkout Repository
         uses: actions/checkout@v3
