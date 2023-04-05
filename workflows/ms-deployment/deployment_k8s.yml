@@ -74,22 +74,6 @@ jobs:
 
           echo "K8S_DEPLOYMENT_ENABLED=$enabled" >> "$GITHUB_ENV"
 
-      - name: Determine deployment ref
-        shell: bash
-        run: |
-          cd -- "$DEPLOYMENT_PATH"
-          ref=$(git describe 2>/dev/null || git log --pretty=format:%h --max-count=1)
-          echo "DEPLOYMENT_REF=$ref" >> "$GITHUB_ENV"
-
-      - name: Create GitHub deployment
-        if: ${{ env.K8S_DEPLOYMENT_ENABLED == 'true' }}
-        uses: chrnorm/deployment-action@v2
-        id: create-deployment
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
-          environment: ${{ inputs.environment }}
-          ref: ${{ env.DEPLOYMENT_REF }}
-
       - name: Select Github Secrets for AWS
         uses: ./.github/actions/select-aws-github-secrets
         with:
@@ -107,6 +91,22 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = GITHUB_TOKEN,
             /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY
+
+      - name: Determine deployment ref
+        shell: bash
+        run: |
+          cd -- "$DEPLOYMENT_PATH"
+          ref=$(git describe 2>/dev/null || git log --pretty=format:%h --max-count=1)
+          echo "DEPLOYMENT_REF=$ref" >> "$GITHUB_ENV"
+
+      - name: Create GitHub deployment
+        if: ${{ env.K8S_DEPLOYMENT_ENABLED == 'true' }}
+        uses: chrnorm/deployment-action@v2
+        id: create-deployment
+        with:
+          token: ${{ env.GITHUB_TOKEN }}
+          environment: ${{ inputs.environment }}
+          ref: ${{ env.DEPLOYMENT_REF }}
 
       # Java installieren (für jrunscript in ms_properties_to_json.sh)
       - name: Set up JDK
