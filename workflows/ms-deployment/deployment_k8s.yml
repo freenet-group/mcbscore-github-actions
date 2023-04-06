@@ -8,6 +8,8 @@ on:
       component:
         description: Der Name der Komponente
         required: true
+        type: choice
+        options: [ "kubernetes-namespace", "kubernetes-cluster" ]
       environment:
         description: Die Zielumgebung
         required: true
