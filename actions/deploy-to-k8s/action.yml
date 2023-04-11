@@ -64,6 +64,8 @@ runs:
 
       # kubernetes-deployment JSON auswerten
       - name: Process kubernetes-deployment.generated.json
+        env:
+          COMPONENT: ${{ inputs.component }}
         shell: bash
         run: |
           # Umgebungsvariablen setzen
@@ -71,7 +73,7 @@ runs:
               "K8S_CLUSTER="        + (.cluster       // ("cluster fehlt"       | halt_error)) + "\n" +
               "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
               "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
-              "K8S_COMPONENT_NAME=" + (.componentName // ("componentName fehlt" | halt_error)) + "\n" +
+              "K8S_COMPONENT_NAME=" + (.componentName // ("ms-" + env["COMPONENT"]))           + "\n" +
               "K8S_VS_HOSTNAME="    + (.virtualService.hostname // "")                         + "\n" +
               "K8S_VS_GATEWAY="     + (.virtualService.gateway  // "")                         + "\n" +
               "HELM_CHART="         + (.helmChart     // "ms")                                 + "\n" +
@@ -264,7 +266,8 @@ runs:
           DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
         shell: bash
         run: |
-          "./${DEPLOYMENT_PATH}/scripts/microservice/ms_properties_to_json.sh" "$COMPONENT" "$ENVIRONMENT" \
+          { "./$DEPLOYMENT_PATH/scripts/microservice/ms_properties_to_json.sh" "$COMPONENT" "$ENVIRONMENT" \
+            || printf '%s\n' '{}'; } \
           | tee deployment.generated.json
 
       - name: Helm Deployment
