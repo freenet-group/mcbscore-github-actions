@@ -4,9 +4,9 @@ javaOpts=(
   -Xmx2g
   -Dfile.encoding=UTF-8
   "-Dspring.profiles.active=$SPRING_PROFILE"
-  # Beim spring.liquibase.drop-first auf Schema metisadm als anderer Benutzer braucht man die Rolle in der URL.
+  # Beim Liquibase DROP auf Schema metisadm als anderer Benutzer braucht man die Rolle in der URL.
   # Hack: "&options=-c role=…" an default-schema anhängen, weil das der einzige Platzhalter in database.url ist.
-  '-Dspring.liquibase.default-schema=metisadm&options=-c%20role=XXXmetisadm'
+  '-Dspring.liquibase.default-schema=metisadm&options=-c%20role=metisadm'
 )
 
 commands=( resetTestData stacktrace )
