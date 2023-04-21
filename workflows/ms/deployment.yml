@@ -204,16 +204,14 @@ jobs:
       componentName: ${{ env.JIRA_COMPONENT }}
 
   deploy_k8s:
-    runs-on: [self-hosted, k8s]
+    if: ${{ hashFiles('**/deployment_k8s.yml') != ''}}
     needs: create-deployment
-    steps:
-      - uses: ./.github/workflows/deployment_k8s.yml
-        if: ${{ hashFiles('**/deployment_k8s.yml') != ''}}
-        secrets: inherit
-        with:
-          componentVersion: ${{ github.event.inputs.componentVersion }}
-          environment: ${{ github.event.inputs.environment }}
-          component: ${{ github.event.inputs.component }}
+    uses: ./.github/workflows/deployment_k8s.yml
+    secrets: inherit
+    with:
+      componentVersion: ${{ github.event.inputs.componentVersion }}
+      environment: ${{ github.event.inputs.environment }}
+      component: ${{ github.event.inputs.component }}
 
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
