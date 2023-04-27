@@ -124,25 +124,28 @@ jobs:
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
-      # ##################################################################################
-      # Mailversand
-      # ##################################################################################
-      - name: ReleaseMail
-        shell: bash
-        run: |
-          atlassianToolsDir=./mcbscore/github/atlassian-tools
-          java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
-            -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
-            mail_info.SendReleaseMailKt \
-            MCBS \
-            "${{ github.event.inputs.releaseVersion }}" \
-            "${{ steps.determine-going-live-date.outputs.goingLiveDate }}" \
-            "${{ steps.fetch-additional-information.outputs.sql }}" \
-            "NEIN" \
-            "${{ github.event.inputs.iterations }}" \
-            "releaseIssues.csv" \
-            "${{ env.TEAMS_MAIL }}" \
-            "ProdFreigabeMCBSTemplate.ftl"
+      # ###################################################################################
+      # Teams-Notification
+      # ###################################################################################
+      - name: Send notification as mail
+        uses: ./mcbscore/github/actions/mail-notification
+        with:
+          component:  ${{ env.JIRA_COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
+          # issueList: issue_info.csv
+          issueList: "releaseIssues.csv"
+          hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
+          hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
+          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          additionalText: "${{ github.event.inputs.iterations }}"
+          epic: ${{ github.event.inputs.epic }}
+          mailAddress: "${{ env.TEAMS_MAIL }}"
+          purpose: MCBSFreigabe
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          repositoryName: ${{ github.REPOSITORY }}
+
+
       # ##################################################################################
       # Freigabestatement auf der Releasenote
       # ##################################################################################
