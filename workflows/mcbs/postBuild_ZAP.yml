@@ -220,19 +220,19 @@ jobs:
       # Teams-Notification
       # ###################################################################################
       - name: Send notification as mail
-        uses: ./mcbscore/github/actions/releasebuild-notification
+        uses: ./mcbscore/github/actions/mail-notification
         with:
-          component: MCBSServices
+          component:  ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           issueList: issue_info.csv
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
-          hasDependencies: NEIN
+          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
-          webhookUri: ${{ env.TEAMS_MAIL }}
-          mailTemplate: ${{ env.MAIL_TEMPLATE }}
+          mailAddress: ${{ env.TEAMS_MAIL }}
+          purpose: MCBSBuild
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}
 
