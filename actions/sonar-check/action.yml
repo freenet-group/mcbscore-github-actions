@@ -54,5 +54,5 @@ runs:
         done < coverage.properties
         
         # ermittelte Coverage als Output bereitstellen
-        echo "coverage=$coverage" >> $GITHUB_OUTPUT
-         echo "coverage=$coverage" >> $GITHUB_ENV
+        # echo "coverage=$coverage" >> $GITHUB_OUTPUT
+        echo "coverage=$coverage" >> $GITHUB_ENV
