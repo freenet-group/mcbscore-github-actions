@@ -1,5 +1,14 @@
 #!/usr/bin/env bash
 
+javaOpts=(
+  -Xmx2g
+  -Dfile.encoding=UTF-8
+  "-Dspring.profiles.active=$SPRING_PROFILE"
+  # Beim Liquibase DROP auf Schema metisadm als anderer Benutzer braucht man die Rolle in der URL.
+  # Hack: "&options=-c role=…" an default-schema anhängen, weil das der einzige Platzhalter in database.url ist.
+  '-Dspring.liquibase.default-schema=metisadm&options=-c%20role=metisadm'
+)
+
 commands=( resetTestData stacktrace )
 if "${LOAD_TEST_DATA:=true}"; then
   commands=(
@@ -11,8 +20,7 @@ fi
 
 printf 'Spring-shell commands:\n'; printf '\t%s\n' "${commands[@]}"
 printf '%s\n' "${commands[@]}" \
-| (set -x; java -Xmx2g -Dfile.encoding=UTF-8 "-Dspring.profiles.active=$SPRING_PROFILE" \
-  -jar "$RELEASE_PATH/metis-shell-${COMPONENT_VERSION}.jar") \
+| (set -x; java "${javaOpts[@]}" -jar "$RELEASE_PATH/metis-shell-${COMPONENT_VERSION}.jar") \
 | tee metis-shell.out
 
 # Status prüfen (Exceptions führen leider nicht zu Spring Shell Exit Status != 0):

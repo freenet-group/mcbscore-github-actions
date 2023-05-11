@@ -204,7 +204,7 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Evaluate Sonar-Coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
+        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (env.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
         uses: ./mcbscore/github/actions/create-sonar-issue
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
@@ -213,7 +213,7 @@ jobs:
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           coverageLimit: ${{ env.COVERAGE_LIMIT }}
-          coverage: ${{ steps.fetch-coverage.outputs.coverage }}
+          coverage: ${{ env.coverage }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
