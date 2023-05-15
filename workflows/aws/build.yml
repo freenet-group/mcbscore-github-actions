@@ -97,7 +97,7 @@ jobs:
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         shell: bash
         run: |
-          tar -czvf serverless.tar.gz resources serverless.yaml
+          tar -czvf serverless-${{ env.COMPONENT_VERSION }}.tar.gz resources serverless.yaml
 
       # MD Release ZIP hinzufügen
       - name: Upload Archive
@@ -105,7 +105,7 @@ jobs:
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         with:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          files: serverless.tar.gz
+          files: serverless-${{ env.COMPONENT_VERSION }}.tar.gz
           token: ${{ env.TOKEN }}
           name:  ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}

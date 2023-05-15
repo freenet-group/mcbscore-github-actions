@@ -51,7 +51,7 @@ jobs:
         uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ inputs.componentVersion }}
-          assetPattern: 'serverless.tar.gz'
+          assetPattern: 'serverless-${{ github.event.inputs.componentVersion }}.tar.gz'
           targetPath: './release'
           token: ${{ env.TOKEN }}
 
@@ -61,7 +61,7 @@ jobs:
         shell: bash
         run: |
           cd release
-          tar -xvzf serverless.tar.gz
+          tar -xvzf serverless-${{ github.event.inputs.componentVersion }}.tar.gz
 
       - id: init-workflow
         name: Initialize Workflow
