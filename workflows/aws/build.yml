@@ -91,16 +91,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
-      # Release erstellen
-      - name: Create Release
-        id: create_release
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/github/actions/create-release
-        with:
-          tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-
       # Release Archive erstellen
       - name: Create Release Archive
         id: create_release_archive
@@ -111,16 +101,14 @@ jobs:
 
       # MD Release ZIP hinzufügen
       - name: Upload Archive
-        id: upload-serverless
+        uses: softprops/action-gh-release@v1
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: serverless.tar.gz
-          asset_name: serverless-${{ env.COMPONENT_VERSION }}.tar.gz
-          asset_content_type: application/gzip
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          files: serverless.tar.gz
+          token: ${{ env.TOKEN }}
+          name:  ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
 
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow
