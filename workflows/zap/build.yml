@@ -147,41 +147,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
-      # Release erstellen
-      - name: Create Release
-        id: create-release
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/github/actions/create-release
-        with:
-          tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-
-      # Release EAR hinzufügen
-      - name: Upload Release EAR
+      # Release EAR und API hinzufügen
+      - name: Upload Release EAR and API
         id: upload-release-ear
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ./${{ env.COMPONENT }}-ear/build/libs/${{ env.COMPONENT }}-ear-${{ env.COMPONENT_VERSION }}.ear
-          asset_name: ${{ env.COMPONENT }}-ear-${{ env.COMPONENT_VERSION }}.ear
-          asset_content_type: application/java-archive
-
-      # Release API hinzufügen
-      - name: Upload Release API
-        id: upload-release-api
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
-        with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ./${{ env.COMPONENT }}-api/build/libs/${{ env.COMPONENT }}-api-${{ env.COMPONENT_VERSION }}.jar
-          asset_name: ${{ env.COMPONENT }}-api-${{ env.COMPONENT_VERSION }}.jar
-          asset_content_type: application/java-archive
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          files: |
+            ./${{ env.COMPONENT }}-ear/build/libs/${{ env.COMPONENT }}-ear-${{ env.COMPONENT_VERSION }}.ear
+            ./${{ env.COMPONENT }}-api/build/libs/${{ env.COMPONENT }}-api-${{ env.COMPONENT_VERSION }}.jar
+          token: ${{ env.TOKEN }}
+          name:  ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
 
       # ##################################################################################
       # Re-Merge

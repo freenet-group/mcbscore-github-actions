@@ -219,6 +219,7 @@ jobs:
           --data-raw '{
             "version": "${{ github.event.inputs.componentVersion }}",
             "componentName": "${{ needs.deploy.outputs.componentName }}",
+            "originComponentName": "${{ github.event.inputs.component }}",
             "workflowName": "${{ github.workflow }}",
             "environment": "${{ github.event.inputs.environment }}",
             "extern": false,
