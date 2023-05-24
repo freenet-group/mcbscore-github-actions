@@ -59,7 +59,10 @@ jobs:
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/jira/api_url = JIRA_API_URL,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
+            /github/secrets/mcbstest_username = USERNAME,
+            /github/secrets/ssh/mcbstest_id_rsa = ID_RSA,
+            /github/secrets/hosts/refcalls = HOST            
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -129,6 +132,18 @@ jobs:
           token: ${{ env.TOKEN }}
           name:  ${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
+
+      # Release-JAR auf DBA-Server kopieren
+      - name: copy artifact to server
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && env.TARGET_DIR != '' }}
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USERNAME }}
+          key: ${{ env.ID_RSA }}
+          source: ${{ env.APPLICATION_JAR_PATH }}*.jar
+          target: '${{ env.TARGET_DIR }}'
+          strip_components: 2
 
       # ##################################################################################
       # Re-Merge
