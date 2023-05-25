@@ -113,10 +113,10 @@ jobs:
             cp ${{ env.COMPONENT }}-km.tar.gz  ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
           fi
           if [ -e ${{ env.COMPONENT }}-md.tar.gz ]; then
-            cp ${{ env.COMPONENT }}-md.tar.gz  ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
+            cp ${{ env.COMPONENT }}-md.tar.gz  ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}.tar.gz
           fi
           if [ -e ${{ env.COMPONENT }}-fm.tar.gz ]; then
-            cp ${{ env.COMPONENT }}-fm.tar.gz  ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
+            cp ${{ env.COMPONENT }}-fm.tar.gz  ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
           fi
 
       # Existierende Draft Releases löschen
