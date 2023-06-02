@@ -204,7 +204,6 @@ jobs:
       componentName: ${{ env.JIRA_COMPONENT }}
 
   deploy_k8s:
-    if: ${{ hashFiles('**/deployment_k8s.yml') != ''}}
     needs: create-deployment
     uses: ./.github/workflows/deployment_k8s.yml
     secrets: inherit
