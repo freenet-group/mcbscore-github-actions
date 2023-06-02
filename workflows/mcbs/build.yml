@@ -29,7 +29,7 @@ on:
           - ms-customerproduct
           - ms-mcbsservices
           - mcbs
-          - mcbsservices
+          - zap
       epic:
         description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
         required: false
@@ -60,7 +60,7 @@ jobs:
       matrix:
         product:
           - { id: mcbs, name: mcbs, group: standard }
-          - { id: mcbsservices, name: zap, group: standard }
+          - { id: zap, name: zap, group: standard }
           - { id: ms-cuba, name: cuba, group: ms }
           - { id: ms-customer, name: customer, group: ms }
           - { id: ms-customerelastic, name: customerelastic, group: ms }
@@ -144,6 +144,16 @@ jobs:
           installGithubCli: true
           installJq: true
           configurationPrefix: ${{ matrix.product.name }}_
+
+      # ##################################################################################
+      # Branch ermitteln (Kurzform)
+      # ##################################################################################
+      - id: get-branch-name
+        name: Get Branch-Name
+        shell: bash
+        run: |
+          GIT_BRANCH=${GITHUB_BASE_REF:-${GITHUB_REF#refs/heads/}}
+          echo "GIT_BRANCH=$GIT_BRANCH"  >> $GITHUB_ENV
 
       # ##################################################################################
       # Version ermitteln
@@ -243,41 +253,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
-      # Release erstellen
-      - name: Create Release
-        id: create_release
-        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
-        uses: ./mcbscore/github/actions/create-release
-        with:
-          tagName: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          releaseName: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-
       # Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL')  && matrix.product.group == 'ms' && env.APPLICATION_JAR_NAME != '' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          asset_content_type: application/java-archive
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          token: ${{ env.TOKEN }}
+          name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
+          target_commitish: ${{ env.GIT_BRANCH }}
 
       # Release ZIP hinzufügen
       - name: Upload Release ZIP
         id: upload-release-zip
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL')  && matrix.product.group == 'standard' && env.APPLICATION_ZIP_NAME != '' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.APPLICATION_ZIP_PATH }}${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
-          asset_name: ${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
-          asset_content_type: application/zip
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          files: ${{ env.APPLICATION_ZIP_PATH }}${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
+          token: ${{ env.TOKEN }}
+          name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
+          target_commitish: ${{ env.GIT_BRANCH }}
 
       # Vorhandene Open API Yamls als Asset hinzufügen
       - name: Upload API Doc Assets

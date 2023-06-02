@@ -1,0 +1,70 @@
+name: Mail-Benachrichtigung
+description: 'Versenden einer Mail-Notification (an MS-Teams)'
+inputs:
+  component:
+    description: der Name der zu erzeugenden Komponente (erforderlich für Auswertung der Komponenten)
+    required: true
+  componentVersion:
+    description: Die Version der erzeugten Kompponente
+    required: true
+  goingLiveDate:
+    description: Das Inbetriebnahmedatum der Komponente (Klartext)
+    required: true
+  issueList:
+    description: Die Liste der integrierten Issues
+    required: true  
+  hasSql:
+    description: Datenbankänderungen (true|false)
+    required: true
+  hasConfiguration:
+    description: Config-Anpassungen (true|false)
+    required: true
+  hasDependencies:
+    description: Abhängigkeiten (true|false)
+    required: true
+  additionalText:
+    description: Extra-Text
+    required: true
+  epic:
+    description: Das EPIC der Komponente
+    required: true
+  mailAddress:
+    description: Die MS-Teams-Zieladresse
+    required: true
+  purpose:
+    description: Die Verwendung der Mail zur Gestaltung von Subject und Content (MSBuild , MCBSBuild , MCBSFreigabe , InternalBuild...)
+    required: true
+  atlassianToolsVersion:
+    description: die Version der organisationsinternen AtlassianDeveloperTools (separates Repository)
+    required: true
+  repositoryName:
+    description: Das Repository e.g. freenet-group/mcbscore-xyz
+    required: true  
+  logLevel:
+    description: Das LogLevel der innerhalb der Action ablaufenden AtlassianDeveloperTools
+    required: false
+    default: info
+  
+runs:
+  using: "composite"
+  steps: 
+    - id: mailNotification
+      shell: bash
+      run: |
+        atlassianToolsDir=./mcbscore/github/atlassian-tools
+
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          mail_info.MailNotificationKt \
+          '${{ inputs.component }}' \
+          ${{ inputs.componentVersion }} \
+          ${{ inputs.goingLiveDate }} \
+          ${{ inputs.hasSql }} \
+          ${{ inputs.hasConfiguration }} \
+          ${{ inputs.hasDependencies }} \
+          ${{ inputs.additionalText }} \
+          ${{ inputs.epic }} \
+          ${{ inputs.issueList }} \
+          ${{ inputs.mailAddress }} \
+          ${{ inputs.purpose }} \
+          ${{ inputs.repositoryName }}

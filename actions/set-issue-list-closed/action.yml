@@ -24,7 +24,7 @@ runs:
     - id: setIssueListClosed
       shell: bash
       run: |
-        echo setIssueListDone ...
+        echo setIssueListClosed ...
         atlassianToolsDir=./mcbscore/github/atlassian-tools
 
         java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.loglevel }}.xml \

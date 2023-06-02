@@ -204,7 +204,7 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Evaluate Sonar-Coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
+        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (env.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
         uses: ./mcbscore/github/actions/create-sonar-issue
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
@@ -213,7 +213,7 @@ jobs:
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           coverageLimit: ${{ env.COVERAGE_LIMIT }}
-          coverage: ${{ steps.fetch-coverage.outputs.coverage }}
+          coverage: ${{ env.coverage }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -271,7 +271,7 @@ jobs:
       # Teams-Notification
       # ###################################################################################
       - name: Send notification as mail
-        uses: ./mcbscore/github/actions/releasebuild-notification
+        uses: ./mcbscore/github/actions/mail-notification
         with:
           component:  ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
@@ -282,7 +282,7 @@ jobs:
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
-          webhookUri: ${{ env.TEAMS_MAIL }}
-          mailTemplate: ${{ env.MAIL_TEMPLATE }}
+          mailAddress: ${{ env.TEAMS_MAIL }}
+          purpose: MSBuild
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          repositoryName: ${{ github.REPOSITORY }}
+          repositoryName: ${{ github.REPOSITORY }}    

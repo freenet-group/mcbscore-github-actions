@@ -59,7 +59,10 @@ jobs:
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/jira/api_url = JIRA_API_URL,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
+            /github/secrets/mcbstest_username = USERNAME,
+            /github/secrets/ssh/mcbstest_id_rsa = ID_RSA,
+            /github/secrets/hosts/refcalls = HOST            
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -118,28 +121,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
-      # Release erstellen
-      - name: Create Release
-        id: create_release
-        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: ./mcbscore/github/actions/create-release
-        with:
-          tagName: ${{ env.COMPONENT_VERSION }}
-          releaseName: ${{ env.COMPONENT_VERSION }}
-          draft: ${{ env.DRAFT }}
-
       # Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && env.APPLICATION_JAR_NAME != '' }}
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          asset_name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
-          asset_content_type: application/java-archive
+          tag_name: ${{ env.COMPONENT_VERSION }}
+          files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          token: ${{ env.TOKEN }}
+          name:  ${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
+
+      # Release-JAR auf DBA-Server kopieren
+      - name: copy artifact to server
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && env.TARGET_DIR != '' }}
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USERNAME }}
+          key: ${{ env.ID_RSA }}
+          source: ${{ env.APPLICATION_JAR_PATH }}*.jar
+          target: '${{ env.TARGET_DIR }}'
+          strip_components: 2
 
       # ##################################################################################
       # Re-Merge

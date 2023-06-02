@@ -102,7 +102,7 @@ runs:
         echo "sql=$sql" >> $GITHUB_OUTPUT
         
         # Config auswerten
-        java -Dlog4j2.configurationFile="$atlassianToolsDir"s/log4j2-${{ inputs.logLevel }}.xml \
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
           -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
           dev_config.GetConfigKt \
           ${{ inputs.jiraUrl }} \
