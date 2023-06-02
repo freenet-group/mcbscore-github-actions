@@ -3,6 +3,7 @@ name: K8s Deployment
 run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.component }} ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
 
 on:
+#für direkten workflow start über githubactions
   workflow_dispatch:
     inputs:
       component:
@@ -31,6 +32,7 @@ on:
         description: Nicht deployen, nur Helm Chart Ergebnis anzeigen (helm --dry-run)
         required: false
         default: false
+  #wenn andere workflows diesen Workflow einbinden
   workflow_call:
     inputs:
       component:
