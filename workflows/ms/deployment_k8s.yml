@@ -24,13 +24,48 @@ on:
         default: main
       maxWaitForDeployment:
         description: maximale Zeit, die beim Helm-Statusscheck auf ein Deployment gewartet wird
-        required: true
+        required: false
         default: 11m0s
       dryRun:
         type: boolean
         description: Nicht deployen, nur Helm Chart Ergebnis anzeigen (helm --dry-run)
         required: false
         default: false
+  workflow_call:
+    inputs:
+      component:
+        description: Der Name der Komponente
+        required: true
+        type: string
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
+        type: string
+      environment:
+        description: Die Zielumgebung
+        required: true
+        type: string
+      timeout:
+        description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
+        required: false
+        default: 10m0s
+        type: string
+      deploymentRepositoryBranch:
+        description: Branch von Repository ms-deployment, der benutzt werden soll
+        required: false
+        default: main
+        type: string
+      maxWaitForDeployment:
+        description: maximale Zeit, die beim Helm-Statusscheck auf ein Deployment gewartet wird
+        required: false
+        default: 11m0s
+        type: string
+      dryRun:
+        type: boolean
+        description: Nicht deployen, nur Helm Chart Ergebnis anzeigen (helm --dry-run)
+        required: false
+        default: false
+        
 
 #Nur ein k8s Workflow darf gleichzeitg gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
 concurrency:
