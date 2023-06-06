@@ -35,7 +35,6 @@ on:
 jobs:
   create-deployment:
     runs-on: ubuntu-latest
-
     steps:
       # Secrets aus AWS auslesen
       - name: Read and set AWS credentials
@@ -162,11 +161,11 @@ jobs:
           component: ${{ github.event.inputs.component }}
           stage: ${{ github.event.inputs.environment }}
           componentConfigPath: ${{ env.DEPLOYMENT_PATH }}
-          dockerImage: ghcr.io/freenet-group/mcbs-core/ms-${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }}
           checkMkUser: ${{ env.CHECKMK_USER }}
           checkMkSecret: ${{ env.CHECKMK_PW }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
           sshKey: ${{ env.SSH_KEY }}
+          dockerImage: ghcr.io/freenet-group/mcbs-core/ms-${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }}
           dockerRegistryToken: ${{ env.TOKEN }}
 
       # Custom Deployment
@@ -203,6 +202,15 @@ jobs:
 
     outputs:
       componentName: ${{ env.JIRA_COMPONENT }}
+
+  deploy_k8s:
+    needs: create-deployment
+    uses: ./.github/workflows/deployment_k8s.yml
+    secrets: inherit
+    with:
+      componentVersion: ${{ github.event.inputs.componentVersion }}
+      environment: ${{ github.event.inputs.environment }}
+      component: ${{ github.event.inputs.component }}
 
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
