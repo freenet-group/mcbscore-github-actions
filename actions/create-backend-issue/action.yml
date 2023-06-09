@@ -47,4 +47,4 @@ runs:
           ${{ inputs.epic }} \
           ${{ inputs.hasDbChanges }} \
           ${{ inputs.epic }} \
-          ${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/wiki/${{ inputs.component }}_${{ inputs.componentVersion }}
+          ${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/wiki/MCBSServices_${{ inputs.componentVersion }}
