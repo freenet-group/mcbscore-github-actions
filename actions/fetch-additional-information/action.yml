@@ -1,5 +1,5 @@
 name: Fetch Additional Information
-description: 'Auswertung der Issues eines Release bzgl. dependencies , sql , config und Bereitstellung nach aussen'
+description: 'Auswertung der Issues eines Release bzgl. dependencies , sql , config und deployment sowie Bereitstellung nach aussen'
 inputs:
   jiraUrl:
     description: Organisationsinterne URL des angebundenen JIRA-Systems
@@ -119,3 +119,22 @@ runs:
 
         # Version als Variable bereitstellen
         echo "config=$config" >> $GITHUB_OUTPUT
+        
+        # Deployment auswerten
+        java -Dlog4j2.configurationFile="$atlassianToolsDir"/log4j2-${{ inputs.logLevel }}.xml \
+          -cp "$atlassianToolsDir"/AtlassianDeveloperTools-all-${{ inputs.atlassianToolsVersion }}.jar:.:"$atlassianToolsDir"/AtlassianDeveloperTools \
+          dev_config.GetDeploymentKt \
+          ${{ inputs.jiraUrl }} \
+          ${{ inputs.jiraCredentials }} \
+          "${{ inputs.issueList }}"  
+
+        while IFS='=' read -r key value
+        do
+          eval ${key}=${value}
+        done < deployment.properties
+        if [ "$deployment" = "true" ]; then deployment="JA"; else deployment="NEIN"; fi 
+        echo "Deployment       = " ${deployment}
+        echo "DEPLOYMENT=$(echo $deployment)" >> $GITHUB_ENV
+
+        # Version als Variable bereitstellen
+        echo "deployment=$deployment" >> $GITHUB_OUTPUT

@@ -247,6 +247,7 @@ jobs:
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          hasDeployment: ${{ env.DEPLOYMENT }}
           dependentIssues: ${{ steps.fetch-additional-information.outputs.dependentIssues }}
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           releaseUrl: '${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.JIRA_COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar'
@@ -280,6 +281,7 @@ jobs:
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          hasDeployment: ${{ env.DEPLOYMENT }}
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
           mailAddress: ${{ env.TEAMS_MAIL }}

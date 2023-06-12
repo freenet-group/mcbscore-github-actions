@@ -60,21 +60,6 @@ jobs:
               "deploymentRepositoryBranch": "${{ github.event.inputs.deploymentRepositoryBranch }}"
             }
 
-      # Starte Deployment auf K8S
-      - name: Invoke kubernetes workflow
-        if: ${{ hashFiles('**/deployment_k8s.yml') != '' && github.event.inputs.additionalDeploymentComponent == '' }}
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: K8s Deployment
-          token: ${{ env.TOKEN }}
-          inputs: >
-            { 
-              "component": "${{ env.COMPONENT }}",
-              "environment": "dev",
-              "componentVersion": "${{ github.event.inputs.componentVersion }}",
-              "dryRun": "false"
-            }
-
       # Starte Developer Portal Upload
       - name: Invoke developer portal upload workflow
         if: ${{ hashFiles('**/developerPortal.yml') != '' && github.event.inputs.additionalDeploymentComponent == '' }}

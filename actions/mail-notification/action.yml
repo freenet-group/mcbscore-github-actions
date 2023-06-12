@@ -20,6 +20,10 @@ inputs:
     description: Config-Anpassungen (true|false)
     required: true
   hasDependencies:
+    description: Einstellungen für ms-deployment via component in Jira
+    required: true
+    default: false
+  hasDeployment:
     description: Abhängigkeiten (true|false)
     required: true
   additionalText:

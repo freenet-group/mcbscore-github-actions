@@ -59,18 +59,3 @@ jobs:
               "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}",
               "deploymentRepositoryBranch": "${{ github.event.inputs.deploymentRepositoryBranch }}"
             }
-
-      # Starte Deployment auf K8S
-      - name: Invoke kubernetes workflow
-        if: ${{ hashFiles('**/deployment_k8s.yml') != '' && github.event.inputs.additionalDeploymentComponent == '' }}
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: K8s Deployment
-          token: ${{ env.TOKEN }}
-          inputs: >
-            { 
-              "component": "${{ env.COMPONENT }}",
-              "environment": "b2b",
-              "componentVersion": "${{ github.event.inputs.componentVersion }}",
-              "dryRun": "false"
-            }
