@@ -335,6 +335,7 @@ jobs:
           - { name: mcbscore-billing-performance-monitor, branch: main, group: simple, workflows: "../encoding" }
           - { name: mcbscore-gatling-compare, branch: main, group: simple, workflows: "../encoding" }
           - { name: mcbscore-yaml-transform-plugin, branch: develop, group: simple, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
     steps:
       - uses: actions/checkout@v3
         with:
