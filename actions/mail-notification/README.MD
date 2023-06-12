@@ -16,10 +16,11 @@ GitHub-Action zum Versand von Releasebuild-Notifications im E-Mail-Format an ein
           hasSql: ${{ steps.cR.outputs.sql }}
           hasConfiguration: ${{ steps.cR.outputs.config }}
           hasDependencies: ${{ steps.cR.outputs.dependency }}
+	  hasDeployment: ${{ env.DEPLOYMENT }}
           additionalText: "extra"
           epic: "epic"
           mailAddress: ${{ inputs.mailAddress }}
-		  purpose: ${{ inputs.purpose }}
+          purpose: ${{ inputs.purpose }}
           atlassianToolsVersion:
           repositoryName:
           logLevel:
