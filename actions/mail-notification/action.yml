@@ -66,6 +66,7 @@ runs:
           ${{ inputs.hasSql }} \
           ${{ inputs.hasConfiguration }} \
           ${{ inputs.hasDependencies }} \
+          ${{ inputs.hasDeployment }} \
           ${{ inputs.additionalText }} \
           ${{ inputs.epic }} \
           ${{ inputs.issueList }} \
