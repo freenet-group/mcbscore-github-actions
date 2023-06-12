@@ -237,6 +237,7 @@ jobs:
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          hasDeployment: ${{ env.DEPLOYMENT }}
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
           mailAddress: ${{ env.TEAMS_MAIL }}
