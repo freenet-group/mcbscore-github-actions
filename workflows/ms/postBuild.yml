@@ -129,27 +129,7 @@ jobs:
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
-      # ##################################################################################
-      # Erzeugen der BAMBI-Einträge
-      # ##################################################################################
-      - name: convert issueList
-        run: |
-          OUTPUT=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
-          echo "IL=$(echo $OUTPUT)" >> $GITHUB_ENV
-               
-      
-      - name: write bambi-entry
-        run: |
-           echo "Create BAMBI-Entry : "
-           echo "${{ env.IL }}"
-           http_response=$(curl -w "%{http_code}\n" --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild' --header 'Content-Type: application/json' --data-raw '{    "componentName": "${{ env.JIRA_COMPONENT }}",    "versionNo": "${{ github.event.inputs.releaseVersion }}",    "buildUser": "mcbstest",    "issueList": "${{ env.IL }}"  }' )
-           echo "Response : ${http_response} \n"
-           http_code=$(echo $http_response |  cut -d '}' -f 2)
-           if [ $http_code != 200 ] ; then
-             echo "ErrorCode : $http_code"
-             exit 1
-           fi
-           
+          
       # ##################################################################################
       # Eintrag der fixVersion
       # ##################################################################################
@@ -288,3 +268,23 @@ jobs:
           purpose: MSBuild
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}    
+          
+      # ##################################################################################
+      # Erzeugen der BAMBI-Einträge
+      # ##################################################################################
+      - name: convert issueList
+        run: |
+          OUTPUT=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
+          echo "IL=$(echo $OUTPUT)" >> $GITHUB_ENV
+      
+      - name: write bambi-entry
+        run: |
+           echo "Create BAMBI-Entry : "
+           echo "${{ env.IL }}"
+           http_response=$(curl -w "%{http_code}\n" --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild' --header 'Content-Type: application/json' --data-raw '{    "componentName": "${{ env.JIRA_COMPONENT }}",    "versionNo": "${{ github.event.inputs.releaseVersion }}",    "buildUser": "mcbstest",    "issueList": "${{ env.IL }}"  }' )
+           echo "Response : ${http_response} \n"
+           http_code=$(echo $http_response |  cut -d '}' -f 2)
+           if [ $http_code != 200 ] ; then
+             echo "ErrorCode : $http_code"
+             exit 1
+           fi    
