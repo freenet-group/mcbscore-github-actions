@@ -15,6 +15,10 @@ inputs:
     description: Config-Anpassungen (true|false)
     required: false
     default: false
+  hasDeployment:
+    description: Ist ms-deployment betroffen (true|false)
+    required: false
+    default: false  
   hasDependencies:
     description: Abhängigkeiten (true|false)
     required: false
@@ -84,6 +88,9 @@ runs:
         
         echo "## Dependencies" >> $release.md
         if [ "${{ inputs.hasDependencies }}" = "JA" ]; then echo "- [x] Dependencies  " >>  $release.md; echo "  ${{ inputs.dependentIssues }}" >>  $release.md; else echo "- [ ] Dependencies" >> $release.md; fi
+        
+        echo "## ms-deployment" >> $release.md
+        if [ "${{ inputs.hasDeployment }}" = "JA" ]; then echo "- [x] ms-deployment" >>  $release.md; else echo "- [ ] ms-deployment" >> $release.md; fi
         
         echo "## Testergebnisse" >> $release.md
         echo "### JUnit-Result : "  >> $release.md
