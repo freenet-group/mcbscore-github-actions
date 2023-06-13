@@ -202,6 +202,7 @@ jobs:
           jiraWebUrl: ${{ env.JIRA_CLOUD_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
+          hasDeployment: "NEIN"
           hasDependencies: "NEIN"
           dependentIssues: "keine"
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
