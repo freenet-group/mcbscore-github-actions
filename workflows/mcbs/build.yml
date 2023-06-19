@@ -249,7 +249,20 @@ jobs:
           done
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
-
+      
+      # Release erstellen
+      - name: Create Release
+        id: create_release
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == 'zap' || github.event.inputs.product == '') }}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+        with:
+          tag_name: '${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}'
+          release_name: '${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}'
+          draft: '${{ env.DRAFT }}'
+          prerelease: false
+      
       # Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
@@ -373,7 +386,7 @@ jobs:
       
       # Starte postBuild auf RELEASE (ZAP)
       - name: Invoke postBuild workflow mcbsservices
-        if: ${{ env.BUILD_TYPE == 'RELEASE' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'mcbsservices' }}
+        if: ${{ env.BUILD_TYPE == 'RELEASE' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'zap' }}
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PostBuild ZAP
