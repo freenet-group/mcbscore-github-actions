@@ -229,31 +229,12 @@ jobs:
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
-    needs: deploy
+    needs: [deploy, deploy_k8s]
     if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
       # Deployment als erfolgreich melden
       - name: Report deployment status
         shell: bash
         run: |
-          curlResult=$(curl -sw %{http_code} --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v2/bambi/deployment/environmentversion' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{
-            "version": "${{ github.event.inputs.componentVersion }}",
-            "componentName": "${{ needs.deploy.outputs.componentName }}",
-            "originComponentName": "${{ github.event.inputs.component }}",
-            "workflowName": "${{ github.workflow }}",
-            "environment": "${{ github.event.inputs.environment }}",
-            "extern": false,
-            "workflowRunId": ${{ github.run_id }},
-            "deployState": "successfull",
-            "deployUser": "${{ github.actor }}"
-          }')
-          echo "Result: $curlResult"
-          statusCode="${curlResult:${#curlResult}-3}"
-          echo "statusCode: $statusCode"
-          
-          if [[ "statusCode" -ge "400" ]]; then
-            echo "Result: $curlResult"
-            exit 1
-          fi
+          echo "Test!!!"
+
