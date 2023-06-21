@@ -230,7 +230,7 @@ jobs:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     needs: [deploy, deploy_k8s]
-    if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') }}
+    if: ${{ always() }}
     steps:
       # Deployment als erfolgreich melden
       - name: Report deployment status
