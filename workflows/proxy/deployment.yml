@@ -37,6 +37,11 @@ on:
         description: Bambi Notification?
         type: string
         required: false
+        default: "false"
+      deployForKubernetes:
+        description: soll für Kubernetes-Zugriff deployt werden?
+        type: boolean
+        required: false
         default: false
 
 jobs:
@@ -153,10 +158,20 @@ jobs:
           installJq: true
 
       - name: Download Release
+        if: ${{ inputs.deployForKubernetes == false }}
         uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ inputs.componentVersion }}
           assetPattern: '${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz'
+          targetPath: './release'
+          token: ${{ env.TOKEN }}
+
+      - name: Download k8s-Release
+        if: ${{ inputs.deployForKubernetes == true }}
+        uses: ./mcbscore/github/actions/download-release-assets
+        with:
+          version: ${{ inputs.componentVersion }}
+          assetPattern: '${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}_k8s.tar.gz'
           targetPath: './release'
           token: ${{ env.TOKEN }}
 
