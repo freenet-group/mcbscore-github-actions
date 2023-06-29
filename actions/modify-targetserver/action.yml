@@ -3,31 +3,31 @@ description: 'Action zum Anpassen der nginx-Targetserver'
 
 inputs:
   host:
-    description: 'Der Zielhost'
+    description: Der Zielhost
     required: true
   serviceName:
-    description: 'Der Name des Services, auf den zugegriffen wird'
+    description: Der Name des Services, auf den zugegriffen wird
     required: true
   stage:
-    description: 'Die Umgebung (DEV/GIT/PROD)'
+    description: Die Umgebung (DEV/GIT/PROD)
     required: true
   file:
-    description: 'Die anzupassende Targetserver-Datei'
+    description: Die anzupassende Targetserver-Datei
     required: true
   deploymentUser:
-    description: 'Der Benutzer für das Deployment'
+    description: Der Benutzer für das Deployment
     required: true
   sshKey:
-    description: 'Der SSH Schlüssel'
+    description: Der SSH Schlüssel
     required: false
   keepalive:
     description: Parameter für "keepalive"
     required: true
   server:
-    description: 'Die IP-Adresse des Upstreams (inkl. Port)'
+    description: Die IP-Adresse des Upstreams (inkl. Port)
     required: true
   zone:
-    description: 'Parameter für "zone"'
+    description: Parameter für "zone"
     required: true
 
 runs:
