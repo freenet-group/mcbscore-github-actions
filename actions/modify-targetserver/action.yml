@@ -1,0 +1,75 @@
+name: 'Modify Targetserver'
+description: 'Action zum Anpassen der nginx-Targetserver'
+
+inputs:
+  host:
+    description: 'Der Zielhost'
+    required: true
+  serviceName:
+    description: 'Der Name des Services, auf den zugegriffen wird'
+    required: true
+  stage:
+    description: 'Die Umgebung (DEV/GIT/PROD)'
+    required: true
+  file:
+    description: 'Die anzupassende Targetserver-Datei'
+    required: true
+  deploymentUser:
+    description: 'Der Benutzer für das Deployment'
+    required: true
+  sshKey:
+    description: 'Der SSH Schlüssel'
+    required: false
+  keepalive:
+    description: Parameter für "keepalive"
+    required: true
+  server:
+    description: 'Die IP-Adresse des Upstreams (inkl. Port)'
+    required: true
+  zone:
+    description: 'Parameter für "zone"'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+
+    # ssh Konfig
+    - name: Setup ssh
+      if: ${{ inputs.sshKey != '' }}
+      shell: bash
+      run: |
+        printf '' > id_rsa
+        chmod 600 id_rsa
+        printf %s "${{ inputs.sshKey }}" >> id_rsa
+
+    # targetserver.conf auf nginx anpassen
+    - name: Modify targetserver.conf 
+      shell: bash
+      run: |
+        if [[ '${{ inputs.sshKey }}' != '' ]]; then
+          echo "key"
+          keyParameter='-o StrictHostKeyChecking=no -i id_rsa'
+        else
+          echo "no key"
+          keyParameter=''
+        fi
+        
+        # Skript kopieren
+        scp $keyParameter \
+          -r ./modify_targetserver.sh \
+          "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp"
+
+        # Skript ausführen, Konfig testen und einlesen, Skript löschen
+        ssh $keyParameter '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
+          /tmp/modify_targetserver.sh ${{inputs.sericeName}} ${{inputs.stage}} ${{inputs.file}} ${{inputs.keepalive}} ${{inputs.server}} ${{inputs.zone}}          
+          #sudo service nginx configtest
+          #sudo service nginx reload
+          #rm /tmp/modify_targetserver.sh'
+        SSH
+
+    # ssh Konfig aufräumen
+    - name: Remove ssh key
+      if: ${{ always() && inputs.sshKey != '' }}
+      shell: bash
+      run: rm -v id_rsa
