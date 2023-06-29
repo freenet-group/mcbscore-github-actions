@@ -136,8 +136,8 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/deployment_user = DEPLOYMENT_USER,
             /github/secrets/ssh/apigw/zxrestapi_ppk = SSH_KEY,
-            /github/secrets/targetserver_conf = TARGETSERVER_CONF,
-            /nginx/upstream/k8s/${{ inputs.stage}}/upstream = UPSTREAM_K8S,
+            /github/secrets/mcbs_targetserver_conf = TARGETSERVER_CONF,
+            /nginx/upstream/k8s/${{ inputs.stage}}/server = UPSTREAM_K8S_SERVER,
             /nginx/upstream/k8s/${{ inputs.stage}}/keepalive = KEEPALIVE,
             /nginx/upstream/k8s/${{ inputs.stage}}/zone = ZONE
 
@@ -232,7 +232,7 @@ jobs:
       - name: Add upstream for k8s
         if: ${{ inputs.deployForKubernetes }}
         id: modify-targetservers
-        uses: ./mcbscore/github/actions/modify-targetserver
+        uses: ./.github/actions/modify-targetserver
         with:
           host: ${{ inputs.deploymentTarget }}
           serviceName:  ${{ env.COMPONENT }}
@@ -241,7 +241,7 @@ jobs:
           deploymentUser:  ${{ env.DEPLOYMENT_USER }}
           sshKey: ${{ env.SSH_KEY }}
           keepalive: ${{ env.KEEPALIVE }}
-          server: ${{ env.UPSTREAM_K8S }}
+          server: ${{ env.UPSTREAM_K8S_SERVER }}
           zone: ${{ env.ZONE }}
 
       # Deployment

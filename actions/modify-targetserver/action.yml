@@ -47,6 +47,10 @@ runs:
     - name: Modify targetserver.conf 
       shell: bash
       run: |
+        if [ ! -f ./modify_targetserver.conf ]; then
+          echo "Update-Skript nicht gefunden"
+          exit 1
+        fi
         if [[ '${{ inputs.sshKey }}' != '' ]]; then
           echo "key"
           keyParameter='-o StrictHostKeyChecking=no -i id_rsa'
