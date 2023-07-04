@@ -135,11 +135,7 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/deployment_user = DEPLOYMENT_USER,
-            /github/secrets/ssh/apigw/zxrestapi_ppk = SSH_KEY,
-            /github/secrets/mcbs_targetserver_conf = TARGETSERVER_CONF,
-            /nginx/upstream/k8s/${{ inputs.stage}}/server = UPSTREAM_K8S_SERVER,
-            /nginx/upstream/k8s/${{ inputs.stage}}/keepalive = KEEPALIVE,
-            /nginx/upstream/k8s/${{ inputs.stage}}/zone = ZONE
+            /github/secrets/ssh/apigw/zxrestapi_ppk = SSH_KEY
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -227,22 +223,6 @@ jobs:
             # default ist leer
             echo "TAR_SUB_COMMAND=" >> $GITHUB_ENV
           fi
-
-      # Bei K8S-Deployment: Targetserver anpassen
-      - name: Add upstream for k8s
-        if: ${{ inputs.deployForKubernetes }}
-        id: modify-targetservers
-        uses: ./.github/actions/modify-targetserver
-        with:
-          host: ${{ inputs.deploymentTarget }}
-          serviceName:  ${{ env.COMPONENT }}
-          stage: ${{ inputs.stage }}
-          file: ${{ env.TARGETSERVER_CONF }}
-          deploymentUser:  ${{ env.DEPLOYMENT_USER }}
-          sshKey: ${{ env.SSH_KEY }}
-          keepalive: ${{ env.KEEPALIVE }}
-          server: ${{ env.UPSTREAM_K8S_SERVER }}
-          zone: ${{ env.ZONE }}
 
       # Deployment
       - name: Deployment

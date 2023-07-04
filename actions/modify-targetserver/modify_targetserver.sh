@@ -45,8 +45,8 @@ if [ $# -ne 6 ]; then
     usage
 fi
 
-SERVICE=$1
-STAGE=$2
+SERVICE=${1^^} # UPPERCASE
+STAGE=${2^^} # UPPERCASE
 FILE=$3
 KEEPALIVE=$4
 SERVER=$5
