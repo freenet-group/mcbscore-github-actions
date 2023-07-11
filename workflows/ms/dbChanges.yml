@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           path: source
-          ref: ${{ github.event.inputs.componentVersion }}
+          ref: sql-${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
 
       - name: Read AWS Secrets
         uses: ./source/.github/actions/read-aws-secrets

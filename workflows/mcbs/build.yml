@@ -253,7 +253,7 @@ jobs:
       # Release erstellen
       - name: Create Release
         id: create_release
-        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == 'zap' || github.event.inputs.product == '') }}
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == 'zap' || ( env.PRODUCT == 'ALL' && env.COMPONENT == 'mcbsserv' )) }}
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
