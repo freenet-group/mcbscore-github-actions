@@ -405,6 +405,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: always()
+    with:
+      ignore_runs: true
 
     steps:
       - name: Download Artifacts
