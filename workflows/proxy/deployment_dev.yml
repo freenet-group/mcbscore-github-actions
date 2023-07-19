@@ -12,6 +12,11 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+      deployForKubernetes:
+        description: soll für Kubernetes-Zugriff deployt werden?
+        type: string
+        required: false
+        default: "false"
 
 jobs:
   deploy:
@@ -41,7 +46,7 @@ jobs:
         with:
           workflow: DEV MD Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}" }'
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}", "deployForKubernetes": "${{ github.event.inputs.deployForKubernetes }}" }'
 
       # Starte KM Deployment auf DEV
       - name: Invoke deployment workflow DEV KM
@@ -50,7 +55,7 @@ jobs:
         with:
           workflow: DEV KM Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}" }'
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}", "deployForKubernetes": "${{ github.event.inputs.deployForKubernetes }}" }'
 
       # Starte FM Deployment auf DEV
       - name: Invoke deployment workflow DEV FM
@@ -59,4 +64,4 @@ jobs:
         with:
           workflow: DEV FM Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}" }'
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}", "deployForKubernetes": "${{ github.event.inputs.deployForKubernetes }}" }'
