@@ -63,6 +63,9 @@ jobs:
             /github/secrets/mcbs_token = TOKEN, 
             /github/secrets/mcbs_app.client_id = CLIENT_ID,
             /github/secrets/mcbs_app.client_secret = CLIENT_SECRET
+            /github/secrets/mcbs_app.client_id_sts = CLIENT_ID_STS,
+            /github/secrets/mcbs_app.client_secret_sts = CLIENT_SECRET_STS,
+            /github/secrets/authorization_uri = AUTHORIZATION_URI
 
       # Auschecken des Deployment Repositories
       - name: Checkout Deployment Data / Scripts

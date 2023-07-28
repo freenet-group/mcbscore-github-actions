@@ -1,0 +1,69 @@
+name: Developer Portal Upload
+description: Action zum Upload der API Dokumentation eines Services in das Developer-Portal
+
+inputs:
+  component:
+    description: Der Name der Komponente
+    required: true
+  componentVersion:
+    description: Die Version der Komponente
+    required: true
+  stage:
+    description: Die Stage für den Upload
+    required: true
+  tagPrefix:
+    description: Der Präfix des Tags
+    required: false
+  componentConfigPath:
+    description: Pfad in dem die Konfiguration der Komponente liegt
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+
+    # Make developerPortalUpload.sh executable
+    - shell: bash
+      run: chmod +x ${{ github.action_path }}/developerPortalUpload.sh
+
+    - shell: bash
+      run: |
+        authHeader="Authorization: token ${{ env.TOKEN }}"
+
+        function gh_curl() {
+          curl -H "${authHeader}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            $@
+        }
+
+        parser=". | map(select(.tag_name == \"${{ inputs.tagPrefix }}${{ inputs.componentVersion }}\"))[0].created_at"
+        RELEASE_CREATED_AT=`gh_curl -s ${{ github.api_url }}/repos/${{ github.repository }}/releases?per_page=100 | jq -r "$parser"`
+        export RELEASE_CREATED_AT
+
+        echo "Starte Developer Portal Upload"
+        ${{ github.action_path }}/setParametersForPortalUpload.sh
+      env:
+        COMPONENT: ${{ inputs.component }}
+        COMPONENT_VERSION: ${{ inputs.componentVersion }}
+        COMPONENT_CONFIG_PATH: ${{ inputs.componentConfigPath }}
+        STAGE: ${{ inputs.stage }}
+        
+      # Checks out this repository under $GITHUB_WORKSPACE/developer-portal-actions
+      - name: Checkout Github Action
+        uses: actions/checkout@v3
+        with:
+          # For accessing to this Action a service account with a personal access token in this repo is necessary.
+          token: ${{ secrets.SERVICE_ACCOUNT_TOKEN }}
+          repository: freenet-group/developer-portal-actions
+          persistent-credentials: false
+          path: ./developer-portal-actions
+
+      # Executes the action with the given parameters
+      - name: Upload new API version
+      - uses: ./developer-portal-actions/publish-api-spec
+        with:
+          documentPath: ./the/path/to/your/swagger.yaml
+          apiId: "YOUR-API-UUID"
+          version: ${{ inputs.version }}
+          clientId: ${{ env.CLIENT_ID_STS }}
+          clientSecret: ${{ env.CLIENT_SECRET_STS }}
