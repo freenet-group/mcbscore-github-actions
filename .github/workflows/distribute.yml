@@ -148,7 +148,21 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-commondata, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-commondata, branch: develop, group: ms, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_deployment, cicd_postBuild, cicd_release, deployment, setPRIssueDone" }
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   ms:
     if: ${{ github.event.inputs.group == 'ms' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
