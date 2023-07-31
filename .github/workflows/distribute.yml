@@ -19,6 +19,7 @@ on:
           - mcbs
           - metis
           - ms
+          - ms-cicd
           - mslib
           - proxy
           - rating
