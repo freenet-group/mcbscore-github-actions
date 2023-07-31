@@ -148,7 +148,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-commondata, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_deployment, cicd_postBuild, cicd_release, deployment, setPRIssueDone" }
+          - { name: ms-commondata, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, ../ms/deployment_k8s, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_deployment, cicd_postBuild, cicd_release, deployment, setPRIssueDone" }
     steps:
       - uses: actions/checkout@v3
         with:
