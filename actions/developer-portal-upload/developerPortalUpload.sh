@@ -96,9 +96,9 @@ header="content-type=multipart/form-data"
 
 #Werte nicht printen, da die Secrets nicht ins buildlog verfügbar sein sollen.
 # cliend_id für Authentifizierung gegen den oidc/STS (AWS-Parameter)
-cliendId=$CLIENT_ID
+cliendId=$CLIENT_ID_STS
 # client_secret für Authentifizierung gegen den oidc/STS (AWS-Parameter)
-clientSecret=$CLIENT_SECRET
+clientSecret=$CLIENT_SECRET_STS
 
 #Authentifizierung gegen den oidc/STS (AWS-Parameter)
 authorizationURI=$AUTHORIZATION_URI
