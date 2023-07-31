@@ -95,10 +95,10 @@ echo "apiVersionSuffix: $apiVersionSuffix"
 header="content-type=multipart/form-data"
 
 #Werte nicht printen, da die Secrets nicht ins buildlog verfügbar sein sollen.
-# cliend_id für Authentifizierung gegen den oidc/STS
-cliendId=$CLIENT_ID (AWS-Parameter)
-# client_secret für Authentifizierung gegen den oidc/STS
-clientSecret=$CLIENT_SECRET (AWS-Parameter)
+# cliend_id für Authentifizierung gegen den oidc/STS (AWS-Parameter)
+cliendId=$CLIENT_ID
+# client_secret für Authentifizierung gegen den oidc/STS (AWS-Parameter)
+clientSecret=$CLIENT_SECRET
 
 #Authentifizierung gegen den oidc/STS (AWS-Parameter)
 authorizationURI=$AUTHORIZATION_URI
