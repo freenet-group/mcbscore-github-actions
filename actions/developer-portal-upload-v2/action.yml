@@ -47,13 +47,15 @@ runs:
         COMPONENT_VERSION: ${{ inputs.componentVersion }}
         COMPONENT_CONFIG_PATH: ${{ inputs.componentConfigPath }}
         STAGE: ${{ inputs.stage }}
+
+      # TODO: Matrix für die verschiedenen APIs (system/public/v1/v2/...)
         
       # Checks out this repository under $GITHUB_WORKSPACE/developer-portal-actions
       - name: Checkout Github Action
         uses: actions/checkout@v3
         with:
           # For accessing to this Action a service account with a personal access token in this repo is necessary.
-          token: ${{ secrets.SERVICE_ACCOUNT_TOKEN }}
+          token: ${{ env.TOKEN }}
           repository: freenet-group/developer-portal-actions
           persistent-credentials: false
           path: ./developer-portal-actions
@@ -62,8 +64,14 @@ runs:
       - name: Upload new API version
       - uses: ./developer-portal-actions/publish-api-spec
         with:
-          documentPath: ./the/path/to/your/swagger.yaml
-          apiId: "YOUR-API-UUID"
-          version: ${{ inputs.version }}
+          #systemApiPath
+          #documentPath: ./apiDoc/${apiName}_system_${apiVersion}_${{ inputs.stage }}.yaml
+          #publicApiPath
+          documentPath: ./apiDoc/${apiName}_client_${apiVersion}_${{ inputs.stage }}.yaml
+          #$systemApiId
+          #apiId: $systemApiId
+          #$publicApiId
+          apiId: $publicApiId
+          version: ${{ inputs.componentVersion }}
           clientId: ${{ env.CLIENT_ID_STS }}
           clientSecret: ${{ env.CLIENT_SECRET_STS }}

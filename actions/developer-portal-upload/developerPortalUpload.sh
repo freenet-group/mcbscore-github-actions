@@ -104,7 +104,7 @@ clientSecret=$CLIENT_SECRET
 authorizationURI=$AUTHORIZATION_URI
 
 #in v2 muss sich zunächst ein token zum authentifizieren geholt werden.
-echo "Starte authentifizierung"
+echo "Starte Authentifizierung gegen $authorizationURI ..."
 curlResult=$(curl -sw %{http_code} -v  -X POST -H "User-Agent: freenet-group/gh-action" -d "client_id=${cliendId}&client_secret=${clientSecret}&grant_type=client_credentials" ${authorizationURI})
 
 #ergebniss behandeln
