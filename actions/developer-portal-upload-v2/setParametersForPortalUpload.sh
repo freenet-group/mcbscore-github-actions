@@ -1,4 +1,5 @@
 #!/bin/bash
+# TODO: Umsetzung oder Entfernung mit ABRMS-5324
 
 set -e
 
@@ -95,16 +96,16 @@ echo "apiVersionSuffix: $apiVersionSuffix"
 header="content-type=multipart/form-data"
 
 #Werte nicht printen, da die Secrets nicht ins buildlog verfügbar sein sollen.
-# cliend_id für Authentifizierung gegen den oidc/STS (AWS-Parameter)
-cliendId=$CLIENT_ID_STS
-# client_secret für Authentifizierung gegen den oidc/STS (AWS-Parameter)
-clientSecret=$CLIENT_SECRET_STS
+# cliend_id für Authentifizierung gegen den oidc/STS
+cliendId=$CLIENT_ID (AWS-Parameter)
+# client_secret für Authentifizierung gegen den oidc/STS
+clientSecret=$CLIENT_SECRET (AWS-Parameter)
 
 #Authentifizierung gegen den oidc/STS (AWS-Parameter)
 authorizationURI=$AUTHORIZATION_URI
 
 #in v2 muss sich zunächst ein token zum authentifizieren geholt werden.
-echo "Starte Authentifizierung gegen $authorizationURI ..."
+echo "Starte authentifizierung"
 curlResult=$(curl -sw %{http_code} -v  -X POST -H "User-Agent: freenet-group/gh-action" -d "client_id=${cliendId}&client_secret=${clientSecret}&grant_type=client_credentials" ${authorizationURI})
 
 #ergebniss behandeln
