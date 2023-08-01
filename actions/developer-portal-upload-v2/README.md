@@ -1,4 +1,4 @@
-# developer-portal-upload-v2
+# developer-portal-upload-v2 (Umsetzung oder Entfernung mit ABRMS-5324)
 
 Neue Version der Github Action zum Upload der YAML Dateien eines Releases einer Komponente in das Developer-Portal.<br>
 Benutzt die [Upload-Action des Developer-Portals-API-Teams](https://github.com/freenet-group/developer-portal-actions/tree/main/upload-api-spec)
