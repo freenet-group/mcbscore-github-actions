@@ -1,0 +1,14 @@
+# Generische Probot settings die fuer alle CICD Repos gelten sollen.
+
+_extends: base-settings.yml
+
+labels:
+  - name: release:major
+    color: 570902
+    description: "Changes that result in a major version bump"
+  - name: release:minor
+    color: CDD101
+    description: "Changes that add new features but do not result in a major version bump"
+  - name: release:patch
+    color: BEEA71
+    description: "Changes that fix bugs or make minor improvements"

@@ -1,5 +1,15 @@
 # Generische Probot settings die fuer alle Repos gelten sollen.
-# Können in der entsprechenden custom yml des repos ueberschrieben werden.
+
+repository:
+  private: true
+
+teams:
+  - name: freenet-intern
+    permission: pull
+  - name: MCBS Core
+    permission: maintain
+  - name: MCBS Core Admins
+    permission: admin
 
 branches:
   - name: develop
@@ -28,14 +38,3 @@ branches:
       required_linear_history: false
       # Required. Restrict who can push to this branch. Team and user restrictions are only available for organization-owned repositories. Set to null to disable.
       restrictions: null
-
-labels:
-  - name: release:major
-    color: 570902
-    description: "Changes that result in a major version bump"
-  - name: release:minor
-    color: CDD101
-    description: "Changes that add new features but do not result in a major version bump"
-  - name: release:patch
-    color: BEEA71
-    description: "Changes that fix bugs or make minor improvements"
