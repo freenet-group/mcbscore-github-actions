@@ -60,7 +60,7 @@ runs:
         
         for file in "${filesArray[@]}"; do
           printf 'copying file "%s"\n' "$file"
-          sourceRelative=files/${repositoryGroup}/${file}
+          sourceRelative=workflows/${repositoryGroup}/${file}
           source="${workingDirectory}/${sourceRelative}"
           target="./.github/$(basename -- "$file")"
         
