@@ -273,7 +273,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-commondata, branch: develop, group: probot-cicd, files: "../probot/distribute/settings-cicd.yml" }
+          - { name: ms-cicd, branch: develop, group: probot-cicd, files: "../probot/distribute/settings-cicd.yml" }
     steps:
       - uses: actions/checkout@v3
         with:
