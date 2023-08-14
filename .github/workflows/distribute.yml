@@ -321,14 +321,11 @@ jobs:
           - { name: mcbscore-contentprovider-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-contractservice-resttemplate, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-contractservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-cuba-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-customer-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-customerchange-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-customerproduct-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-documents-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-invoiceservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-ms-user-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-notes-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v3
