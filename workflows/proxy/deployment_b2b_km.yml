@@ -12,6 +12,11 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+      deployForKubernetes:
+        description: soll für Kubernetes-Zugriff deployt werden?
+        type: string
+        required: false
+        default: "false"
 
 jobs:
   deployment:
@@ -22,5 +27,5 @@ jobs:
       stage: b2b
       company: km
       deploymentTarget: apigw-t11.mobilcom.de
-      bambiNotification: true
       actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+      deployForKubernetes: ${{ github.event.inputs.deployForKubernetes }}

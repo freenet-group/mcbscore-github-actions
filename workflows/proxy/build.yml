@@ -115,6 +115,15 @@ jobs:
           if [ -e ${{ env.COMPONENT }}-fm.tar.gz ]; then
             cp ${{ env.COMPONENT }}-fm.tar.gz  ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
           fi
+          if [ -e ${{ env.COMPONENT }}-km_k8s.tar.gz ]; then
+            cp ${{ env.COMPONENT }}-km_k8s.tar.gz  ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
+          fi
+          if [ -e ${{ env.COMPONENT }}-md_k8s.tar.gz ]; then
+            cp ${{ env.COMPONENT }}-md_k8s.tar.gz  ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
+          fi
+          if [ -e ${{ env.COMPONENT }}-fm_k8s.tar.gz ]; then
+            cp ${{ env.COMPONENT }}-fm_k8s.tar.gz  ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
+          fi
 
       # Existierende Draft Releases löschen
       - name: Delete draft releases
@@ -134,10 +143,14 @@ jobs:
             ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}.tar.gz
             ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
             ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
+            ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
+            ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
+            ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
             secretMappings.txt
           token: ${{ env.TOKEN }}
           name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
+          target_commitish: ${{ env.BRANCH_NAME }}
 
       # ##################################################################################
       # Re-Merge

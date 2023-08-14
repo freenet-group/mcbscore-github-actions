@@ -95,16 +95,16 @@ echo "apiVersionSuffix: $apiVersionSuffix"
 header="content-type=multipart/form-data"
 
 #Werte nicht printen, da die Secrets nicht ins buildlog verfügbar sein sollen.
-# cliend_id für v2
-cliendId=$CLIENT_ID
-# client_secret für v2
-clientSecret=$CLIENT_SECRET
+# cliend_id für Authentifizierung gegen den oidc/STS (AWS-Parameter)
+cliendId=$CLIENT_ID_STS
+# client_secret für Authentifizierung gegen den oidc/STS (AWS-Parameter)
+clientSecret=$CLIENT_SECRET_STS
 
-#Authentifizierung gegen den oidc
-authorizationURI="https://identity.mobilcom-debitel.de/v2/oidc/token"
+#Authentifizierung gegen den oidc/STS (AWS-Parameter)
+authorizationURI=$AUTHORIZATION_URI
 
 #in v2 muss sich zunächst ein token zum authentifizieren geholt werden.
-echo "Starte authentifizierung"
+echo "Starte Authentifizierung gegen $authorizationURI ..."
 curlResult=$(curl -sw %{http_code} -v  -X POST -H "User-Agent: freenet-group/gh-action" -d "client_id=${cliendId}&client_secret=${clientSecret}&grant_type=client_credentials" ${authorizationURI})
 
 #ergebniss behandeln
