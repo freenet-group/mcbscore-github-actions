@@ -307,7 +307,6 @@ jobs:
           - { name: mcbscore-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-invoiceservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-ms-user-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-notes-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-notes-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v3
