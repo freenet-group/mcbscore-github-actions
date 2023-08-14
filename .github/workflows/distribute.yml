@@ -380,7 +380,6 @@ jobs:
           - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-compare-cp-contract-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-contentprovider-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-customerproduct-and-contract-service-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-customer-search-index, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
