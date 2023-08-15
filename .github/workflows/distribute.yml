@@ -377,7 +377,6 @@ jobs:
           - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-bot, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-contentprovider-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-customer-search-index, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
