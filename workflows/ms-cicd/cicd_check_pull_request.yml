@@ -10,6 +10,11 @@ on:
 jobs:
   syncLabels:
     runs-on: ubuntu-latest
+    env:
+      # expected aws properties
+      USER: ''
+      TOKEN: ''
+      JASYPT_ENCRYPTOR_PASSWORD: ''
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -83,17 +88,18 @@ jobs:
           - ms-deployment:yes\n
           - ms-deployment:no"
 
-  reviewer:
-    needs: labels
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-    steps:
-      - name: Check Reviewers
-        id: reviewer_check
-        uses: DasBen/require-reviewer-for-pull-request-on-label@0.1.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          required-reviewers: 'DasBen, bmoeller-md'
-          required-labels: 'ms-deployment:yes, ms-configuration:yes'
+  # @todo Reviewer funktioniert nicht wie erwartet
+#  reviewer:
+#    needs: labels
+#    runs-on: ubuntu-latest
+#    permissions:
+#      issues: write
+#      pull-requests: write
+#    steps:
+#      - name: Check Reviewers
+#        id: reviewer_check
+#        uses: DasBen/require-reviewer-for-pull-request-on-label@0.1.0
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          required-reviewers: 'DasBen, bmoeller-md'
+#          required-labels: 'ms-deployment:yes, ms-configuration:yes'

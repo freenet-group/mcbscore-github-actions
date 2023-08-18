@@ -8,8 +8,6 @@ name: CICD Release
 on:
   pull_request:
     types: [ closed ]
-    branches:
-      - 'develop'
   workflow_dispatch:
     inputs:
       release:
@@ -21,10 +19,55 @@ jobs:
   release:
     if: github.event.pull_request.merged == true || github.event.inputs.release == 'true'
     runs-on: [ self-hosted, k8s ]
+
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
+      DOCKER_ENABLED: false
+      # expected aws properties
+      USER: ''
+      TOKEN: ''
+      MCBSTEST_CREDENTIALS: ''
+      JIRA_CLOUD_URL: ''
+      DEPENDENCYTRACK_PROTOCOL: ''
+      DEPENDENCYTRACK_HOSTNAME: ''
+      DEPENDENCYTRACK_PORT: ''
+      DEPENDENCYTRACK_API_KEY: ''
+      JASYPT_ENCRYPTOR_PASSWORD: ''
+      # expected workflow.properties
+      JAVA_VERSION: ''
+      JIRA_COMPONENT: ''
+      JIRA_PROJECT: ''
+      ATLASSIAN_DEVELOPER_TOOLS_VERSION: ''
+      APPLICATION_JAR_PATH: ''
+      APPLICATION_JAR_NAME: ''
+      COVERAGE_LIMIT: ''
+      COVERAGE_FAIL: ''
+      COVERAGE_PATH: ''
+      COVERAGE_APP: ''
+      COMPONENT: ''
+      RELEASENOTES_JAVA_RELEASE: ''
+      DEPENDENCYTRACK_BOM: ''
+
+    outputs:
+      current_version: ${{ steps.get-latest-tag.outputs.tag  }}
+      level: ${{ steps.release-label.outputs.level || 'patch' }}
+      new_version: ${{ steps.bump-semver.outputs.new_version }}
+      issue_keys: ${{ steps.jira_keys.outputs.issue-keys }}
+      issue_list: ${{ steps.update_release_template.outputs.issue_list }}
+      renovate: ${{ steps.update_release_template.outputs.renovate }}
+      renovate_title: ${{ steps.update_release_template.outputs.renovate_title }}
+      epic_list: ${{ steps.update_release_template.outputs.epic_list }}
+      epic_due_date: ${{ steps.update_release_template.outputs.epic_dueDate }}
+      ms_configuration: ${{ steps.update_release_template.outputs.ms_configuration }}
+      ms_deployment: ${{ steps.update_release_template.outputs.ms_deployment }}
+      db_changes: ${{ steps.update_release_template.outputs.db_changes }}
+      dependencies: ${{ steps.update_release_template.outputs.dependencies }}
+      deploymentWorkflowRunId: ${{ steps.deployment.outputs.workflowId }}
+      deploymentK8sWorkflowRunId: ${{ steps.deployment_k8s.outputs.workflowId }}
+      developerPortalUploadWorkflowRunId: ${{ steps.developerPortalUpload.outputs.workflowId }}
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -35,8 +78,8 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
-            /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER,
+            /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
@@ -159,17 +202,33 @@ jobs:
         id: update_release_template
         run: |
           template_file=".github/actions/create-release-note/templates/release_template.md"
-          uniqueIssueList=$(echo "${{ steps.jira_keys.outputs.issue-keys }}" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
           allComponentList=""
           dependencyList=""
           linkedIssuesListLines=""
+          epicList=""
+          
+          # Alle Issues auslesen
+          uniqueIssueList=$(echo "${{ steps.jira_keys.outputs.issue-keys }}" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+          uniqueIssueList=${uniqueIssueList#"[]"}
+          
+          # Setting default outputs
+          echo "issue_list=" >> "$GITHUB_OUTPUT"
+          echo "renovate=false" >> "$GITHUB_OUTPUT"
+          echo "renovate_title=" >> "$GITHUB_OUTPUT"
+          echo "epic_list=" >> "$GITHUB_OUTPUT"
+          echo "epic_due_date=" >> "$GITHUB_OUTPUT"
+          echo "ms_configuration=false" >> "$GITHUB_OUTPUT"
+          echo "ms_deployment=false" >> "$GITHUB_OUTPUT"
+          echo "db_changes=false" >> "$GITHUB_OUTPUT"
+          echo "dependencies=false" >> "$GITHUB_OUTPUT"
 
           # Prüfen ob das label "renovate" gesetzt wurde
           PR_NUMBER=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
           LABELS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels" | jq -r ".[].name")
+          
           if echo "$LABELS" | grep -q "renovate"; then
             if [ -z "$uniqueIssueList" ]; then
               uniqueIssueList="ABRMS-5265"
@@ -186,12 +245,13 @@ jobs:
             # Tabellen Eintrag erstellen
             issueNumber=$(echo "$line" | cut -d";" -f1 | xargs)
             echo "$issueNumber wird eingelesen"
-    
+          
             # Renovate Ticket überspringen, Rest aber prüfen
             if [ "$issueNumber" = "ABRMS-5265" ]; then
               title="${{ github.event.pull_request.title }}"
               issueListLines+="| ABRMS-5265 | $title | Renovate | Renovate |\n"
               echo "renovate=true" >> "$GITHUB_OUTPUT"
+              echo "renovate_title=$title" >> "$GITHUB_OUTPUT"
               continue  # Rest überspringen
             fi
           
@@ -201,6 +261,23 @@ jobs:
             BASIC_AUTH=$(echo -n ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }} | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
+          
+            # Extracting the epic name and dueDate
+            echo "Epic name for $issueNumber is being extracted"
+            epicKey=$(echo "$issue_info" | jq -r '.fields.customfield_10014')
+            if [ -n "$epicKey" ] && [ "$epicKey" != "null" ]; then
+              if [ -z "$epicList" ]; then
+                epicList="$epic_name"
+                API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$epic_name"
+                epic_issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
+                epic_dueDate=$(echo "$epic_issue_info" | jq -r '.fields.duedate')
+                if [ -n "$epic_dueDate" ] && [ "$epic_dueDate" != "null" ]; then
+                  echo "epic_due_date=$epic_dueDate" >> "$GITHUB_OUTPUT"
+                fi
+              else
+                epicList="$epicList,$epicKey"
+              fi
+            fi
           
             # Titel einlesen
             echo "Titel zu $issueNumber extrahieren"
@@ -260,10 +337,11 @@ jobs:
           
           ## EPIC
           echo "EPIC setzen"
-          if [ "${{ github.event.inputs.epic }}" = "META-170" ]; then
-            sed -i 's/<!-- EPIC_PLACEHOLDER -->/[x] keine umfassendes Epic"' "$template_file";
+          if [ -n "$epicList" ]; then
+            echo "epic_list=$epicList" >> "$GITHUB_OUTPUT"
+            sed -i "s/<!-- EPIC_PLACEHOLDER -->/$epicList/" "$template_file";
           else
-            sed -i 's/<!-- EPIC_PLACEHOLDER -->/${{ github.event.inputs.epic }}/' "$template_file";
+            sed -i "s/<!-- EPIC_PLACEHOLDER -->/:white_check_mark: Keine Änderung/" "$template_file";
           fi
           
           ## Java
@@ -273,6 +351,7 @@ jobs:
           ## MS-Configuration
           echo "MS-Configuration Flag setzen"
           if echo "$allComponentList" | grep -iq "ms-configuration"; then
+            echo "ms_configuration=true" >> "$GITHUB_OUTPUT"
             url="${{ github.SERVER_URL }}/ms-configuration"
             escaped_url=$(sed 's/[\/&]/\\&/g' <<< "$url")
             sed -i "s/<!-- MS_CONFIGURATION_PLACEHOLDER -->/:warning: Achtung [MS-Configuration]($escaped_url) wurde geändert/" "$template_file";
@@ -283,6 +362,7 @@ jobs:
           ## MS-Deployment
           echo "MS-Deployment Flag setzen"
           if echo "$allComponentList" | grep -iq "ms-deployment"; then
+            echo "ms_deployment=true" >> "$GITHUB_OUTPUT"
             url="${{ github.SERVER_URL }}/ms-deployment"
             escaped_url=$(sed 's/[\/&]/\\&/g' <<< "$url")
             sed -i "s/<!-- MS_DEPLOYMENT_PLACEHOLDER -->/:warning: Achtung [MS-Deployment]($escaped_url) wurde geändert/" "$template_file";
@@ -293,6 +373,7 @@ jobs:
           ## DB-Changes
           echo "DB-Changes Flag setzen"
           if echo "$allComponentList" | grep -iq "sql update script"; then
+            echo "db_changes=true" >> "$GITHUB_OUTPUT"
             sed -i "s/<!-- DB_CHANGES_PLACEHOLDER -->/:warning: Achtung DB-Changes sind notwendig/" "$template_file";
           else 
             sed -i 's/<!-- DB_CHANGES_PLACEHOLDER -->/:white_check_mark: Keine DB-Changes/' "$template_file";
@@ -300,7 +381,9 @@ jobs:
           
           ## Dependencies
           echo "Dependencies setzen"
-          if [ -z "$dependencyList" ]; then
+          if [ -n "$dependencyList" ]; then
+            echo "dependencies=true" >> "$GITHUB_OUTPUT"
+            dependencyList="\n$dependencyList"
             sed -i "s/<!-- DEPENDENCIES_PLACEHOLDER -->/$dependencyList/" "$template_file";
           else 
             sed -i 's/<!-- DEPENDENCIES_PLACEHOLDER -->/:white_check_mark: Keine Dependencies/' "$template_file";
@@ -354,9 +437,120 @@ jobs:
           jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}.jar
           javaVersion: ${{ env.JAVA_VERSION }}
 
+      # Deployment Dev
+      - name: Deployment Workflow starten
+        id: deployment
+        uses: benc-uk/workflow-dispatch@v1.2.2
+        with:
+          workflow: Deployment
+          token: ${{ env.TOKEN }}
+          inputs: >
+            {
+              "environment": "dev",
+              "component": "${{ env.COMPONENT }}", 
+              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}"
+            }
+
+      - name: Kubernetes Deployment Workflow starten
+        id: deployment_k8s
+        if: hashFiles('.github/**/deployment_k8s.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1.2.2
+        with:
+          workflow: K8s Deployment
+          token: ${{ env.TOKEN }}
+          inputs: >
+            {
+              "environment": "dev",
+              "component": "${{ env.COMPONENT }}",
+              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}",
+              "dryRun": "false"
+            }
+
+      - name: Developer Portal Upload starten
+        id: developerPortalUpload
+        if: hashFiles('.github/**/developerPortal.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1.2.2
+        with:
+          workflow: DeveloperPortal Upload
+          token: ${{ env.TOKEN }}
+          inputs: >
+            {
+              "environment": "dev",
+              "component": "${{ env.COMPONENT }}",
+              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}"
+            }
+
+      # Post Deployment Steps
+      # @todo create an action for this
+      - name: Check Deployment Workflow Status
+        run: |
+          # Set max checks and initialize counter
+          MAX_CHECKS=30  # Number of checks before timeout, for 15 minutes total.
+          COUNTER=0
+          FOUND_RUN_ID=""
+          INITIAL_SLEEP=60
+          RETRY_SLEEP=30
+          
+          echo "Starting the Check Deployment Workflow Status..."
+          sleep 60  # Sleep for 1 minute to allow workflow to register
+
+          # Fetch the workflow runs
+          echo "Fetching workflow runs for workflow ID: ${{ steps.deployment.outputs.workflowId }}"
+          WORKFLOW_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                          "https://api.github.com/repos/${{ github.repository }}/actions/workflows/${{ steps.deployment.outputs.workflowId }}/runs")
+          
+          # Extract the ID and name of the latest run
+          LATEST_RUN=$(echo "$WORKFLOW_RUNS" | jq '.workflow_runs[0]')  # Assuming the first run is the latest
+          RUN_ID=$(echo "$LATEST_RUN" | jq -r '.id')
+          RUN_NAME=$(echo "$LATEST_RUN" | jq -r '.name')
+          
+          echo "Checking run with ID: $RUN_ID and name: $RUN_NAME"
+          
+          # Loop to check the status of the identified run
+          while true; do
+            # Increase counter
+            COUNTER=$(( COUNTER + 1 ))
+            REMAINING_CHECKS=$(( MAX_CHECKS - COUNTER ))
+            REMAINING_TIME=$(( REMAINING_CHECKS * RETRY_SLEEP / 60 ))  # Convert to minutes
+          
+            echo "Check attempt $COUNTER of $MAX_CHECKS. Remaining checks: $REMAINING_CHECKS. Time left before timeout: ~$REMAINING_TIME minutes."
+          
+            # Fetch the specific run details
+            RUN_DETAILS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                                "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID")
+          
+            RUN_STATUS=$(echo "$RUN_DETAILS" | jq -r '.status')
+            CONCLUSION=$(echo "$RUN_DETAILS" | jq -r '.conclusion')
+          
+            echo "Run Status: $RUN_STATUS, Conclusion: $CONCLUSION"
+          
+            # Check if the workflow is either queued or still running
+            if [[ "$RUN_STATUS" == "queued" || "$RUN_STATUS" == "in_progress" || "$RUN_STATUS" == "null" ]]; then
+              echo "Deployment Workflow is $RUN_STATUS..."
+          
+              if [[ "$COUNTER" -ge "$MAX_CHECKS" ]]; then
+                echo "Timeout waiting for the Deployment Workflow."
+                exit 1
+              fi
+          
+              sleep $RETRY_SLEEP  # Wait for a specified duration before checking again
+            else
+              # If not queued or in progress, break the loop
+              break
+            fi
+          done
+          
+          # Check the conclusion of the run
+          if [[ "$CONCLUSION" == "null" || "$CONCLUSION" != "success" ]]; then
+            echo "Deployment Workflow did not complete successfully. Conclusion: $CONCLUSION"
+            exit 1
+          else
+            echo "Deployment Workflow completed with Conclusion: $CONCLUSION"
+          fi
+
       - name: dbChanges Workflow starten
         if: hashFiles('.github/**/dbChanges.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.2
         with:
           workflow: DB Changes
           token: ${{ env.TOKEN }}
@@ -369,18 +563,19 @@ jobs:
 
       - name: postBuild Workflow starten
         if: hashFiles('.github/**/cicd_postBuild.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.2
         with:
           workflow: CICD PostBuild
           token: ${{ env.TOKEN }}
           inputs: >
             {
               "releaseVersion": "${{ steps.bump-semver.outputs.new_version }}",
-              "issueList": "${{ steps.update_release_template.outputs.issue_list }}"
+              "issueList": "${{ steps.update_release_template.outputs.issue_list }}",
+              "bambiArgs": "{\"renovate\":\"${{ steps.update_release_template.outputs.renovate }}\",\"renovateInfo\":\"${{ steps.update_release_template.outputs.renovate_title }}\",\"ibnDate\":\"${{ steps.update_release_template.outputs.epic_dueDate }}\",\"changesInConfiguration\":\"${{ steps.update_release_template.outputs.ms_configuration }}\",\"changesInDeployment\":\"${{ steps.update_release_template.outputs.ms_deployment }}\",\"dbChanges\":\"${{ steps.update_release_template.outputs.db_changes }}\",\"dependencies\":\"${{ steps.update_release_template.outputs.dependencies }}\"}"
             }
 
       - name: SBOM zu DependencyTrack senden
-        uses: freenet-actions/gh-upload-sbom@1.1.2
+        uses: DependencyTrack/gh-upload-sbom@v2.0.1
         with:
           protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
           serverHostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
