@@ -320,18 +320,11 @@ jobs:
       matrix:
         repository:
           - { name: mcbscore-billingaccount-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-contentprovider-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-contractservice-resttemplate, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-contractservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-cuba-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-customer-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-customerchange-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-customerproduct-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-documents-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-invoiceservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-ms-user-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-notes-feign-client, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-notes-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v3
@@ -384,9 +377,6 @@ jobs:
           - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-bot, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-compare-cp-contract-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-contentprovider-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-customerproduct-and-contract-service-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-customer-search-index, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
