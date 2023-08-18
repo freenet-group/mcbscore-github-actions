@@ -39,4 +39,4 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           ignore-pattern: '.md$|^\.github/workflows/'
           review-message: "Bitte die Einträge prüfen :eyes:"
-          tags:  "TODO:,FIXME:,BUG:,DOCME:"
+          tags:  "TODO,FIXME,BUG,DOCME,DEPRECATED"
