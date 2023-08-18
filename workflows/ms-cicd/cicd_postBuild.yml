@@ -23,20 +23,37 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
-      renovate:
-        description: Markiert das Release als ein Renovate Release
+      bambiArgs:
+        description: 'JSON string for Bambi API call. Should contain fields: ibnDate, changesInConfiguration, changesInDeployment, dbChanges, dependencies, renovateInfo, and renovate.'
         required: false
-        default: false
+        default: '{"ibnDate": "", "changesInConfiguration": "", "changesInDeployment": "", "dbChanges": "", "dependencies": "", "renovateInfo": "", "renovate": ""}'
 
 jobs:
   postBuild:
     # self-hosted Runner für den Systeminternen Zugriff
-    runs-on: [ self-hosted, vm ]
+    runs-on: [ self-hosted, k8s ]
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       MAIL_TEMPLATE: B_MS.ftl
       TEAMS_MAIL: b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms
+      BAMBI_API_URL: 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild'
+      # expected aws properties
+      TOKEN: ''
+      MCBSTEST_CREDENTIALS: ''
+      JIRA_API_URL: ''
+      JIRA_CLOUD_WEB_URL: ''
+      SONAR_API_URL: ''
+      JIRA_URL2: ''
+      MCBSTEST_JIRACLOUD_CREDENTIALS: ''
+      JIRA_CLOUD_URL: ''
+
+    outputs:
+      coverage: ${{ steps.fetch-coverage.outputs.coverage }}
+      sql: ${{ steps.fetch-additional-information.outputs.sql }}
+      config: ${{ steps.fetch-additional-information.outputs.config }}
+      dependency: ${{ steps.fetch-additional-information.outputs.dependency }}
+      going_live_date: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
 
     steps:
       - name: Checkout Repository
@@ -104,25 +121,32 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Release bei Bambi melden
-        env:
-          BAMBI_API_URL: 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild'
-          API_PAYLOAD: |
-            {
-              "componentName": "${{ env.JIRA_COMPONENT }}",
-              "versionNo": "${{ github.event.inputs.releaseVersion }}",
-              "buildUser": "mcbstest",
-              "issueList": "${{ env.ISSUE_LIST_WITH_DELIMITER }}"
-            }
         run: |
           issueListWithDelimiter=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
           renovate="${{ github.event.inputs.renovate }}"
           echo "Create BAMBI-Entry for IssueList: $issueListWithDelimiter"
-          
-          http_response=$(curl -w "%{http_code}\n" --location --request POST "$BAMBI_API_URL" --header "Content-Type: application/json" --data-raw "$API_PAYLOAD")
+
+          API_PAYLOAD="{
+            \"componentName\": \"${{ env.JIRA_COMPONENT }}\",
+            \"versionNo\": \"${{ github.event.inputs.releaseVersion }}\",
+            \"buildUser\": \"mcbstest\",
+            \"issueList\": \"$issueListWithDelimiter\",
+            \"buildInfo\": {
+              \"ibnDate\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.ibnDate')\",
+              \"changesInConfiguration\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.changesInConfiguration')\",
+              \"changesInDeployment\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.changesInDeployment')\",
+              \"dbChanges\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.dbChanges')\",
+              \"dependencies\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.dependencies')\",
+              \"renovateInfo\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.renovateInfo')\"
+            },
+            \"renovate\": \"$renovate\"
+          }"
+
+          http_response=$(curl -w "%{http_code}\n" --location --request POST "${{ env.BAMBI_API_URL }}" --header "Content-Type: application/json" --data-raw "$API_PAYLOAD")
           echo "Response: ${http_response} \n"
-          
+
           http_code=$(echo "$http_response" | cut -d '}' -f 2)
-          if [ "$http_code" != 200 ]; then
+          if [ "$http_code" != "200" ]; then
             echo "ErrorCode: $http_code"
             exit 1
           fi

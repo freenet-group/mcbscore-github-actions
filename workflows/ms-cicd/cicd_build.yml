@@ -33,6 +33,10 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
+      # expected aws properties
+      USER: ''
+      TOKEN: ''
+      JASYPT_ENCRYPTOR_PASSWORD: ''
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -47,15 +51,7 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER, 
-            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
-            /github/common/jira/api_url = JIRA_API_URL,
-            /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
-            /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD,
-            /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
-            /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
-            /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
-            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
+            /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
 
       - name: Read workflow.properties
         shell: bash
