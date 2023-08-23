@@ -1,4 +1,5 @@
 name: DeveloperPortal Upload
+run-name: DeveloperPortal Upload von  ${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }} für ${{ github.event.inputs.environment }}
 
 on:
   workflow_dispatch:
