@@ -201,7 +201,6 @@ jobs:
           - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild,setPRIssueDone" }
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
-          - { name: ms-tools, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, ../encoding" }
           - { name: ms-usage-importer, branch: develop, group: ms, workflows: "../check, build, deploymentDB" }
           - { name: ms-usageprices, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
