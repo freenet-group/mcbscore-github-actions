@@ -22,4 +22,7 @@ runs:
       run : |
         token=$( ${{ github.action_path }}/getToken.sh ${{ inputs.clientId }} ${{ inputs.clientSecret }} ${{ inputs.tokenUrl }})
         echo "accessToken=$token" >> $GITHUB_ENV
- 
+
+outputs:
+  accessToken:
+    description: 'Access token retrieved from the API response'
