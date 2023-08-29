@@ -48,8 +48,8 @@ spotless {
                     replaceAll('(?xm) ^ ([ \\t\\f]*) // [ \\t\\f]* J[+] [ \\t\\f]* $', '$1// @formatter:on').
                     replaceAll('(?xm) ^ [ \\t\\f]* // [ \\t\\f]* JDOC- [ \\t\\f]* \\n', '')
         }
-        eclipse().configFile('spotless/MCBS-format.xml')
-        importOrderFile('spotless/mcbs.importorder')
+        eclipse().configFile('spotless-config/MCBS-format.xml')
+        importOrderFile('spotless-config/mcbs.importorder')
         removeUnusedImports()
     }
 }

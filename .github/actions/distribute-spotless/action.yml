@@ -1,0 +1,75 @@
+name: 'Distribute Spotless'
+description: 'Action zur Verteilung der spotless-Dateien für Java-Anwendungen'
+
+inputs:
+  repositoryName:
+    description: Der Name des Repositories
+    required: true
+  repositoryGroup:
+    description: Die Gruppe der Repositories
+    required: true
+  repositoryBranch:
+    description: Der Branch des Repositories
+    required: true
+  awsAccessKeyId:
+    description: AWS Access Key Id
+    required: true
+  awsSecretAccessKey:
+    description: AWS Secret Access Key
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - id: read-aws-secrets
+      name: Read AWS Secrets
+      uses: ./actions/read-aws-secrets
+      with:
+        awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
+        awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
+        awsParameterPairs: |
+          /github/secrets/mcbs_token = TOKEN,
+          /github/secrets/mcbs_user = USER
+
+    # Ziel-Repository auschecken
+    - uses: actions/checkout@v3
+      with:
+        repository: freenet-group/${{ inputs.repositoryName }}
+        token: ${{ env.TOKEN }}
+        path: ${{ inputs.repositoryName }}
+        ref: ${{ inputs.repositoryBranch }}
+
+     - name: Add or replace spotless-files
+      env:
+        thisRepository: ${{ github.repository }}
+        thisWorkflow: ${{ github.workflow }}
+        repositoryGroup: ${{ inputs.repositoryGroup }}
+        repositoryName: ${{ inputs.repositoryName }}
+      shell: bash
+      run: |
+        # spotless-Ordner erstellen (falls nicht vorhanden)
+        workingDirectory=$(pwd)
+        spotlessDirectory=${workingDirectory}/${repositoryName}/spotless
+        # TODO: gradle-file bestimmen (java8/normal)
+        gradleFile=spotless/apply-spotless.gradle
+        cd -- "$repositoryName"
+        mkdir -p -- "$spotlessDirectory"
+
+        # spotless-Dateien kopieren
+        printf 'copying spotless-files\n'        
+        cp -v -- $gradleFile ${workingDirectory}/${repositoryName}
+        cp -v -- spotless/spotless-config/* $spotlessDirectory
+
+        git config user.email "tp.sd.back.mcbs@freenet.ag"
+        git config user.name "$USER"
+
+        # git status
+        changesDetected=$(git status --porcelain)
+
+        if [ -n "$changesDetected" ]; then
+          echo "git commit + push"
+          git commit -av -m "Github Workflows aktualisiert"
+          git push
+        else
+          echo "kein git commit"
+        fi
