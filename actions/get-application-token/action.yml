@@ -1,0 +1,28 @@
+name: Get Application Token
+description: Action, die ein Access-Token für Aufrufe gegen das API-Gateway beschafft
+inputs:
+  clientId:
+    description: Client-ID für Applikationstoken
+    required: true
+  clientSecret:
+    description: Client-Secret für Applikationstoken
+    required: true
+  tokenUrl:
+    description: URL für den Token-Aufruf
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      run : |
+        chmod +x  ${{ github.action_path }}/getToken.sh
+
+    - shell: bash
+      run : |
+        token=$( ${{ github.action_path }}/getToken.sh ${{ inputs.clientId }} ${{ inputs.clientSecret }} ${{ inputs.tokenUrl }})
+        echo "accessToken=$token" >> $GITHUB_ENV
+
+outputs:
+  accessToken:
+    description: 'Access token retrieved from the API response'
