@@ -1,0 +1,55 @@
+spotless {
+    java {
+        target project.fileTree(project.rootDir) {
+            include '**/*.java'
+            exclude '**/generated/**/*.*'
+            exclude 'spotless/*.*'
+        }
+        custom 'jalopy section comments', {
+            str -> str.replaceAll('(?xsm)' +
+                    '^ \\s* // \\s* ~ \\s*' +
+                    '(?:Static\\sfields/initializers|Instance\\sfields|Instance\\sinitializers|Constructors|Methods|Ordinary\\smethods|Inner\\sInterfaces|Inner\\sClasses|Enums|Enum\\sconstants|Annotations)' +
+                    '(?:\\s* \\n \\s* //)?' + //optional Zeilenumbruch durch anderen Formatierer
+                    '\\s* -+ \\s* $'
+                    , '')
+        }
+        custom 'jalopy DOCME whole comments', {
+            str -> str.replaceAll(
+                    // === einzeiliges /** DOCME */ ===
+                    '(?xsm) ^ \\s* /[*]{2,} \\s* DOCME \\s* [*]+/ \\s* $', ''
+                    // === mehrzeilig ===
+            ).replaceAll(
+                    '(?xsm)' +
+                            // /** oder länger
+                            '^ \\s* /[*]{2,} \\s* ' +
+                            // Start Wiederholung (beliebig viele Zeilen)
+                            '(?: ' +
+                            // siehe Ersetzung für einzelne Zeile, aber Tag-Teil optional, um auch Zeilen mit nur Stern zu erlauben
+                            '^ \\s* (?: [*]+ \\s*)?  (?: (?: (?: @return | @param\\s+\\w+ | @throws\\s+(?:\\w+[.])*\\w+ | @exception\\s+(?:\\w+[.])*\\w+) \\s+)?  DOCME \\s*)?' +
+                            // Ende Wiederholung
+                            ')+ ' +
+                            // */ oder länger
+                            '^ \\s* [*]+/ \\s* \\n'
+                    , '')
+        }
+        custom 'jalopy DOCME line', {
+            str -> str.replaceAll('(?xsm)' +
+                    // optionale Sterne am Zeilenanfang:
+                    '^ \\s* (?: [*]+ \\s*)?' +
+                    // optional Javadoc Tag, je nach Typ inkl. Identifier, z.B. @throws foo.bar.BazException:
+                    '(?: (?: @return | @param\\s+\\w+ | @throws\\s+(?:\\w+[.])*\\w+ | @exception\\s+(?:\\w+[.])*\\w+) \\s+)?' +
+                    // dann nur noch "DOCME":
+                    'DOCME \\s* \\n'
+                    , '')
+        }
+        custom 'jalopy control comments to Eclipse', {
+            str -> str.replaceAll('(?xm) ^ ([ \\t\\f]*) // [ \\t\\f]* J- [ \\t\\f]* $', '$1// @formatter:off').
+                    replaceAll('(?xm) ^ ([ \\t\\f]*) // [ \\t\\f]* J[+] [ \\t\\f]* $', '$1// @formatter:on').
+                    replaceAll('(?xm) ^ [ \\t\\f]* // [ \\t\\f]* JDOC- [ \\t\\f]* \\n', '')
+        }
+        eclipse('4.21').configFile('spotless/MCBS-format.xml')
+        licenseHeaderFile	'spotless/license.java'
+        importOrderFile		'spotless/mcbs.importorder'
+        removeUnusedImports()
+    }
+}
