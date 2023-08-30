@@ -36,6 +36,11 @@ jobs:
   create-deployment:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout Repository
+      # Repository auschecken 
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     # Secrets aus AWS auslesen
     - name: Read and set AWS credentials
       uses: ./actions/read-aws-secrets
