@@ -36,9 +36,14 @@ jobs:
   create-deployment:
     runs-on: ubuntu-latest
     steps:
-    # Secrets aus AWS auslesen
+    - name: Checkout Repository
+      # Repository auschecken 
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     - name: Read and set AWS credentials
-      uses: ./actions/read-aws-secrets
+      # Secrets aus AWS auslesen
+      uses: ./.github/actions/read-aws-secrets
       with:
         awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
         awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -102,7 +107,12 @@ jobs:
       with:
         awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
         awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        awsParameterPairs: "/github/secrets/mcbs_token = TOKEN,\n/github/secrets/deployment_user = DEPLOYMENT_USER,\n/github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY,\n/github/secrets/checkmk_user = CHECKMK_USER, \n/github/secrets/checkmk_password = CHECKMK_PW\n#magic___^_^___line\n"
+        awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/deployment_user = DEPLOYMENT_USER,
+            /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY,
+            /github/secrets/checkmk_user = CHECKMK_USER, 
+            /github/secrets/checkmk_password = CHECKMK_PW
     - name: checkout mcbscore-github-actions
       # Die internen Actions auschecken
       uses: actions/checkout@v3
