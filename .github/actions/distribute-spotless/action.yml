@@ -17,6 +17,10 @@ inputs:
   awsSecretAccessKey:
     description: AWS Secret Access Key
     required: true
+  needsJava8:
+    description: Ob die Java8-Version verwendet werden soll
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -45,15 +49,21 @@ runs:
         thisWorkflow: ${{ github.workflow }}
         repositoryGroup: ${{ inputs.repositoryGroup }}
         repositoryName: ${{ inputs.repositoryName }}
+        needsJava8: ${{ inputs.needsJava8 }}
       shell: bash
       run: |
         # spotless-Ordner erstellen (falls nicht vorhanden)
         workingDirectory=$(pwd)
         spotlessDirectory=${workingDirectory}/${repositoryName}/spotless
-        # TODO: gradle-file bestimmen (java8/normal)
-        gradleFile=spotless/apply-spotless.gradle
         cd -- "$repositoryName"
         mkdir -p -- "$spotlessDirectory"
+        
+        # Gradle-Datei bestimmen
+        if [[ "$needsJava8" == "true" ]]; then
+          gradleFile=spotless/apply-spotless-java8.gradle
+        else
+          gradleFile=spotless/apply-spotless.gradle
+        fi
 
         # spotless-Dateien kopieren
         printf 'copying spotless-files\n'        

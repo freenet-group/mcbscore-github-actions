@@ -96,6 +96,16 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+      - name: Distribute Spotless
+        uses: ./.github/actions/distribute-spotless
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          needsJava8: "true"
+
   mcbs:
     if: ${{ github.event.inputs.group == 'mcbs' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
@@ -117,6 +127,16 @@ jobs:
           workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Distribute Spotless
+        uses: ./.github/actions/distribute-spotless
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          needsJava8: "true"
 
   metis:
     if: ${{ github.event.inputs.group == 'metis' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
@@ -141,6 +161,16 @@ jobs:
           workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # TODO: metis, metis-pricing, metis-businessfacade
+      # - name: Distribute Spotless
+      #   uses: ./.github/actions/distribute-spotless
+      #   with:
+      #     repositoryName: ${{ matrix.repository.name }}
+      #     repositoryGroup: ${{ matrix.repository.group }}
+      #     repositoryBranch: ${{ matrix.repository.branch }}
+      #     awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   ms-cicd:
     if: ${{ github.event.inputs.group == 'ms-cicd' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
@@ -219,6 +249,15 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+      - name: Distribute Spotless
+        uses: ./.github/actions/distribute-spotless
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
   mslib:
     if: ${{ github.event.inputs.group == 'mslib' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
@@ -239,6 +278,15 @@ jobs:
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
           workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Distribute Spotless
+        uses: ./.github/actions/distribute-spotless
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -372,14 +420,14 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-bot, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-customer-search-index, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
+          - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, workflows: "../check, build, ../encoding", needsJava8: "false" }
+          - { name: mcbscore-bot, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "true" }
+          - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "false" }
+          - { name: mcbscore-customer-search-index, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "false" }
+          - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "false" }
+          - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "false" }
+          - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "true" }
+          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding", needsJava8: "false" }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -394,6 +442,16 @@ jobs:
           workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Distribute Spotless
+        uses: ./.github/actions/distribute-spotless
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          needsJava8: ${{ matrix.repository.needsJava8 }}
 
   zap:
     if: ${{ github.event.inputs.group == 'zap' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
