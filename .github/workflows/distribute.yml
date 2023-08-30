@@ -28,6 +28,7 @@ on:
           - standard
           - zap
           - test
+          - spotless
 
 jobs:
   aws:
@@ -96,16 +97,6 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Distribute Spotless
-        uses: ./.github/actions/distribute-spotless
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          needsJava8: "true"
-
   mcbs:
     if: ${{ github.event.inputs.group == 'mcbs' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
@@ -127,16 +118,6 @@ jobs:
           workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Distribute Spotless
-        uses: ./.github/actions/distribute-spotless
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          needsJava8: "true"
 
   metis:
     if: ${{ github.event.inputs.group == 'metis' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
@@ -161,16 +142,6 @@ jobs:
           workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      # TODO: metis, metis-pricing, metis-businessfacade
-      # - name: Distribute Spotless
-      #   uses: ./.github/actions/distribute-spotless
-      #   with:
-      #     repositoryName: ${{ matrix.repository.name }}
-      #     repositoryGroup: ${{ matrix.repository.group }}
-      #     repositoryBranch: ${{ matrix.repository.branch }}
-      #     awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   ms-cicd:
     if: ${{ github.event.inputs.group == 'ms-cicd' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
@@ -249,15 +220,6 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Distribute Spotless
-        uses: ./.github/actions/distribute-spotless
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
   mslib:
     if: ${{ github.event.inputs.group == 'mslib' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
@@ -278,15 +240,6 @@ jobs:
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
           workflows: ${{ matrix.repository.workflows }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-      - name: Distribute Spotless
-        uses: ./.github/actions/distribute-spotless
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -503,3 +456,73 @@ jobs:
           workflows: ${{ matrix.repository.workflows }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  spotless:    
+    if: ${{ github.event.inputs.group == 'spotless' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: mcbscore-mandel, branch: develop, group: mandel, needsJava8: "true" }
+          - { name: mcbs-master, branch: develop, group: mcbs, needsJava8: "true" }
+          - { name: metis, branch: develop, group: metis, needsJava8: "false" }
+          # - { name: metis-pricing, branch: develop, group: metis, needsJava8: "false" }
+          # - { name: metis-businessfacade, branch: develop, group: metis, needsJava8: "false" }
+          - { name: ms-commondata, branch: develop, group: ms-cicd, needsJava8: "false" }
+          - { name: ms-admin-dashboard, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-agreement, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-appcheck, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-authorities-information, branch: develop, group: ms, needsJava8: "false" }	
+          - { name: ms-billingaccount-frontend, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-businessinteraction-router, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-businesstransaction, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-configserver, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-contentprovider, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-customerchange, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-customerproduct, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-delegate, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-delegate-test, branch: main, group: ms, needsJava8: "false" }
+          - { name: ms-deployment, branch: main, group: ms-deployment, needsJava8: "false" }
+          - { name: ms-discovery, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-elasticupdate, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-event-relay, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-find, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-freeprint-router, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-gateway, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-homer, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-invoice, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-mandel, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-mark, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-note-router, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-oidc, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-oms-router, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-proxy-support, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-rating, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-usageprices, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-user, branch: develop, group: ms, needsJava8: "false" }
+          - { name: ms-user-cleanup, branch: develop, group: ms, needsJava8: "false" }
+          - { name: mslib-aws, branch: develop, group: mslib, needsJava8: "false" }
+          - { name: mslib-rest, branch: develop, group: mslib, needsJava8: "false" }
+          - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, needsJava8: "false" }
+          - { name: mcbscore-bot, branch: develop, group: standard, needsJava8: "true" }
+          - { name: mcbscore-changelog-editor, branch: develop, group: standard, needsJava8: "false" }
+          - { name: mcbscore-customer-search-index, branch: develop, group: standard, needsJava8: "false" }
+          - { name: mcbscore-db-replica, branch: develop, group: standard, needsJava8: "false" }
+          - { name: mcbscore-es-plugin-collection, branch: develop, needsJava8: "false" }
+          - { name: mcbscore-framework, branch: develop, group: standard, needsJava8: "true" }
+          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, needsJava8: "false" }
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Spotless
+        uses: ./.github/actions/distribute-spotless
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          needsJava8: ${{ matrix.repository.needsJava8 }}
