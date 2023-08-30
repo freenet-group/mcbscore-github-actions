@@ -396,16 +396,6 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Distribute Spotless
-        uses: ./.github/actions/distribute-spotless
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          needsJava8: ${{ matrix.repository.needsJava8 }}
-
   zap:
     if: ${{ github.event.inputs.group == 'zap' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
@@ -511,6 +501,13 @@ jobs:
           - { name: mcbscore-es-plugin-collection, branch: develop, needsJava8: "false" }
           - { name: mcbscore-framework, branch: develop, group: standard, needsJava8: "true" }
           - { name: mcbscore-usageprices-ui, branch: develop, group: standard, needsJava8: "false" }
+          - { name: mcbscore-business-transaction-service, branch: develop, group: zap, needsJava8: "true" }
+          - { name: mcbscore-contract-service, branch: develop, group: zap, needsJava8: "true"}
+          - { name: mcbscore-fee-service, branch: develop, group: zap, needsJava8: "true"}
+          - { name: mcbscore-invoice-service, branch: develop, group: zap, needsJava8: "true"}
+          - { name: mcbscore-mark-service, branch: develop, group: zap, needsJava8: "true"}
+          - { name: mcbscore-network-service, branch: develop, group: zap, needsJava8: "true"}
+          - { name: mcbscore-party-service, branch: develop, group: zap, needsJava8: "true"}          
 
     steps:
       - uses: actions/checkout@v3
