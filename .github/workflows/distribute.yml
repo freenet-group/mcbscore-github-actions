@@ -184,7 +184,6 @@ jobs:
           - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod,deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
-          - { name: ms-delegate-test, branch: main, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-deployment, branch: main, group: ms-deployment, workflows: "deployment_k8s" }
           - { name: ms-discovery, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
