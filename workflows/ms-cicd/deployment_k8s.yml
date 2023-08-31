@@ -250,7 +250,14 @@ jobs:
     steps:
     # Leeren Workspace sicherstellen
     - name: Ensure clean workspace
-      run: "echo \"Cleaning up previous run\"\nchown -R \"$(id -u):$(id -g)\" . || true\n# verstecke Dateien auch entfernen \n# https://askubuntu.com/questions/740805/how-can-i-remove-all-files-from-current-directory-using-terminal\nshopt -s dotglob\nrm -rf *\n        #magic___^_^___line\n"
+      run: |
+        echo "Cleaning up previous run"
+        chown -R "$(id -u):$(id -g)" . || true
+        # verstecke Dateien auch entfernen 
+        # https://askubuntu.com/questions/740805/how-can-i-remove-all-files-from-current-directory-using-terminal
+        shopt -s dotglob
+        rm -rf *
+      
     - name: Checkout Repository
       uses: actions/checkout@v3
       with:
