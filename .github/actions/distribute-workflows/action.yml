@@ -103,7 +103,7 @@ runs:
         declare -A workflowPatternToActions
         workflowPatternToActions=(
           # Manche Actions müssen in jedes Repo:
-          ['.+']='select-aws-github-secrets read-aws-secrets'
+          ['.+']='select-aws-github-secrets read-aws-secrets templates'
           # Actions für bestimmte Workflows:
           ['(^|.*/)deployment_k8s']='deploy-to-k8s'
         )
