@@ -205,6 +205,11 @@ jobs:
     needs: build-matrix
     if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
     steps:
+
+   - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     # Secrets aus AWS auslesen
     - name: Read and set AWS credentials
       uses: ./actions/read-aws-secrets
