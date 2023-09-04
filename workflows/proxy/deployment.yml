@@ -49,9 +49,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
     # Secrets aus AWS auslesen
     - name: Read and set AWS credentials
-      uses: ./actions/read-aws-secrets
+      uses:  ./.github/actions/read-aws-secrets
       with:
         awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
         awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
