@@ -55,6 +55,7 @@ runs:
         # spotless-Ordner erstellen (falls nicht vorhanden)
         workingDirectory=$(pwd)
         spotlessDirectory=${workingDirectory}/${repositoryName}/spotless
+        ideaDirectory=${workingDirectory}/${repositoryName}/.idea
         cd -- "$repositoryName"
         mkdir -p -- "$spotlessDirectory"
         
@@ -66,10 +67,17 @@ runs:
         fi
 
         # spotless-Dateien kopieren
-        printf 'copying spotless-files\n'        
+        printf 'copying spotless-files\n'
         cp -v -- $gradleFile ${workingDirectory}/${repositoryName}
         cp -v -- spotless/spotless-config/* $spotlessDirectory
 
+        # Idea-Konfiguration kopieren
+        printf 'copying idea-eclipseformatter.xml\n'
+        if [ ! -d "$ideaDirectory" ]; then
+          mkdir -p -- "$ideaDirectory"
+        fi
+        cp -v -- spotless/idea-config/eclipseCodeFormatter.xml $ideaDirectory
+        
         git config user.email "tp.sd.back.mcbs@freenet.ag"
         git config user.name "$USER"
 

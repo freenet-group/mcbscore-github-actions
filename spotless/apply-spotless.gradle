@@ -1,8 +1,11 @@
+apply plugin: 'java'
 spotless {
     java {
-        target project.fileTree(project.rootDir) {
+        target project.fileTree(getRootDir()) {
             include '**/*.java'
             exclude '**/generated/**/*.*'
+            exclude '**/generated-sources/**/*.*'
+            exclude '**/generated-api/**/*.*'
             exclude 'spotless/*.*'
         }
         custom 'jalopy section comments', {
