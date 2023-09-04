@@ -191,7 +191,7 @@ jobs:
       - name: Release-Template ausfüllen
         id: update_release_template
         run: |
-          template_file=".github/workflows/templates/release_template.md"
+          template_file=".github/templates/release_template.md"
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
@@ -405,7 +405,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}.jar
-          body_path: ".github/workflows/templates/release_template.md"
+          body_path: ".github/templates/release_template.md"
           token: ${{ env.TOKEN }}
           generate_release_notes: true
           tag_name: ${{ steps.bump-semver.outputs.new_version }}
