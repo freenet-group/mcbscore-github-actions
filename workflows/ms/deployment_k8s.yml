@@ -211,7 +211,7 @@ jobs:
         fetch-depth: 0
     # Secrets aus AWS auslesen
     - name: Read and set AWS credentials
-      uses: ./actions/read-aws-secrets
+      uses: ./.github/actions/read-aws-secrets
       with:
         awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
         awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
