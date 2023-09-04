@@ -19,6 +19,7 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
+      DOCKER_ENABLED: false
       # expected aws properties
       USER: ''
       TOKEN: ''
@@ -190,7 +191,7 @@ jobs:
       - name: Release-Template ausfüllen
         id: update_release_template
         run: |
-          template_file=".github/actions/templates/release_template.md"
+          template_file=".github/workflows/templates/release_template.md"
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
@@ -404,7 +405,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}.jar
-          body_path: ".github/actions/templates/release_template.md"
+          body_path: ".github/workflows/templates/release_template.md"
           token: ${{ env.TOKEN }}
           generate_release_notes: true
           tag_name: ${{ steps.bump-semver.outputs.new_version }}
@@ -443,6 +444,21 @@ jobs:
               "environment": "dev",
               "component": "${{ env.COMPONENT }}", 
               "componentVersion": "${{ steps.bump-semver.outputs.new_version }}"
+            }
+
+      - name: Kubernetes Deployment Workflow starten
+        id: deployment_k8s
+        if: hashFiles('.github/**/deployment_k8s.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1.2.2
+        with:
+          workflow: K8s Deployment
+          token: ${{ env.TOKEN }}
+          inputs: >
+            {
+              "environment": "dev",
+              "component": "${{ env.COMPONENT }}",
+              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}",
+              "dryRun": "false"
             }
 
       - name: Developer Portal Upload starten
