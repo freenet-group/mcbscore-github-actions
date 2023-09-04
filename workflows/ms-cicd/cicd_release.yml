@@ -19,7 +19,6 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
-      DOCKER_ENABLED: false
       # expected aws properties
       USER: ''
       TOKEN: ''
@@ -122,6 +121,7 @@ jobs:
         uses: actions-ecosystem/action-get-latest-tag@v1
         with:
           initial_version: 0.0.0
+          semver_only: true
 
       - name: Semantic Version hochzählen
         id: bump-semver
@@ -174,19 +174,6 @@ jobs:
           projectKeyName: ${{ env.COVERAGE_APP }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
-      - name: Sonar-Coverage prüfen
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
-        uses: ./mcbscore/github/actions/create-sonar-issue
-        with:
-          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          jiraProject: ${{ env.JIRA_PROJECT }}
-          component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ steps.bump-semver.outputs.new_version }}
-          coverageLimit: ${{ env.COVERAGE_LIMIT }}
-          coverage: ${{ steps.fetch-coverage.outputs.coverage }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-
       - name: Tag einchecken
         uses: actions-ecosystem/action-push-tag@v1
         with:
@@ -203,7 +190,7 @@ jobs:
       - name: Release-Template ausfüllen
         id: update_release_template
         run: |
-          template_file=".github/actions/create-release-note/templates/release_template.md"
+          template_file=".github/actions/templates/release_template.md"
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
@@ -417,7 +404,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}.jar
-          body_path: ".github/actions/create-release-note/templates/release_template.md"
+          body_path: ".github/actions/templates/release_template.md"
           token: ${{ env.TOKEN }}
           generate_release_notes: true
           tag_name: ${{ steps.bump-semver.outputs.new_version }}
@@ -456,21 +443,6 @@ jobs:
               "environment": "dev",
               "component": "${{ env.COMPONENT }}", 
               "componentVersion": "${{ steps.bump-semver.outputs.new_version }}"
-            }
-
-      - name: Kubernetes Deployment Workflow starten
-        id: deployment_k8s
-        if: hashFiles('.github/**/deployment_k8s.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.2
-        with:
-          workflow: K8s Deployment
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "environment": "dev",
-              "component": "${{ env.COMPONENT }}",
-              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}",
-              "dryRun": "false"
             }
 
       - name: Developer Portal Upload starten
