@@ -21,7 +21,7 @@ runs:
     - shell: bash
       run : |
         token=$( ${{ github.action_path }}/getToken.sh ${{ inputs.clientId }} ${{ inputs.clientSecret }} ${{ inputs.tokenUrl }})
-        echo "accessToken=$token" >> $GITHUB_ENV
+        echo "accessToken=$token" >> $GITHUB_OUTPUT
 
 outputs:
   accessToken:
