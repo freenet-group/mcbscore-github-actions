@@ -228,24 +228,27 @@ jobs:
     outputs:
       componentName: ${{ env.JIRA_COMPONENT }}
 
-  deploy_k8s:
+  deploy_k8s_workflow_exists:
     runs-on: ubuntu-latest
     needs: create-deployment
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - id: FileExists
         run: |
           echo "k8sExists=${{hashFiles('**/deployment_k8s.yml')}}" >> "$GITHUB_OUTPUT"
+    outputs:
+      k8sWorkflowExists: ${{ steps.FileExists.outputs.k8sExists }}
 
-      - name: deploy_k8s
-        if: ${{ steps.FileExists.outputs.k8sExists != '' }
-        uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@main
-        with:
-          componentVersion: ${{ github.event.inputs.componentVersion }}
-          environment: ${{ github.event.inputs.environment }}
-          component: ${{ github.event.inputs.component }}
+  deploy_k8s:
+    needs: [create-deployment, deploy_k8s_workflow_exists]
+    if: ${{needs.deploy_k8s_workflow_exists.outputs.k8sWorkflowExists != ''}}
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@main
+    secrets: inherit
+    with:
+      componentVersion: ${{ github.event.inputs.componentVersion }}
+      environment: ${{ github.event.inputs.environment }}
+      component: ${{ github.event.inputs.component }}
 
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
