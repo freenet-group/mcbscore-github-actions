@@ -19,7 +19,6 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
-      DOCKER_ENABLED: false
       # expected aws properties
       USER: ''
       TOKEN: ''
