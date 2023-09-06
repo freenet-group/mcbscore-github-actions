@@ -148,8 +148,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          # Das ms-cicd Repo wird für die Weiterentwicklung und Testing benötigt
-          # - { name: ms-cicd, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
+          - { name: ms-cicd, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
           - { name: ms-commondata, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
           - { name: ms-contentprovider, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
     steps:
