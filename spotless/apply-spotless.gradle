@@ -1,4 +1,3 @@
-apply plugin: 'java'
 spotless {
     java {
         target project.fileTree(getRootDir()) {
@@ -46,9 +45,9 @@ spotless {
                     , '')
         }
         custom 'jalopy control comments to Eclipse', {
-            str -> str.replaceAll('(?xm) ^ ([ \\t\\f]*) // [ \\t\\f]* J- [ \\t\\f]* $', '$1// @formatter:off').
-                    replaceAll('(?xm) ^ ([ \\t\\f]*) // [ \\t\\f]* J[+] [ \\t\\f]* $', '$1// @formatter:on').
-                    replaceAll('(?xm) ^ [ \\t\\f]* // [ \\t\\f]* JDOC- [ \\t\\f]* \\n', '')
+            str -> str.replaceAll('(?xm) ^ ([\\ \\t\\f]*) // [\\ \\t\\f]* J- [\\ \\t\\f]* $', '$1// @formatter:off').
+                    replaceAll('(?xm) ^ ([\\ \\t\\f]*) // [\\ \\t\\f]* J[+] [\\ \\t\\f]* $', '$1// @formatter:on').
+                    replaceAll('(?xm) ^ [\\ \\t\\f]* // [\\ \\t\\f]* JDOC- [\\ \\t\\f]* \\r?\\n', '')
         }
         eclipse('4.21').configFile('spotless/MCBS-format.xml')
         licenseHeaderFile	'spotless/license.java'
