@@ -175,6 +175,7 @@ jobs:
         repository:
           - { name: ms-admin-dashboard, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-alteration, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-appcheck, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-authorities-information, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-billingaccount-frontend, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
