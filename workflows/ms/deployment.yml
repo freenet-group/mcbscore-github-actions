@@ -102,6 +102,7 @@ jobs:
       deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
 
   deploy:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     needs: create-deployment
     steps:
@@ -236,6 +237,7 @@ jobs:
 
   sanity_test:
     needs: [deploy, deploy_k8s]
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     steps:
       - name: Checkout Repository
@@ -310,6 +312,7 @@ jobs:
           authToken: "Bearer ${{ steps.getToken.outputs.accessToken }}"
 
   bambi-notification:
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     needs: [deploy, deploy_k8s]
     #Der Check success() ist nicht true bei geskippten workflows. !failure() dahingegen sieht geskippte nicht als failure und nur rote Steps
