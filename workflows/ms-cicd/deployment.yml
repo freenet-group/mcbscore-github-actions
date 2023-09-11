@@ -55,19 +55,24 @@ on:
         default: main
         type: string
 
+
+env:
+  ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+  ACTIONS_PATH: mcbscore/github
+  DEPLOYMENT_PATH: mcbscore/deployment
+  NODEJS_VERSION: 16
+
 jobs:
   create-deployment:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        # Repository auschecken
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Read and set AWS credentials
-        # Secrets aus AWS auslesen
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -76,7 +81,6 @@ jobs:
             /github/secrets/mcbs_token = TOKEN
 
       - name: Determine deployment ref
-        # DEPLOYMENT_REF Umgebungsvariable setzen
         shell: bash
         run: |
           if  [[ ${{ github.event.inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
@@ -98,17 +102,9 @@ jobs:
       deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
 
   deploy:
-    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     needs: create-deployment
-    env:
-      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
-      ACTIONS_PATH: mcbscore/github
-      DEPLOYMENT_PATH: mcbscore/deployment
-      NODEJS_VERSION: 16
-
     steps:
-      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
       - name: Change Owner to Runner User
         if: ${{ always() }}
         run: |
@@ -116,13 +112,11 @@ jobs:
           docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
       - name: Ensure clean workspace
-        # Leeren Workspace sicherstellen
         run: |
           echo "Cleaning up previous run"
           rm -rf *
 
       - name: Checkout Repository
-        # Repository auschecken unter $GITHUB_WORKSPACE
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -136,11 +130,10 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/deployment_user = DEPLOYMENT_USER,
             /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY,
-            /github/secrets/checkmk_user = CHECKMK_USER, 
+            /github/secrets/checkmk_user = CHECKMK_USER,
             /github/secrets/checkmk_password = CHECKMK_PW
 
       - name: checkout mcbscore-github-actions
-        # Die internen Actions auschecken
         uses: actions/checkout@v3
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
@@ -148,7 +141,6 @@ jobs:
           path: ${{ env.ACTIONS_PATH }}
           ref: ${{ inputs.actionsRepositoryBranch }}
 
-      # Auschecken des Deployment Repositories
       - name: Checkout Deployment Data / Scripts
         uses: actions/checkout@v3
         with:
@@ -156,10 +148,6 @@ jobs:
           token: ${{ env.TOKEN }}
           path: ${{ env.DEPLOYMENT_PATH }}
           ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
-
-      # ##################################################################################
-      # Initialize Workflow
-      # ##################################################################################
 
       - name: Initialize Workflow
         uses: ./mcbscore/github/actions/init-workflow
@@ -177,8 +165,7 @@ jobs:
           targetPath: './${{ env.DEPLOYMENT_PATH }}/release'
           token: ${{ env.TOKEN }}
 
-      # Standard Deployment
-      - name: Deployment
+      - name: Standard Deployment
         id: deployRelease
         if: ${{ github.event.inputs.additionalDeploymentComponent == '' }}
         uses: ./mcbscore/github/actions/deploy-microservice
@@ -193,8 +180,7 @@ jobs:
           sshKey: ${{ env.SSH_KEY }}
           dockerRegistryToken: ${{ env.TOKEN }}
 
-      # Custom Deployment
-      - name: Deployment
+      - name: Custom Deployment
         id: additionalDeployment
         if: ${{ github.event.inputs.additionalDeploymentComponent != '' }}
         uses: ./mcbscore/github/actions/deploy-microservice
@@ -207,7 +193,6 @@ jobs:
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
           sshKey: ${{ env.SSH_KEY }}
 
-      # Deployment als erfolgreich markieren
       - name: Update deployment status (success)
         if: success()
         uses: chrnorm/deployment-status@v2
@@ -216,7 +201,6 @@ jobs:
           state: "success"
           deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
-      # Deployment als fehlerhaft markieren
       - name: Update deployment status (failure)
         if: failure()
         uses: chrnorm/deployment-status@v2
@@ -250,14 +234,87 @@ jobs:
       environment: ${{ github.event.inputs.environment }}
       component: ${{ github.event.inputs.component }}
 
-  bambi-notification:
-    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted, k8s]
+  sanity_test:
     needs: [deploy, deploy_k8s]
+    runs-on: [self-hosted, k8s]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: AWS Secrets für Sanity-Test auslesen
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.client.mcbs-test-client.clientId = SANITY_CLIENT_ID,
+            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.client.mcbs-test-client.clientSecret = SANITY_CLIENT_SECRET,
+            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.base.url = SANITY_STS_URL,
+            /config/ms/application_${{ github.event.inputs.environment}}/api.gateway.md.${{ github.event.inputs.environment}}.base.url = SANITY_API_GATEWAY
+
+      - name: Read workflow.properties
+        shell: bash
+        run: |
+          cat ./.github/workflow.properties >> $GITHUB_ENV
+
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
+
+      - name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJava: true
+          installNodeJs: true
+          installJq: true
+
+      - name: Prüfe ob SanityTest.feature existiert und aktiviert ist
+        id: checkFeatureFileExists
+        run: |
+          # Disable sanity tests if feature file does not exist
+          if [[ "${{ env.SANITY_TESTS_ENABLED }}" == "false" ]]; then
+            echo "sanityTestExists=false" >> "$GITHUB_OUTPUT"
+          else
+            # Check if feature file exists
+            if [[ -z "${{ hashFiles('**/sanityTests/*.feature') }}" ]]; then
+              echo "sanityTestExists=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "sanityTestExists=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Token holen
+        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
+        id: getToken
+        uses: ./mcbscore/github/actions/get-application-token
+        with:
+          clientId: ${{ env.SANITY_CLIENT_ID }}
+          clientSecret: ${{ env.SANITY_CLIENT_SECRET }}
+          tokenUrl: ${{ env.SANITY_STS_URL }}/v1/oidc/token
+
+      - name: Karate Tests ausführen
+        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
+        uses: DasBen/karate-action@0.1.0
+        with:
+          karateVersion: ${{ env.KARATE_VERSION }}
+          baseUrl: ${{ env.SANITY_API_GATEWAY }}
+          testDir: './sanityTests'
+          testFilePath: 'SanityTest.feature'
+          authToken: "Bearer ${{ steps.getToken.outputs.accessToken }}"
+
+  bambi-notification:
+    runs-on: [self-hosted, k8s]
+    needs: [deploy, deploy_k8s, sanity_test]
     #Der Check success() ist nicht true bei geskippten workflows. !failure() dahingegen sieht geskippte nicht als failure und nur rote Steps
     if: ${{ always() && !failure() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
-      # Deployment als erfolgreich melden
       - name: Report deployment status
         shell: bash
         run: |
@@ -277,7 +334,7 @@ jobs:
           echo "Result: $curlResult"
           statusCode="${curlResult:${#curlResult}-3}"
           echo "statusCode: $statusCode"
-          
+
           if [[ "statusCode" -ge "400" ]]; then
             echo "Result: $curlResult"
             exit 1
