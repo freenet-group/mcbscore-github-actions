@@ -373,14 +373,14 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, workflows: "../check, build, ../encoding", needsJava8: "false" }
-          - { name: mcbscore-bot, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "true" }
-          - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "false" }
-          - { name: mcbscore-customer-search-index, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "false" }
-          - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "false" }
-          - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "false" }
-          - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", needsJava8: "true" }
-          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding", needsJava8: "false" }
+          - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, workflows: "../check, build, ../encoding", javaVersion: "17" }
+          - { name: mcbscore-bot, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", javaVersion: "8" }
+          - { name: mcbscore-changelog-editor, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", javaVersion: "17" }
+          - { name: mcbscore-customer-search-index, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", javaVersion: "17" }
+          - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", javaVersion: "17" }
+          - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", javaVersion: "17" }
+          - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild", javaVersion: "8" }
+          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding", javaVersion: "17" }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -453,61 +453,56 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-mandel, branch: develop, group: mandel, needsJava8: "true" }
-          - { name: mcbs-master, branch: develop, group: mcbs, needsJava8: "true" }
-          - { name: metis, branch: develop, group: metis, needsJava8: "false" }
-          # - { name: metis-pricing, branch: develop, group: metis, needsJava8: "false" }
-          # - { name: metis-businessfacade, branch: develop, group: metis, needsJava8: "false" }
-          - { name: ms-commondata, branch: develop, group: ms-cicd, needsJava8: "false" }
-          - { name: ms-admin-dashboard, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-agreement, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-appcheck, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-authorities-information, branch: develop, group: ms, needsJava8: "false" }	
-          - { name: ms-billingaccount-frontend, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-businessinteraction-router, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-businesstransaction, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-configserver, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-contentprovider, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-customerchange, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-customerproduct, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-delegate, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-delegate-test, branch: main, group: ms, needsJava8: "false" }
-          - { name: ms-deployment, branch: main, group: ms-deployment, needsJava8: "false" }
-          - { name: ms-discovery, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-elasticupdate, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-event-relay, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-find, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-freeprint-router, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-gateway, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-homer, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-invoice, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-mandel, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-mark, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-note-router, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-oidc, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-oms-router, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-proxy-support, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-rating, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-usageprices, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-user, branch: develop, group: ms, needsJava8: "false" }
-          - { name: ms-user-cleanup, branch: develop, group: ms, needsJava8: "false" }
-          - { name: mslib-aws, branch: develop, group: mslib, needsJava8: "false" }
-          - { name: mslib-rest, branch: develop, group: mslib, needsJava8: "false" }
-          - { name: mcbscore-billing-prototype-ca, branch: develop, group: standard, needsJava8: "false" }
-          - { name: mcbscore-bot, branch: develop, group: standard, needsJava8: "true" }
-          - { name: mcbscore-changelog-editor, branch: develop, group: standard, needsJava8: "false" }
-          - { name: mcbscore-customer-search-index, branch: develop, group: standard, needsJava8: "false" }
-          - { name: mcbscore-db-replica, branch: develop, group: standard, needsJava8: "false" }
-          - { name: mcbscore-es-plugin-collection, branch: develop, needsJava8: "false" }
-          - { name: mcbscore-framework, branch: develop, group: standard, needsJava8: "true" }
-          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, needsJava8: "false" }
-          - { name: mcbscore-business-transaction-service, branch: develop, group: zap, needsJava8: "true" }
-          - { name: mcbscore-contract-service, branch: develop, group: zap, needsJava8: "true"}
-          - { name: mcbscore-fee-service, branch: develop, group: zap, needsJava8: "true"}
-          - { name: mcbscore-invoice-service, branch: develop, group: zap, needsJava8: "true"}
-          - { name: mcbscore-mark-service, branch: develop, group: zap, needsJava8: "true"}
-          - { name: mcbscore-network-service, branch: develop, group: zap, needsJava8: "true"}
-          - { name: mcbscore-party-service, branch: develop, group: zap, needsJava8: "true"}          
+          - { name: mcbscore-mandel, branch: develop, group: mandel, javaVersion: "8" }
+          - { name: mcbs-master, branch: develop, group: mcbs, javaVersion: "8" }
+          - { name: metis, branch: develop, group: metis, javaVersion: "17" }
+          - { name: ms-commondata, branch: develop, group: ms-cicd, javaVersion: "17" }
+          - { name: ms-admin-dashboard, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-agreement, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-appcheck, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-authorities-information, branch: develop, group: ms, javaVersion: "17" }	
+          - { name: ms-billingaccount-frontend, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-businessinteraction-router, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-businesstransaction, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-configserver, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-contentprovider, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-customerchange, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-customerproduct, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-delegate, branch: develop, group: ms, javaVersion: "8" }
+          - { name: ms-discovery, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-elasticupdate, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-event-relay, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-find, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-freeprint-router, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-gateway, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-homer, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-invoice, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-mandel, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-mark, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-note-router, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-oidc, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-oms-router, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-proxy-support, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-rating, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-usageprices, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-user, branch: develop, group: ms, javaVersion: "17" }
+          - { name: ms-user-cleanup, branch: develop, group: ms, javaVersion: "17" }
+          - { name: mslib-aws, branch: develop, group: mslib, javaVersion: "17" }
+          - { name: mslib-rest, branch: develop, group: mslib, javaVersion: "17" }
+          - { name: mcbscore-bot, branch: develop, group: standard, javaVersion: "8" }
+          - { name: mcbscore-changelog-editor, branch: develop, group: standard, javaVersion: "17" }
+          - { name: mcbscore-customer-search-index, branch: develop, group: standard, javaVersion: "17" }
+          - { name: mcbscore-db-replica, branch: develop, group: standard, javaVersion: "17" }
+          - { name: mcbscore-es-plugin-collection, branch: develop, javaVersion: "17" }
+          - { name: mcbscore-framework, branch: develop, group: standard, javaVersion: "8" }
+          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, javaVersion: "17" }
+          - { name: mcbscore-business-transaction-service, branch: develop, group: zap, javaVersion: "8" }
+          - { name: mcbscore-contract-service, branch: develop, group: zap, javaVersion: "8"}
+          - { name: mcbscore-fee-service, branch: develop, group: zap, javaVersion: "8"}
+          - { name: mcbscore-invoice-service, branch: develop, group: zap, javaVersion: "8"}
+          - { name: mcbscore-mark-service, branch: develop, group: zap, javaVersion: "8"}
+          - { name: mcbscore-network-service, branch: develop, group: zap, javaVersion: "8"}
+          - { name: mcbscore-party-service, branch: develop, group: zap, javaVersion: "8"}          
 
     steps:
       - uses: actions/checkout@v3

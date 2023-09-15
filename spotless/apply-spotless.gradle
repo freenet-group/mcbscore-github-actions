@@ -6,6 +6,7 @@ spotless {
             exclude '**/generated-sources/**/*.*'
             exclude '**/generated-api/**/*.*'
             exclude 'spotless/*.*'
+            exclude '**/ApiUtil.java'
         }
         custom 'jalopy section comments', {
             str -> str.replaceAll('(?xsm)' +
@@ -49,9 +50,8 @@ spotless {
                     replaceAll('(?xm) ^ ([\\ \\t\\f]*) // [\\ \\t\\f]* J[+] [\\ \\t\\f]* $', '$1// @formatter:on').
                     replaceAll('(?xm) ^ [\\ \\t\\f]* // [\\ \\t\\f]* JDOC- [\\ \\t\\f]* \\r?\\n', '')
         }
-        eclipse('4.21').configFile('spotless/MCBS-format.xml')
+        eclipse().configFile('spotless/MCBS-format.xml')
         licenseHeaderFile	'spotless/license.java'
-        importOrderFile		'spotless/mcbs.importorder'
         removeUnusedImports()
     }
 }

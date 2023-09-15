@@ -17,10 +17,9 @@ inputs:
   awsSecretAccessKey:
     description: AWS Secret Access Key
     required: true
-  needsJava8:
-    description: Ob die Java8-Version verwendet werden soll
-    required: false
-    default: "false"
+  javaVersion:
+    description: Welche Java-Version von Spotless verwendet werden soll
+    required: true
 
 runs:
   using: "composite"
@@ -43,13 +42,21 @@ runs:
         path: ${{ inputs.repositoryName }}
         ref: ${{ inputs.repositoryBranch }}
 
-     - name: Add or replace spotless-files
+    # JAVA installieren
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: zulu
+        java-version: ${{ inputs.javaVersion }}
+
+    # Spotless akualisieren
+    - name: Add or replace spotless-files
       env:
         thisRepository: ${{ github.repository }}
         thisWorkflow: ${{ github.workflow }}
         repositoryGroup: ${{ inputs.repositoryGroup }}
         repositoryName: ${{ inputs.repositoryName }}
-        needsJava8: ${{ inputs.needsJava8 }}
+        javaVersion: ${{ inputs.javaVersion }}
       shell: bash
       run: |
         # spotless-Ordner erstellen (falls nicht vorhanden)
@@ -60,7 +67,7 @@ runs:
         mkdir -p -- "$spotlessDirectory"
         
         # Gradle-Datei bestimmen
-        if [[ "$needsJava8" == "true" ]]; then
+        if [[ "$javaVersion" == "8" ]]; then
           gradleFile=spotless/apply-spotless-java8.gradle
         else
           gradleFile=spotless/apply-spotless.gradle
@@ -77,7 +84,11 @@ runs:
           mkdir -p -- "$ideaDirectory"
         fi
         cp -v -- spotless/idea-config/eclipseCodeFormatter.xml $ideaDirectory
+
+        # spotless mit der neuen Konfiguratuion ausführen
+        sh gradlew spotlessApply
         
+        # Änderungen einchecken
         git config user.email "tp.sd.back.mcbs@freenet.ag"
         git config user.name "$USER"
 
@@ -86,7 +97,7 @@ runs:
 
         if [ -n "$changesDetected" ]; then
           echo "git commit + push"
-          git commit -av -m "Github Workflows aktualisiert"
+          git commit -av -m "Spotless aktualisiert"
           git push
         else
           echo "kein git commit"
