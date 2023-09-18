@@ -469,7 +469,7 @@ jobs:
           - { name: ms-contentprovider, branch: develop, group: ms, javaVersion: "17" }
           - { name: ms-customerchange, branch: develop, group: ms, javaVersion: "17" }
           - { name: ms-customerproduct, branch: develop, group: ms, javaVersion: "17" }
-          - { name: ms-delegate, branch: develop, group: ms, javaVersion: "8" }
+          - { name: ms-delegate, branch: develop, group: ms, javaVersion: "11" }
           - { name: ms-discovery, branch: develop, group: ms, javaVersion: "17" }
           - { name: ms-elasticupdate, branch: develop, group: ms, javaVersion: "17" }
           - { name: ms-event-relay, branch: develop, group: ms, javaVersion: "17" }
