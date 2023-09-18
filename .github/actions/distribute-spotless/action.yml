@@ -57,8 +57,6 @@ runs:
         repositoryGroup: ${{ inputs.repositoryGroup }}
         repositoryName: ${{ inputs.repositoryName }}
         javaVersion: ${{ inputs.javaVersion }}
-        GITHUB_USER: ${{ env.USER }}
-        GITHUB_TOKEN: ${{ env.TOKEN }}
       shell: bash
       run: |
         # spotless-Ordner erstellen (falls nicht vorhanden)
@@ -89,11 +87,11 @@ runs:
         cp -v -- $spotlessDirectory/idea-config/eclipseCodeFormatter.xml $ideaDirectory
 
         # spotless mit der neuen Konfiguratuion ausführen
-        sh gradlew spotlessApply
+        sh gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} spotlessApply
         
         # Änderungen einchecken
         git config user.email "tp.sd.back.mcbs@freenet.ag"
-        git config user.name "$GITHUB_USER"
+        git config user.name "$USER"
 
         # git status
         changesDetected=$(git status --porcelain)
