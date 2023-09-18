@@ -521,3 +521,5 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           javaVersion: ${{ matrix.repository.javaVersion }}
+          artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
+          artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}

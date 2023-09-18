@@ -20,6 +20,12 @@ inputs:
   javaVersion:
     description: Welche Java-Version von Spotless verwendet werden soll
     required: true
+  artifactoryUserName:
+    description: Login für das Artifactory
+    required: true
+  artifactoryPassword:
+    description: Passwort für das Artifactory
+    required: true
 
 runs:
   using: "composite"
@@ -57,8 +63,8 @@ runs:
         repositoryGroup: ${{ inputs.repositoryGroup }}
         repositoryName: ${{ inputs.repositoryName }}
         javaVersion: ${{ inputs.javaVersion }}
-        artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
-        artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
+        artifactoryUserName: ${{ inputs.artifactoryUserName }}
+        artifactoryPassword: ${{ inputs.artifactoryPassword }}
       shell: bash
       run: |
         # spotless-Ordner erstellen (falls nicht vorhanden)
