@@ -6,6 +6,8 @@ spotless {
             include '**/*.java'
             exclude '**/generated/**/*.*'
             exclude 'spotless/*.*'
+            exclude '**/generated-sources/**/*.*'
+            exclude '**/generated-api/**/*.*'
         }
         custom 'jalopy section comments', {
             str -> str.replaceAll('(?xsm)' +
