@@ -57,6 +57,8 @@ runs:
         repositoryGroup: ${{ inputs.repositoryGroup }}
         repositoryName: ${{ inputs.repositoryName }}
         javaVersion: ${{ inputs.javaVersion }}
+        artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
+        artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
       shell: bash
       run: |
         # spotless-Ordner erstellen (falls nicht vorhanden)
@@ -85,9 +87,9 @@ runs:
           mkdir -p -- "$ideaDirectory"
         fi
         cp -v -- $spotlessDirectory/idea-config/eclipseCodeFormatter.xml $ideaDirectory
-
+          
         # spotless mit der neuen Konfiguratuion ausführen
-        sh gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} spotlessApply
+        sh gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${artifactoryUserName} -PartifactoryPassword=${artifactoryPassword} spotlessApply
         
         # Änderungen einchecken
         git config user.email "tp.sd.back.mcbs@freenet.ag"
