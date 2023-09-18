@@ -57,6 +57,8 @@ runs:
         repositoryGroup: ${{ inputs.repositoryGroup }}
         repositoryName: ${{ inputs.repositoryName }}
         javaVersion: ${{ inputs.javaVersion }}
+        GITHUB_USER: ${{ env.USER }}
+        GITHUB_TOKEN: ${{ env.TOKEN }}
       shell: bash
       run: |
         # spotless-Ordner erstellen (falls nicht vorhanden)
@@ -91,7 +93,7 @@ runs:
         
         # Änderungen einchecken
         git config user.email "tp.sd.back.mcbs@freenet.ag"
-        git config user.name "$USER"
+        git config user.name "$GITHUB_USER"
 
         # git status
         changesDetected=$(git status --porcelain)

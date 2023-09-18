@@ -457,7 +457,7 @@ jobs:
           # - { name: mcbscore-mandel, branch: develop, group: mandel, javaVersion: "8" }
           # - { name: mcbs-master, branch: develop, group: mcbs, javaVersion: "8" }
           # - { name: metis, branch: develop, group: metis, javaVersion: "17" }
-          # - { name: ms-commondata, branch: develop, group: ms-cicd, javaVersion: "17" }
+          # - { name: ms-commondata, branch: develop, group: ms-cicd, javaVersion: "17" } neues CA, nicht verteilen
           # - { name: ms-admin-dashboard, branch: develop, group: ms, javaVersion: "17" }
           # - { name: ms-agreement, branch: develop, group: ms, javaVersion: "17" }
           # - { name: ms-appcheck, branch: develop, group: ms, javaVersion: "17" }
