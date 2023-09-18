@@ -61,29 +61,30 @@ runs:
       run: |
         # spotless-Ordner erstellen (falls nicht vorhanden)
         workingDirectory=$(pwd)
-        spotlessDirectory=${workingDirectory}/${repositoryName}/spotless
+        spotlessDirectory=${workingDirectory}/spotless
+        spotlessTargetDirectory=${workingDirectory}/${repositoryName}/spotless
         ideaDirectory=${workingDirectory}/${repositoryName}/.idea
         cd -- "$repositoryName"
-        mkdir -p -- "$spotlessDirectory"
+        mkdir -p -- "$spotlessTargetDirectory"
         
         # Gradle-Datei bestimmen
         if [[ "$javaVersion" == "8" ]]; then
-          gradleFile=spotless/apply-spotless-java8.gradle
+          gradleFile=$spotlessDirectory/apply-spotless-java8.gradle
         else
-          gradleFile=spotless/apply-spotless.gradle
+          gradleFile=$spotlessDirectory/apply-spotless.gradle
         fi
 
         # spotless-Dateien kopieren
         printf 'copying spotless-files\n'
         cp -v -- $gradleFile ${workingDirectory}/${repositoryName}
-        cp -v -- spotless/spotless-config/* $spotlessDirectory
+        cp -v -- $spotlessDirectory/spotless-config/* $spotlessTargetDirectory
 
         # Idea-Konfiguration kopieren
         printf 'copying idea-eclipseformatter.xml\n'
         if [ ! -d "$ideaDirectory" ]; then
           mkdir -p -- "$ideaDirectory"
         fi
-        cp -v -- spotless/idea-config/eclipseCodeFormatter.xml $ideaDirectory
+        cp -v -- $spotlessDirectory/idea-config/eclipseCodeFormatter.xml $ideaDirectory
 
         # spotless mit der neuen Konfiguratuion ausführen
         sh gradlew spotlessApply
