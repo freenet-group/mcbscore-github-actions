@@ -141,3 +141,41 @@ runs:
         else
           echo "kein git commit"
         fi
+
+    # Checkout the target repository
+    - uses: actions/checkout@v3
+      with:
+        repository: freenet-group/${{ inputs.repositoryName }}
+        token: ${{ env.TOKEN }}
+        path: ${{ inputs.repositoryName }}
+        ref: ${{ inputs.repositoryBranch }}
+
+    # Clean up existing templates and Copy new templates
+    - name: Manage templates
+      shell: bash
+      run: |
+        # Cleanup
+        rm -rf ${{ inputs.repositoryName }}/.github/templates
+        
+        # Copy new templates
+        mkdir -p ${{ inputs.repositoryName }}/.github/templates
+        cp ./templates/* ${{ inputs.repositoryName }}/.github/templates/
+        
+        # Stage changes
+        cd ${{ inputs.repositoryName }}
+        git add -A .github/templates/
+
+    # Commit and Push changes
+    - name: Commit and Push
+      shell: bash
+      run: |
+        cd ${{ inputs.repositoryName }}
+        git config user.email "it.abr.abba.entw@md.de"
+        git config user.name "$USER"
+        changesDetected=$(git status --porcelain)
+        if [ -n "$changesDetected" ]; then
+          git commit -m "Update templates"
+          git push
+        else
+          echo "No changes to commit"
+        fi

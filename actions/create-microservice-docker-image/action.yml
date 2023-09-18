@@ -39,7 +39,7 @@ runs:
         actionDir='${{ github.action_path }}'
 
         if ! "${enabled:-true}"; then
-          printf 'DOCKER_ENABLED == %s => kein Docker build\n' "$dockerEnabled"
+          printf 'DOCKER_ENABLED == %s => kein Docker build\n' "$enabled"
           exit 0
         fi
 

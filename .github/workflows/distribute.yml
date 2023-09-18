@@ -152,6 +152,7 @@ jobs:
           # Das ms-cicd Repo wird für die Weiterentwicklung und Testing benötigt
           # - { name: ms-cicd, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
           - { name: ms-commondata, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
+          - { name: ms-contentprovider, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
     steps:
       - uses: actions/checkout@v3
         with:
@@ -175,6 +176,7 @@ jobs:
         repository:
           - { name: ms-admin-dashboard, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-alteration, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-appcheck, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-authorities-information, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-billingaccount-frontend, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
@@ -185,7 +187,6 @@ jobs:
           - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod,deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
-          - { name: ms-delegate-test, branch: main, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-deployment, branch: main, group: ms-deployment, workflows: "deployment_k8s" }
           - { name: ms-discovery, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }

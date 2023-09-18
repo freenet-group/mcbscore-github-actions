@@ -3,7 +3,7 @@ name: K8s Deployment
 run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.component }} ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
 
 on:
-#für direkten workflow start über githubactions
+  #für direkten workflow start über githubactions
   workflow_dispatch:
     inputs:
       component:
@@ -67,7 +67,7 @@ on:
         description: Nicht deployen, nur Helm Chart Ergebnis anzeigen (helm --dry-run)
         required: false
         default: false
-        
+
 
 #Nur ein k8s Workflow darf gleichzeitg gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
 concurrency:
@@ -87,114 +87,114 @@ jobs:
   build-matrix:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Select Github Secrets for AWS
-        uses: ./.github/actions/select-aws-github-secrets
-        with:
-          environment: ${{ inputs.environment }}
-          awsAccessKeyId:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
-          awsSecretAccessKey:     ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+    - name: Select Github Secrets for AWS
+      uses: ./.github/actions/select-aws-github-secrets
+      with:
+        environment: ${{ inputs.environment }}
+        awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+        awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
 
-      - name: Read AWS Secrets
-        uses: ./.github/actions/read-aws-secrets
-        with:
-          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          awsParameterPairs: |
-            /github/secrets/mcbs_token = GITHUB_TOKEN
+    - name: Read AWS Secrets
+      uses: ./.github/actions/read-aws-secrets
+      with:
+        awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+        awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        awsParameterPairs: |
+          /github/secrets/mcbs_token = GITHUB_TOKEN
 
+    - name: Checkout Deployment Data / Scripts
       # Auschecken des Deployment Repositories
-      - name: Checkout Deployment Data / Scripts
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ env.DEPLOYMENT_REPO }}
-          token: ${{ env.GITHUB_TOKEN }}
-          path: ${{ env.DEPLOYMENT_PATH }}
-          ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ env.DEPLOYMENT_REPO }}
+        token: ${{ env.GITHUB_TOKEN }}
+        path: ${{ env.DEPLOYMENT_PATH }}
+        ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
 
-      # Java installieren (für jrunscript in ms_properties_to_json.sh)
-      - name: Set up JDK
-        uses: actions/setup-java@v3
-        with:
-          distribution: zulu
-          # eine Version mit jrunscript
-          java-version: ${{ env.JAVA_VERSION }}
+    # Java installieren (für jrunscript in ms_properties_to_json.sh)
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: zulu
+        # eine Version mit jrunscript
+        java-version: ${{ env.JAVA_VERSION }}
 
-      # jq installieren
-      - name: Setup jq
-        uses: freenet-actions/setup-jq@v2
+    # jq installieren
+    - name: Setup jq
+      uses: freenet-actions/setup-jq@v2
 
-      # Prüft, ob ein Verzeichnis für die Komponente in /deployment/properties/ existiert
-      - name: Check component name
-        id: component-check
-        shell: bash
-        run: |
-          component='${{ github.event.inputs.component }}'
-          if [ ! -d "./${DEPLOYMENT_PATH}/properties/${component}" ]; then
-              printf 'Der Name der Komponente "%s" existiert nicht\n' "${DEPLOYMENT_REPO}/properties/${component}" >&2
-              exit 1
-          fi
+    # Prüft, ob ein Verzeichnis für die Komponente in /deployment/properties/ existiert
+    - name: Check component name
+      id: component-check
+      shell: bash
+      run: |
+        component='${{ github.event.inputs.component }}'
+        if [ ! -d "./${DEPLOYMENT_PATH}/properties/${component}" ]; then
+            printf 'Der Name der Komponente "%s" existiert nicht\n' "${DEPLOYMENT_REPO}/properties/${component}" >&2
+            exit 1
+        fi
 
+    - name: Init Job Matrix
       # Github Job-Matrix entsprechend domains aus kubernetes-deployment*.json oder deployment*.properties initialisieren
-      - name: Init Job Matrix
-        id: set-matrix
-        shell: bash
-        run: |
-          component='${{ github.event.inputs.component }}'
-          environment='${{ github.event.inputs.environment }}'
-          domains=
+      id: set-matrix
+      shell: bash
+      run: |
+        component='${{ github.event.inputs.component }}'
+        environment='${{ github.event.inputs.environment }}'
+        domains=
 
-          for f in \
-              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json" \
-              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment.json" \
-              "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.json" \
-              "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.properties" \
-              "./${DEPLOYMENT_PATH}/properties/${component}/deployment.properties"
-          do
-            if [ -z "$domains" -a -e "$f" ]; then
-              echo "Prüfe domains in $f"
-              domains=$(
-                if [[ "$f" == *.json ]]; then
-                  cat -- "$f"
-                else
-                  "./${DEPLOYMENT_PATH}/scripts/common/properties_to_json.sh" < "$f"
-                fi \
-                | jq -c -r 'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
-                # ^ ohne Domains: Leerstring => jq -r gibt nichts aus => if [ -z "$domains" ] bleibt true.
-                # mit Domains: jq split Ergebnis ist Array (z.B. ["km","mc"]); jq ignoriert -r.
-              )
-            fi
-          done
-          printf 'domains: %s\n' "$domains"
+        for f in \
+            "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json" \
+            "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment.json" \
+            "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.json" \
+            "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.properties" \
+            "./${DEPLOYMENT_PATH}/properties/${component}/deployment.properties"
+        do
+          if [ -z "$domains" -a -e "$f" ]; then
+            echo "Prüfe domains in $f"
+            domains=$(
+              if [[ "$f" == *.json ]]; then
+                cat -- "$f"
+              else
+                "./${DEPLOYMENT_PATH}/scripts/common/properties_to_json.sh" < "$f"
+              fi \
+              | jq -c -r 'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
+              # ^ ohne Domains: Leerstring => jq -r gibt nichts aus => if [ -z "$domains" ] bleibt true.
+              # mit Domains: jq split Ergebnis ist Array (z.B. ["km","mc"]); jq ignoriert -r.
+            )
+          fi
+        done
+        printf 'domains: %s\n' "$domains"
 
-          # Ergebnis: domains JSON Array wie ["km","mc"] oder Default ["-"]
-          echo "domainMatrix=${domains:-[\"-\"]}" >> $GITHUB_OUTPUT
+        # Ergebnis: domains JSON Array wie ["km","mc"] oder Default ["-"]
+        echo "domainMatrix=${domains:-[\"-\"]}" >> $GITHUB_OUTPUT
 
+    - name: Check for deployment
       # Prüft, ob deployed werden soll
-      - name: Check for deployment
-        id: deployment-check
-        shell: bash
-        run: |
-          component='${{ github.event.inputs.component }}'
-          environment='${{ github.event.inputs.environment }}'
+      id: deployment-check
+      shell: bash
+      run: |
+        component='${{ github.event.inputs.component }}'
+        environment='${{ github.event.inputs.environment }}'
 
-          enabled=$(
-            for f in \
-              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment.json" \
-              "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json"
-            do
-              printf '%s existiert' "$f" >&2
-              if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
-            done | jq -s -r 'add | .enabled'
-          )
+        enabled=$(
+          for f in \
+            "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment.json" \
+            "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json"
+          do
+            printf '%s existiert' "$f" >&2
+            if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
+          done | jq -s -r 'add | .enabled'
+        )
 
-          echo "deploymentEnabled=$enabled" >> $GITHUB_OUTPUT
+        echo "deploymentEnabled=$enabled" >> $GITHUB_OUTPUT
 
     outputs:
       deployment-enabled: ${{ steps.deployment-check.outputs.deploymentEnabled }}
@@ -205,38 +205,37 @@ jobs:
     needs: build-matrix
     if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
     steps:
-      # Secrets aus AWS auslesen
-      - name: Read and set AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'eu-central-1'
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    # Secrets aus AWS auslesen
+    - name: Read and set AWS credentials
+      uses: ./.github/actions/read-aws-secrets
+      with:
+        awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        awsParameterPairs: |
+          /github/secrets/mcbs_token = TOKEN
 
-      - name: Read AWS Parameters
-        uses: dkershner6/aws-ssm-getparameters-action@v1
-        with:
-          parameterPairs: |
-            /github/secrets/mcbs_token = TOKEN
-
+    - name: Determine deployment ref
       # DEPLOYMENT_REF Umgebungsvariable setzen
-      - name: Determine deployment ref
-        shell: bash
-        run: |
-          if  [[ ${{ github.event.inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
-          then
-            echo "DEPLOYMENT_REF=develop" >> $GITHUB_ENV
-          else
-            echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
-          fi
+      shell: bash
+      run: |
+        if  [[ ${{ github.event.inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
+        then
+          echo "DEPLOYMENT_REF=develop" >> $GITHUB_ENV
+        else
+          echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
+        fi
 
-      - name: Create GitHub deployment
-        uses: chrnorm/deployment-action@v2
-        id: create-deployment
-        with:
-          token: ${{ env.TOKEN }}
-          environment: ${{ github.event.inputs.environment }}
-          ref: ${{ env.DEPLOYMENT_REF }}
+    - name: Create GitHub deployment
+      uses: chrnorm/deployment-action@v2
+      id: create-deployment
+      with:
+        token: ${{ env.TOKEN }}
+        environment: ${{ github.event.inputs.environment }}
+        ref: ${{ env.DEPLOYMENT_REF }}
 
     outputs:
       deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
@@ -253,114 +252,114 @@ jobs:
       matrix:
         domain: ${{ fromJson(needs.build-matrix.outputs.domain-matrix) }}
     steps:
-      # Leeren Workspace sicherstellen
-      - name: Ensure clean workspace
-        run: |
+    # Leeren Workspace sicherstellen
+    - name: Ensure clean workspace
+      run: |
           echo "Cleaning up previous run"
           chown -R "$(id -u):$(id -g)" . || true
           # verstecke Dateien auch entfernen 
           # https://askubuntu.com/questions/740805/how-can-i-remove-all-files-from-current-directory-using-terminal
           shopt -s dotglob
           rm -rf *
+          
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+    - name: Select Github Secrets for AWS
+      uses: ./.github/actions/select-aws-github-secrets
+      with:
+        environment: ${{ inputs.environment }}
+        awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+        awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
 
-      - name: Select Github Secrets for AWS
-        uses: ./.github/actions/select-aws-github-secrets
-        with:
-          environment: ${{ inputs.environment }}
-          awsAccessKeyId:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
-          awsSecretAccessKey:     ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+    - name: Read AWS Secrets
+      uses: ./.github/actions/read-aws-secrets
+      with:
+        awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+        awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        awsParameterPairs: |
+          /github/secrets/mcbs_token = GITHUB_TOKEN,
+          /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY
 
-      - name: Read AWS Secrets
-        uses: ./.github/actions/read-aws-secrets
-        with:
-          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          awsParameterPairs: |
-            /github/secrets/mcbs_token = GITHUB_TOKEN,
-            /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY
-
+    - name: Checkout Deployment Data / Scripts
       # Auschecken des Deployment Repositories
-      - name: Checkout Deployment Data / Scripts
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ env.DEPLOYMENT_REPO }}
-          token: ${{ env.GITHUB_TOKEN }}
-          path: ${{ env.DEPLOYMENT_PATH }}
-          ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ env.DEPLOYMENT_REPO }}
+        token: ${{ env.GITHUB_TOKEN }}
+        path: ${{ env.DEPLOYMENT_PATH }}
+        ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
 
-      # jq installieren
-      - name: Setup jq
-        uses: freenet-actions/setup-jq@v2
+    # jq installieren
+    - name: Setup jq
+      uses: freenet-actions/setup-jq@v2
 
-      # ssh Konfig
-      - name: Setup ssh
-        if: env.SSH_KEY != ''
-        shell: bash
-        run: |
-          printf '' > "$GENERATED_SSH_KEY_FILE"
-          chmod 600 -- "$GENERATED_SSH_KEY_FILE"
-          printf %s "$SSH_KEY" >> "$GENERATED_SSH_KEY_FILE"
-          ls -lAF -- "$GENERATED_SSH_KEY_FILE"
+    # ssh Konfig
+    - name: Setup ssh
+      if: env.SSH_KEY != ''
+      shell: bash
+      run: |
+        printf '' > "$GENERATED_SSH_KEY_FILE"
+        chmod 600 -- "$GENERATED_SSH_KEY_FILE"
+        printf %s "$SSH_KEY" >> "$GENERATED_SSH_KEY_FILE"
+        ls -lAF -- "$GENERATED_SSH_KEY_FILE"
 
+    # Quelle von "sourceType": "FILE" Secrets.
+    - name: Copy keystore files
       # Keystore-Dateien herunterladen
       # Werden vom Workflow selbst nicht gebraucht, aber evtl per kubernetes-deployment*.json als
-      # Quelle von "sourceType": "FILE" Secrets.
-      - name: Copy keystore files
-        if: env.KEY_SERVER != ''
-        shell: bash
-        run: |
-          certServer='${{ secrets.CERT_SERVER }}'
-          if scp -i "$GENERATED_SSH_KEY_FILE" -o StrictHostKeyChecking=no -p \
-              "${certServer}:oidc/keys/keystore.jwks" "${certServer}:oidc/keys/samlKeystore.jks" \
-              docker/home/oidc/keys/; then
-            ls -lA docker/home/oidc/keys
-          else
-            echo 'Keine Keystore-Dateien kopiert (aber vielleicht ja gar nicht gefordert)'
-          fi
+      if: env.KEY_SERVER != ''
+      shell: bash
+      run: |
+        certServer='${{ secrets.CERT_SERVER }}'
+        if scp -i "$GENERATED_SSH_KEY_FILE" -o StrictHostKeyChecking=no -p \
+            "${certServer}:oidc/keys/keystore.jwks" "${certServer}:oidc/keys/samlKeystore.jks" \
+            docker/home/oidc/keys/; then
+          ls -lA docker/home/oidc/keys
+        else
+          echo 'Keine Keystore-Dateien kopiert (aber vielleicht ja gar nicht gefordert)'
+        fi
 
+    - name: Deploy to K8s
       # Haupt-Deployment-Action
-      - name: Deploy to K8s
-        uses: ./.github/actions/deploy-to-k8s
-        with:
-          component: ${{ inputs.component }}
-          domain: ${{ matrix.domain }}
-          componentVersion: ${{ inputs.componentVersion }}
-          environment: ${{ inputs.environment }}
-          dryRun: ${{ inputs.dryRun }}
-          timeout: ${{ inputs.timeout }}
-          maxWaitForDeployment: ${{ inputs.maxWaitForDeployment }}
-          deploymentPath: ${{ env.DEPLOYMENT_PATH }}
-          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
+      uses: ./.github/actions/deploy-to-k8s
+      with:
+        component: ${{ inputs.component }}
+        domain: ${{ matrix.domain }}
+        componentVersion: ${{ inputs.componentVersion }}
+        environment: ${{ inputs.environment }}
+        dryRun: ${{ inputs.dryRun }}
+        timeout: ${{ inputs.timeout }}
+        maxWaitForDeployment: ${{ inputs.maxWaitForDeployment }}
+        deploymentPath: ${{ env.DEPLOYMENT_PATH }}
+        awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+        awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
 
-      # Deployment als erfolgreich markieren
-      - name: Update deployment status (success)
-        if: success()
-        uses: chrnorm/deployment-status@v2
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
-          state: "success"
-          deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
+    # Deployment als erfolgreich markieren
+    - name: Update deployment status (success)
+      if: success()
+      uses: chrnorm/deployment-status@v2
+      with:
+        token: ${{ env.GITHUB_TOKEN }}
+        state: "success"
+        deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
-      # Deployment als fehlerhaft markieren
-      - name: Update deployment status (failure)
-        if: failure()
-        uses: chrnorm/deployment-status@v2
-        with:
-          token: ${{ env.GITHUB_TOKEN }}
-          state: "failure"
-          deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
+    # Deployment als fehlerhaft markieren
+    - name: Update deployment status (failure)
+      if: failure()
+      uses: chrnorm/deployment-status@v2
+      with:
+        token: ${{ env.GITHUB_TOKEN }}
+        state: "failure"
+        deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
-      - name: Cleanup
-        if: ${{ always() }}
-        run: |
-          set +e
-          rm -rfv -- docker/home/oidc/keys *.generated.json
-          rm -rf /__w/_tool/*
+    - name: Cleanup
+      if: ${{ always() }}
+      run: |
+        set +e
+        rm -rfv -- docker/home/oidc/keys *.generated.json
+        rm -rf /__w/_tool/*
