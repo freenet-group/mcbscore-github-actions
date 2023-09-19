@@ -72,7 +72,7 @@ runs:
     # jq installieren
     - name: Setup jq
       if: ${{ inputs.installJq == 'true' }}
-      uses: freenet-actions/setup-jq@v2
+      uses: freenet-actions/setup-jq@v3
 
     # Github CLI installieren
     - name: Setup Github CLI
