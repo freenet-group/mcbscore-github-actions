@@ -72,6 +72,7 @@ runs:
         spotlessDirectory=${workingDirectory}/spotless
         spotlessTargetDirectory=${workingDirectory}/${repositoryName}/spotless
         ideaDirectory=${workingDirectory}/${repositoryName}/.idea
+        gradleFile="${workingDirectory}/${repositoryName}/build.gradle"
         cd -- "$repositoryName"
         mkdir -p -- "$spotlessTargetDirectory"
         
@@ -93,9 +94,13 @@ runs:
           mkdir -p -- "$ideaDirectory"
         fi
         cp -v -- $spotlessDirectory/idea-config/eclipseCodeFormatter.xml $ideaDirectory
-          
-        # spotless mit der neuen Konfiguratuion ausführen
-        sh gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${artifactoryUserName} -PartifactoryPassword=${artifactoryPassword} spotlessApply
+
+        if [ `grep -c "apply-spotless" $gradleFile` -eq 1 ]; then          
+          # spotless mit der neuen Konfiguratuion ausführen
+          sh gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${artifactoryUserName} -PartifactoryPassword=${artifactoryPassword} spotlessApply
+        else
+          echo "apply-spotless* nicht gefunden, keine Ausführung von spotlessApply!"
+        fi
         
         # Änderungen einchecken
         git config user.email "tp.sd.back.mcbs@freenet.ag"
