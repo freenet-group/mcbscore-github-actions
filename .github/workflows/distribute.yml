@@ -454,9 +454,9 @@ jobs:
     strategy:
       matrix:
         repository:
-          # - { name: mcbscore-mandel, branch: develop, group: mandel, javaVersion: "8" } PR noch offen
+          - { name: mcbscore-mandel, branch: develop, group: mandel, javaVersion: "8" }
           - { name: mcbs-master, branch: develop, group: mcbs, javaVersion: "8" }
-          # - { name: metis, branch: develop, group: metis, javaVersion: "17" } PR noch offen
+          - { name: metis, branch: develop, group: metis, javaVersion: "17" }
           # - { name: ms-commondata, branch: develop, group: ms-cicd, javaVersion: "17" } neues CA, nicht verteilen
           - { name: ms-admin-dashboard, branch: develop, group: ms, javaVersion: "17" }
           - { name: ms-agreement, branch: develop, group: ms, javaVersion: "17" }
@@ -493,15 +493,15 @@ jobs:
           - { name: mcbscore-bot, branch: develop, group: standard, javaVersion: "8" }
           - { name: mcbscore-changelog-editor, branch: develop, group: standard, javaVersion: "17" }
           - { name: mcbscore-customer-search-index, branch: develop, group: standard, javaVersion: "17" }
-          # - { name: mcbscore-db-replica, branch: develop, group: standard, javaVersion: "17" } PR noch offen
+          - { name: mcbscore-db-replica, branch: develop, group: standard, javaVersion: "17" }
           - { name: mcbscore-es-plugin-collection, branch: develop, javaVersion: "17" }
           - { name: mcbscore-framework, branch: develop, group: standard, javaVersion: "8" }
           - { name: mcbscore-business-transaction-service, branch: develop, group: zap, javaVersion: "8" }
           - { name: mcbscore-contract-service, branch: develop, group: zap, javaVersion: "8"}
           - { name: mcbscore-fee-service, branch: develop, group: zap, javaVersion: "8"}
-          # - { name: mcbscore-invoice-service, branch: develop, group: zap, javaVersion: "8"} PR noch offen
+          - { name: mcbscore-invoice-service, branch: develop, group: zap, javaVersion: "8"}
           - { name: mcbscore-mark-service, branch: develop, group: zap, javaVersion: "8"}
-          # - { name: mcbscore-network-service, branch: develop, group: zap, javaVersion: "8"} PR noch offen
+          - { name: mcbscore-network-service, branch: develop, group: zap, javaVersion: "8"}
           - { name: mcbscore-party-service, branch: develop, group: zap, javaVersion: "8"}
           - { name: mcbscore-yaml-transform-plugin, branch: develop, group: zap, javaVersion: "8"}
           - { name: scaffold-clean-architecture-gradle-plugin, branch: develop, group: standard, javaVersion: "17" }
