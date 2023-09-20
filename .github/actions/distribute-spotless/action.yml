@@ -1,0 +1,118 @@
+name: 'Distribute Spotless'
+description: 'Action zur Verteilung der spotless-Dateien für Java-Anwendungen'
+
+inputs:
+  repositoryName:
+    description: Der Name des Repositories
+    required: true
+  repositoryGroup:
+    description: Die Gruppe der Repositories
+    required: true
+  repositoryBranch:
+    description: Der Branch des Repositories
+    required: true
+  awsAccessKeyId:
+    description: AWS Access Key Id
+    required: true
+  awsSecretAccessKey:
+    description: AWS Secret Access Key
+    required: true
+  javaVersion:
+    description: Welche Java-Version von Spotless verwendet werden soll
+    required: true
+  artifactoryUserName:
+    description: Login für das Artifactory
+    required: true
+  artifactoryPassword:
+    description: Passwort für das Artifactory
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - id: read-aws-secrets
+      name: Read AWS Secrets
+      uses: ./actions/read-aws-secrets
+      with:
+        awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
+        awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
+        awsParameterPairs: |
+          /github/secrets/mcbs_token = TOKEN,
+          /github/secrets/mcbs_user = USER
+
+    # Ziel-Repository auschecken
+    - uses: actions/checkout@v3
+      with:
+        repository: freenet-group/${{ inputs.repositoryName }}
+        token: ${{ env.TOKEN }}
+        path: ${{ inputs.repositoryName }}
+        ref: ${{ inputs.repositoryBranch }}
+
+    # JAVA installieren
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: zulu
+        java-version: ${{ inputs.javaVersion }}
+
+    # Spotless akualisieren
+    - name: Add or replace spotless-files
+      env:
+        thisRepository: ${{ github.repository }}
+        thisWorkflow: ${{ github.workflow }}
+        repositoryGroup: ${{ inputs.repositoryGroup }}
+        repositoryName: ${{ inputs.repositoryName }}
+        javaVersion: ${{ inputs.javaVersion }}
+        artifactoryUserName: ${{ inputs.artifactoryUserName }}
+        artifactoryPassword: ${{ inputs.artifactoryPassword }}
+      shell: bash
+      run: |
+        # spotless-Ordner erstellen (falls nicht vorhanden)
+        workingDirectory=$(pwd)
+        spotlessDirectory=${workingDirectory}/spotless
+        spotlessTargetDirectory=${workingDirectory}/${repositoryName}/spotless
+        ideaDirectory=${workingDirectory}/${repositoryName}/.idea
+        gradleFile="${workingDirectory}/${repositoryName}/build.gradle"
+        cd -- "$repositoryName"
+        mkdir -p -- "$spotlessTargetDirectory"
+        
+        # Gradle-Datei bestimmen
+        if [[ "$javaVersion" == "8" ]]; then
+          gradleFile=$spotlessDirectory/apply-spotless-java8.gradle
+        else
+          gradleFile=$spotlessDirectory/apply-spotless.gradle
+        fi
+
+        # spotless-Dateien kopieren
+        printf 'copying spotless-files\n'
+        cp -v -- $gradleFile ${workingDirectory}/${repositoryName}
+        cp -v -- $spotlessDirectory/spotless-config/* $spotlessTargetDirectory
+
+        # Idea-Konfiguration kopieren
+        printf 'copying idea-eclipseformatter.xml\n'
+        if [ ! -d "$ideaDirectory" ]; then
+          mkdir -p -- "$ideaDirectory"
+        fi
+        cp -v -- $spotlessDirectory/idea-config/eclipseCodeFormatter.xml $ideaDirectory
+
+        if [ `grep -c "apply-spotless" $gradleFile` -eq 1 ]; then          
+          # spotless mit der neuen Konfiguratuion ausführen
+          sh gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${artifactoryUserName} -PartifactoryPassword=${artifactoryPassword} spotlessApply
+        else
+          echo "apply-spotless* nicht gefunden, keine Ausführung von spotlessApply!"
+        fi
+        
+        # Änderungen einchecken
+        git config user.email "tp.sd.back.mcbs@freenet.ag"
+        git config user.name "$USER"
+
+        # git status
+        changesDetected=$(git status --porcelain)
+
+        if [ -n "$changesDetected" ]; then
+          echo "git commit + push"
+          git commit -av -m "Spotless aktualisiert"
+          git push
+        else
+          echo "kein git commit"
+        fi
