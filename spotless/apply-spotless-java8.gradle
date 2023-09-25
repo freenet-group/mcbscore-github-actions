@@ -6,6 +6,7 @@ spotless {
             include '**/*.java'
             exclude '**/generated/**/*.*'
             exclude 'spotless/*.*'
+            exclude 'mcbscore/github/*.*'
             exclude '**/generated-sources/**/*.*'
             exclude '**/generated-api/**/*.*'
         }
