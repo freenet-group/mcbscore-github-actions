@@ -95,8 +95,7 @@ runs:
         fi
         cp -v -- $spotlessDirectory/idea-config/eclipseCodeFormatter.xml $ideaDirectory
 
-        echo "gradleFile: $gradleFile"
-        grep -c "apply-spotless" $gradleFile
+        echo "checking $gradleFile..."
 
         if [ `grep -c "apply-spotless" $gradleFile` -eq 1 ]; then          
           # spotless mit der neuen Konfiguratuion ausführen
