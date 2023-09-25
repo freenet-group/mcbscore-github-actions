@@ -78,14 +78,14 @@ runs:
         
         # Gradle-Datei bestimmen
         if [[ "$javaVersion" == "8" ]]; then
-          gradleFile=$spotlessDirectory/apply-spotless-java8.gradle
+          spotlessGradleFile=$spotlessDirectory/apply-spotless-java8.gradle
         else
-          gradleFile=$spotlessDirectory/apply-spotless.gradle
+          spotlessGradleFile=$spotlessDirectory/apply-spotless.gradle
         fi
 
         # spotless-Dateien kopieren
         printf 'copying spotless-files\n'
-        cp -v -- $gradleFile ${workingDirectory}/${repositoryName}
+        cp -v -- $spotlessGradleFile ${workingDirectory}/${repositoryName}
         cp -v -- $spotlessDirectory/spotless-config/* $spotlessTargetDirectory
 
         # Idea-Konfiguration kopieren
