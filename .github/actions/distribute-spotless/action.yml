@@ -72,7 +72,7 @@ runs:
         spotlessDirectory=${workingDirectory}/spotless
         spotlessTargetDirectory=${workingDirectory}/${repositoryName}/spotless
         ideaDirectory=${workingDirectory}/${repositoryName}/.idea
-        gradleFile="${workingDirectory}/${repositoryName}/build.gradle"
+        gradleFile=${workingDirectory}/${repositoryName}/build.gradle
         cd -- "$repositoryName"
         mkdir -p -- "$spotlessTargetDirectory"
         
@@ -94,6 +94,9 @@ runs:
           mkdir -p -- "$ideaDirectory"
         fi
         cp -v -- $spotlessDirectory/idea-config/eclipseCodeFormatter.xml $ideaDirectory
+
+        echo "gradleFile: $gradleFile"
+        grep -c "apply-spotless" $gradleFile
 
         if [ `grep -c "apply-spotless" $gradleFile` -eq 1 ]; then          
           # spotless mit der neuen Konfiguratuion ausführen
