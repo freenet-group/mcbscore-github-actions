@@ -9,8 +9,7 @@ on:
 
 jobs:
   issue_state:
-    # self-hosted Runner für den Systeminternen Zugriff
-    runs-on: [self-hosted, vm]
+    runs-on: ubuntu-latest
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
