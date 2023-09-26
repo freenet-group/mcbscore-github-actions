@@ -1,5 +1,5 @@
 name: DeveloperPortal Upload
-#run-name: DeveloperPortal Upload von  ${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }} für ${{ github.event.inputs.environment }}
+run-name: DeveloperPortal Upload von  ${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }} für ${{ github.event.inputs.environment }}
 
 on:
   workflow_dispatch:
@@ -28,6 +28,7 @@ on:
 jobs:
   developerPortalUpload:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    # TODO: ubuntu-latest benutzen? ms-deployment und Action sind in Github
     runs-on: [self-hosted, k8s]
     strategy:
       matrix:
@@ -38,6 +39,7 @@ jobs:
       ACTIONS_PATH: mcbscore/github
       DEPLOYMENT_PATH: mcbscore/deployment
       NODEJS_VERSION: 12
+      PORTAL_URL: 'https://developer-portal-api.prod.developers.md.de/v2/specifications'
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -116,6 +118,12 @@ jobs:
       #     stage: ${{ github.event.inputs.environment }}
       #     tagPrefix: ${{ github.event.inputs.tagPrefix }}
       #     componentConfigPath: ${{ env.DEPLOYMENT_PATH }}
+
+    - name: get API-ID
+      run: |
+       # TODO: API-ID auslesen
+       echo "API_ID=someApiId" >> "$GITHUB_ENV"       
+        
     - name: Checkout Github Action
       uses: actions/checkout@v4
       with:
@@ -125,13 +133,31 @@ jobs:
           ref: refs/heads/main
           persistent-credentials: false
           path: ./.github/actions/developer-portal-actions
-    - uses: ./.github/actions/developer-portal-actions/publish-api-spec
+
+    # Client-API ins Portal hochladen
+    - name: Publish API Spec (client/open-api)
+        if: ${{ matrix.type }} == 'open-api' && hashFiles('.apiDoc/${{ github.event.inputs.component }}_client_${{ matrix.version }}.yml') != ''
+      uses: ./.github/actions/developer-portal-actions/publish-api-spec
       with:
-          portalUrl: 'https://developer-portal-api.prod.developers.md.de/v2/specifications'
-          documentPath: ./testdata/petstore.yaml # zusammengesetzter Pfad zur Yaml
+          portalUrl: ${{ env.PORTAL_URL }}
+          documentPath: .apiDoc/${{ github.event.inputs.component }}_client_${{ matrix.version }}.yml
           stage: ${{ github.event.inputs.environment }}
           maturityLevel:  ${{ matrix.type }}
-          apiId: '9e950a2b-efbe-4db9-b500-8c9cedc98f1f' # ID aus ms-deployment
-          version: '1.0.0' # Version aus Übergabe
+          apiId: ${{ env.API_ID }}
+          version: ${{ github.event.inputs.componentVersion }}
+          clientId: ${{ env.CLIENT_ID_STS }}
+          clientSecret: ${{ env.CLIENT_SECRET_STS }}
+
+    # System-API ins Portal hochladen
+    - name: Publish API Spec (system/system-api)
+        if: ${{ matrix.type }} == 'system-api' && hashFiles('.apiDoc/${{ github.event.inputs.component }}_system_${{ matrix.version }}.yml') != ''
+      uses: ./.github/actions/developer-portal-actions/publish-api-spec
+      with:
+          portalUrl: ${{ env.PORTAL_URL }}
+          documentPath: .apiDoc/${{ github.event.inputs.component }}_system_${{ matrix.version }}.yml
+          stage: ${{ github.event.inputs.environment }}
+          maturityLevel:  ${{ matrix.type }}
+          apiId: ${{ env.API_ID }}
+          version: ${{ github.event.inputs.componentVersion }}
           clientId: ${{ env.CLIENT_ID_STS }}
           clientSecret: ${{ env.CLIENT_SECRET_STS }}
