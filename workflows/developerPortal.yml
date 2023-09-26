@@ -1,5 +1,5 @@
 name: DeveloperPortal Upload
-run-name: DeveloperPortal Upload von  ${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }} für ${{ github.event.inputs.environment }}
+#run-name: DeveloperPortal Upload von  ${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }} für ${{ github.event.inputs.environment }}
 
 on:
   workflow_dispatch:
@@ -29,6 +29,10 @@ jobs:
   developerPortalUpload:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
+    strategy:
+      matrix:
+        type: [open-api, system-api]
+        version: [v1, v2]
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
@@ -104,11 +108,30 @@ jobs:
           token: ${{ env.TOKEN }}
 
       # Developer Portal Upload
-      - name: Developer Portal Upload
-        uses: ./mcbscore/github/actions/developer-portal-upload
-        with:
-          component: ${{ github.event.inputs.component }}
-          componentVersion: ${{ github.event.inputs.componentVersion }}
+      # - name: Developer Portal Upload
+      #   uses: ./mcbscore/github/actions/developer-portal-upload
+      #   with:
+      #     component: ${{ github.event.inputs.component }}
+      #     componentVersion: ${{ github.event.inputs.componentVersion }}
+      #     stage: ${{ github.event.inputs.environment }}
+      #     tagPrefix: ${{ github.event.inputs.tagPrefix }}
+      #     componentConfigPath: ${{ env.DEPLOYMENT_PATH }}
+    - name: Checkout Github Action
+      uses: actions/checkout@v4
+      with:
+          # For accessing to this Action a service account with a personal access token in this repo is necessary.
+          token: ${{ env.TOKEN }}
+          repository: freenet-group/developer-portal-actions
+          ref: refs/heads/main
+          persistent-credentials: false
+          path: ./.github/actions/developer-portal-actions
+    - uses: ./.github/actions/developer-portal-actions/publish-api-spec
+      with:
+          portalUrl: 'https://developer-portal-api.prod.developers.md.de/v2/specifications'
+          documentPath: ./testdata/petstore.yaml # zusammengesetzter Pfad zur Yaml
           stage: ${{ github.event.inputs.environment }}
-          tagPrefix: ${{ github.event.inputs.tagPrefix }}
-          componentConfigPath: ${{ env.DEPLOYMENT_PATH }}
+          maturityLevel:  ${{ matrix.type }}
+          apiId: '9e950a2b-efbe-4db9-b500-8c9cedc98f1f' # ID aus ms-deployment
+          version: '1.0.0' # Version aus Übergabe
+          clientId: ${{ env.CLIENT_ID_STS }}
+          clientSecret: ${{ env.CLIENT_SECRET_STS }}
