@@ -121,10 +121,113 @@ jobs:
 
     - name: get API-ID
       run: |
-       # TODO: API-ID auslesen
-       echo "API_ID=someApiId" >> "$GITHUB_ENV"       
+        set -e
+
+        function evalValue() {
+          local value="$1"
+
+          # printf statt echo um zu verhindern, dass ein Teil von $value als echo-Option interpretiert wird
+          function echo-safe() { printf ' %s' "$@" | cut --characters=2-; }
+          eval echo-safe "$value"
+        }
+
+        # Liest Properties-Dateien und setzt ein assoziatives Array mit den Werten daraus.
+        # Parameter:
+        # - $1: Variablenname (z.B. DEPLOYMENT_PROPS); muss vorher vom Aufrufer als assoziatives Array deklariert werden
+        # - $2, ...: Property-Datei-Name(n); spätere überschreiben ehere
+        # => Setzt z.B.: DEPLOYMENT_PROPS['api.name']='customer'
+        function readPropertiesIntoMap() {
+          local jsCode tmpFile
+          tmpFile=$(mktemp)
+          jsCode=$(cat <<'EOF'
+            argsList = new java.util.LinkedList(java.util.Arrays.asList(arguments));
+            varName = argsList.removeFirst();
+            p = new java.util.Properties();
+            argsList.forEach(function(filename) {
+              file = new java.io.File(filename);
+              if (!file.exists()) { return }
+
+              err.println("lese " + filename);
+              // Properties.load dokumentiert nicht die Überschreibe-Prio.
+              // => Sicherheitshalber in separate Properties laden
+              pTemp = new java.util.Properties();
+              inputStream = new java.io.FileInputStream(file);
+              try { pTemp.load(inputStream); } finally { inputStream.close(); }
+              p.putAll(pTemp); // ist eigentlich auch nicht sicher, weil pTemp's Defaults verloren gehen
+            });
+            p.forEach(function(k,v) {
+              // Bash-Code wird in dieser Form ausgegeben: z.B.
+              // DEPLOYMENT_PROPS['root.dir']='/home/xy'
+              // Quoting von einfachen Anführungszeichen (angenommen Key "root'dir", Wert "/ho'me/xy"):
+              // DEPLOYMENT_PROPS['root'\''dir']=['/ho'\''me/xy']
+              // (d.h. ein ' zum String beenden, ein \' für literalen ', ein ' zu String fortsetzen).
+              // Backslash doppeln für JavaScript-String und nochmal gegen replaceAll-Interpretation.
+              kq = k.replaceAll("'", "'\\\\''");
+              vq = v.replaceAll("'", "'\\\\''");
+
+              out.format("%s['%s']='%s'\n", varName, kq, vq);
+            });
+        EOF
+          )
+          jrunscript -e "$jsCode" "$@" > "$tmpFile"
+          cat -- "$tmpFile"
+          source -- "$tmpFile"
+          rm -f -- "$tmpFile"
+        }
+
+        environment=${{ env.STAGE }}
+        echo "environment: $environment"
+
+        # Einlesen der Backend Version
+        componentVersion=${{ env.COMPONENT_VERSION }}
+        echo "componentVersion: $componentVersion"
+
+        declare -A DEPLOYMENT_PROPS
+        : ${GENERIC_DEPLOYMENT_FILE:=./$COMPONENT_CONFIG_PATH/properties/$COMPONENT/deployment.properties}
+        : ${DEPLOYMENT_FILE:=./$COMPONENT_CONFIG_PATH/properties/$COMPONENT/deployment-$environment.properties}
+        readPropertiesIntoMap DEPLOYMENT_PROPS "$GENERIC_DEPLOYMENT_FILE" "$DEPLOYMENT_FILE"
+
+        # ${deployment.api.name}
+        apiName=$(evalValue "${DEPLOYMENT_PROPS[api.name]}")
+        echo "apiName: $apiName"
+
+        if [[ "${{ matrix.type }}" == "open-api" ]]; then
+          # ${deployment.public.api.ids}
+          publicApiVersions=$(evalValue "${DEPLOYMENT_PROPS[public.api.ids]}")
+          echo "publicApiVersions: $publicApiVersions"
+          for publicApiVersion in $publicApiVersions; do
+            versionAndIdArray=(${publicApiVersion//:/ })            
+            apiVersion=${versionAndIdArray[0]}
+            echo "apiVersion: ${apiVersion}"
+            publicApiId=${versionAndIdArray[1]}
+            echo "publicApiId: $publicApiId"
+            if [[ "$apiVersion" == "${{ matrix.version }}" ]]; then
+               echo "API_ID=$publicApiId" >> "$GITHUB_ENV"
+               publicApiPath=./apiDoc/${apiName}_client_${apiVersion}_${environment}.yaml
+               echo "publicApiPath: $publicApiPath"
+               echo "API_PATH=$publicApiPath" >> "$GITHUB_ENV"               
+            fi            
+          done
+        else         
+          # ${deployment.system.api.ids}
+          systemApiVersions=$(evalValue "${DEPLOYMENT_PROPS[system.api.ids]}")
+          echo "systemApiVersions: $systemApiVersions"
+          for systemApiVersion in $systemApiVersions; do
+            versionAndIdArray=(${systemApiVersion//:/ })
+            apiVersion=${versionAndIdArray[0]}
+            echo "apiVersion: ${apiVersion}"
+            systemApiId=${versionAndIdArray[1]}
+            echo "systemApiId: $systemApiId"
+            if [[ "$apiVersion" == "${{ matrix.version }}" ]]; then
+               echo "API_ID=$systemApiId" >> "$GITHUB_ENV"
+               systemApiPath=./apiDoc/${apiName}_system_${apiVersion}_${environment}.yaml
+               echo "systemApiPath: $systemApiPath"
+               echo "API_PATH=$systemApiPath" >> "$GITHUB_ENV"
+            fi
+          done
+        fi
         
-    - name: Checkout Github Action
+    - name: Checkout Portal Action
       uses: actions/checkout@v4
       with:
           # For accessing to this Action a service account with a personal access token in this repo is necessary.
@@ -134,27 +237,13 @@ jobs:
           persistent-credentials: false
           path: ./.github/actions/developer-portal-actions
 
-    # Client-API ins Portal hochladen
+    # API ins Portal hochladen
     - name: Publish API Spec (client/open-api)
-        if: ${{ matrix.type }} == 'open-api' && hashFiles('.apiDoc/${{ github.event.inputs.component }}_client_${{ matrix.version }}.yml') != ''
+        if: hashFiles('${{ env.API_PATH }}') != ''
       uses: ./.github/actions/developer-portal-actions/publish-api-spec
       with:
           portalUrl: ${{ env.PORTAL_URL }}
-          documentPath: .apiDoc/${{ github.event.inputs.component }}_client_${{ matrix.version }}.yml
-          stage: ${{ github.event.inputs.environment }}
-          maturityLevel:  ${{ matrix.type }}
-          apiId: ${{ env.API_ID }}
-          version: ${{ github.event.inputs.componentVersion }}
-          clientId: ${{ env.CLIENT_ID_STS }}
-          clientSecret: ${{ env.CLIENT_SECRET_STS }}
-
-    # System-API ins Portal hochladen
-    - name: Publish API Spec (system/system-api)
-        if: ${{ matrix.type }} == 'system-api' && hashFiles('.apiDoc/${{ github.event.inputs.component }}_system_${{ matrix.version }}.yml') != ''
-      uses: ./.github/actions/developer-portal-actions/publish-api-spec
-      with:
-          portalUrl: ${{ env.PORTAL_URL }}
-          documentPath: .apiDoc/${{ github.event.inputs.component }}_system_${{ matrix.version }}.yml
+          documentPath:  ${{ env.API_PATH }}
           stage: ${{ github.event.inputs.environment }}
           maturityLevel:  ${{ matrix.type }}
           apiId: ${{ env.API_ID }}
