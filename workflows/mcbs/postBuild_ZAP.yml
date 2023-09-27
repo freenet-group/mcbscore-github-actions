@@ -230,17 +230,3 @@ jobs:
           purpose: MCBSBuild
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}
-
-      # ##################################################################################
-      # Issue zur BE-Integration
-      # ##################################################################################
-      - name: Create BE-Issue
-        uses: ./mcbscore/github/actions/create-backend-issue
-        with:
-          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
-          epic: ${{ github.event.inputs.epic }}
-          hasDbChanges: ${{ steps.fetch-additional-information.outputs.sql }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
