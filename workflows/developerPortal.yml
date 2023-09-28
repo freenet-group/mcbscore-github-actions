@@ -215,7 +215,7 @@ jobs:
             token: ${{ env.TOKEN }}
             repository: freenet-group/developer-portal-actions
             ref: refs/heads/main
-            persistent-credentials: false
+            persist-credentials: false
             path: ./.github/actions/developer-portal-actions
 
       # API ins Portal hochladen
