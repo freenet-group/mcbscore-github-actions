@@ -27,9 +27,7 @@ on:
 
 jobs:
   developerPortalUpload:
-    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    # TODO: ubuntu-latest benutzen? ms-deployment und Action sind in Github
-    runs-on: [self-hosted, k8s]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         type: [open-api, system-api]
@@ -42,19 +40,6 @@ jobs:
       PORTAL_URL: 'https://developer-portal-api.prod.developers.md.de/v2/specifications'
 
     steps:
-      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
-      - name: Change Owner to Runner User
-        if: ${{ always() }}
-        run: |
-          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
-          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
-
-      # Leeren Workspace sicherstellen
-      - name: Ensure clean workspace
-        run: |
-          echo "Cleaning up previous run"
-          rm -rf *
-
       # Repository auschecken unter $GITHUB_WORKSPACE
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -196,7 +181,7 @@ jobs:
                 publicApiPath=./apiDoc/${apiName}_client_${apiVersion}_${environment}.yaml
                 echo "publicApiPath: $publicApiPath"
                 echo "API_PATH=$publicApiPath" >> "$GITHUB_ENV"               
-              fi            
+              fi         
             done
           else         
             # ${deployment.system.api.ids}
@@ -220,7 +205,7 @@ jobs:
           COMPONENT: ${{ github.event.inputs.component }}
           COMPONENT_VERSION: ${{ github.event.inputs.componentVersion }}
           COMPONENT_CONFIG_PATH: ${{ env.DEPLOYMENT_PATH }}
-          STAGE: ${{ github.event.inputs.stage }}
+          STAGE: ${{ github.event.inputs.environment }}
           MATRIX_VERSION: ${{ matrix.version }}
           MATRIX_TYPE: ${{ matrix.type }}
       - name: Checkout Portal Action
@@ -234,8 +219,8 @@ jobs:
             path: ./.github/actions/developer-portal-actions
 
       # API ins Portal hochladen
-      - name: Publish API Spec (client/open-api)
-          if: hashFiles('${{ env.API_PATH }}') != ''
+      - name: Publish API Spec
+        if: env.API_PATH != ''
         uses: ./.github/actions/developer-portal-actions/publish-api-spec
         with:
             portalUrl: ${{ env.PORTAL_URL }}
