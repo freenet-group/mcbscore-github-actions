@@ -102,7 +102,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../ms/deployment_k8s, ../developerPortal, ../encoding, postBuild_MCBS, postBuild_MS, postBuild_ZAP, sonarqube, MCBS-Freigabe, refcalls_deployment,setPRIssueDone" }
+          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, deployment_k8s, ../developerPortal, ../encoding, postBuild_MCBS, postBuild_MS, postBuild_ZAP, sonarqube, MCBS-Freigabe, refcalls_deployment,setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
