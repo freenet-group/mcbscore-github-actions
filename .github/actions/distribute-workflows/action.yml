@@ -35,7 +35,7 @@ runs:
           /github/secrets/mcbs_user = USER
 
     # Ziel Repository auschecken
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         repository: freenet-group/${{ inputs.repositoryName }}
         token: ${{ env.TOKEN }}
@@ -143,7 +143,7 @@ runs:
         fi
 
     # Checkout the target repository
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         repository: freenet-group/${{ inputs.repositoryName }}
         token: ${{ env.TOKEN }}

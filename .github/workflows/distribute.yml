@@ -38,7 +38,7 @@ jobs:
         repository:
           - { name: aws-ms-events, branch: develop, group: aws, workflows: "build, deployment, deployment_dev, deployment_git, deployment_playground, deployment_prod, remove, remove_dev, remove_git, remove_playground, remove_prod" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -60,7 +60,7 @@ jobs:
         repository:
           - { name: md-error-codes, branch: main, group: errorcodes, workflows: "../check, build" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -82,7 +82,7 @@ jobs:
         repository:
           - { name: mcbscore-mandel, branch: develop, group: mandel, workflows: "../check, build, ../encoding, postBuild" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -102,9 +102,9 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../ms/deployment_k8s, ../developerPortal, ../encoding, postBuild_MCBS, postBuild_MS, postBuild_ZAP, sonarqube, MCBS-Freigabe, refcalls_deployment,setPRIssueDone" }
+          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, deployment_k8s, ../developerPortal, ../encoding, postBuild_MCBS, postBuild_MS, postBuild_ZAP, sonarqube, MCBS-Freigabe, refcalls_deployment,setPRIssueDone" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -128,7 +128,7 @@ jobs:
           - { name: metis-ui, branch: develop, group: metis, workflows: "../check, ui/build, ui/deployment, ui/deployment_dev, ui/deployment_test, ui/deployment_prod, ui/deployment_k8s, ../encoding" }
           - { name: metis, branch: develop, group: metis, workflows: "../check, ../encoding, backend/build, backend/postBuild, backend/dbChanges, backend/deployment, ../ms/deployment_k8s, backend/rest-deployment, backend/database-init" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -153,7 +153,7 @@ jobs:
           - { name: ms-commondata, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
           - { name: ms-contentprovider, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, deployment_k8s, setPRIssueDone" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -182,7 +182,6 @@ jobs:
           - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_k8s, postBuild,setPRIssueDone" }
           - { name: ms-businesstransaction, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_k8s, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-configserver, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
-          - { name: ms-contentprovider, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod,deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
@@ -206,7 +205,7 @@ jobs:
           - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, deployment_k8s, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s, ../encoding, postBuild,setPRIssueDone" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -229,7 +228,7 @@ jobs:
           - { name: mslib-aws, branch: develop, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mslib-rest, branch: develop, group: mslib, workflows: "../check, build, ../encoding, postBuild" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -276,7 +275,7 @@ jobs:
           - { name: mcbscore-zap-network-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
           - { name: mcbscore-zap-party-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -298,7 +297,7 @@ jobs:
         repository:
           - { name: mcbscore-rating, branch: develop, group: rating, workflows: "../check, build, dbChanges, ../encoding, postBuild" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -326,7 +325,7 @@ jobs:
           - { name: mcbscore-invoiceservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-notes-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -353,7 +352,7 @@ jobs:
           - { name: mcbscore-yaml-transform-plugin, branch: develop, group: simple, workflows: "../check, build, ../encoding" }
           - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -382,7 +381,7 @@ jobs:
           - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -410,7 +409,7 @@ jobs:
           - { name: mcbscore-network-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-party-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -433,7 +432,7 @@ jobs:
         repository:
           - { name: ms-deployment, branch: main, group: ms-deployment, workflows: "deployment_k8s" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
