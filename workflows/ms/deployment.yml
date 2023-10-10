@@ -162,7 +162,7 @@ jobs:
         uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ github.event.inputs.componentVersion }}
-          assetPattern: '${{ github.event.inputs.component }}.jar'
+          assetPattern: '-${{ github.event.inputs.componentVersion }}.jar'
           targetPath: './${{ env.DEPLOYMENT_PATH }}/release'
           token: ${{ env.TOKEN }}
 
