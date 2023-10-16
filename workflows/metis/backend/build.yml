@@ -169,7 +169,7 @@ jobs:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
-          name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          name: ${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
 
       # Release Upload masterdata
@@ -184,7 +184,7 @@ jobs:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
-          name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          name: ${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
 
       # Release Upload hofactoring
@@ -199,7 +199,7 @@ jobs:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
-          name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          name: ${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
 
       # Release Upload shell
@@ -214,7 +214,7 @@ jobs:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
-          name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          name: ${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
 
       # Release Upload rest
@@ -229,7 +229,7 @@ jobs:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
-          name: ${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
+          name: ${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
 
       # ##################################################################################
