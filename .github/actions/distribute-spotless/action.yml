@@ -45,19 +45,17 @@ runs:
         path: ${{ inputs.repositoryName }}
         ref: ${{ inputs.repositoryBranch }}
 
-    # TODO: workflow.properties im ZielRepo auslesen
-    # workflow.properties einlesen
+    # workflow.properties im ZielRepo auslesen
     - name: Read workflow.properties
       shell: bash
       run: |
-        # Einlesen der workflow.properties, wenn ein Prefix gesetzt ist
-        if [ -n '${{ inputs.configurationPrefix }}' ] && [ -f ${{ inputs.lookupBasePath }}/.github/workflow.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/workflow.properties; echo; } >> $GITHUB_ENV; fi 
-        # Einlesen beider Dateien, da build.properties in workflow.properties umbenannt werden sollte. Somit bleibt es abwärtskompatibel
-        if [ -f ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}workflow.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}workflow.properties; echo; } >> $GITHUB_ENV; fi
-        if [ -f ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}build.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}build.properties; echo; } >> $GITHUB_ENV; fi
+        workingDirectory=$(pwd)
+        # Einlesen der workflow.properties aus dem Ziel-Repository
+        if [ -f  ${workingDirectory}/${{ inputs.repositoryName }}/.github/workflow.properties ]; then { cat ${workingDirectory}/${{ inputs.repositoryName }}/.github/workflow.properties; echo; } >> $GITHUB_ENV; fi
 
     # JAVA installieren
     - name: Set up JDK
+      if: env.JAVA_VERSION != ''
       uses: actions/setup-java@v3
       with:
         distribution: zulu
@@ -65,6 +63,7 @@ runs:
 
     # Spotless akualisieren
     - name: Add or replace spotless-files
+      if: env.JAVA_VERSION != ''
       env:
         thisRepository: ${{ github.repository }}
         thisWorkflow: ${{ github.workflow }}
