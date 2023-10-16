@@ -17,9 +17,6 @@ inputs:
   awsSecretAccessKey:
     description: AWS Secret Access Key
     required: true
-  javaVersion:
-    description: Welche Java-Version von Spotless verwendet werden soll
-    required: true
   artifactoryUserName:
     description: Login für das Artifactory
     required: true
@@ -48,12 +45,23 @@ runs:
         path: ${{ inputs.repositoryName }}
         ref: ${{ inputs.repositoryBranch }}
 
+    # TODO: workflow.properties im ZielRepo auslesen
+    # workflow.properties einlesen
+    - name: Read workflow.properties
+      shell: bash
+      run: |
+        # Einlesen der workflow.properties, wenn ein Prefix gesetzt ist
+        if [ -n '${{ inputs.configurationPrefix }}' ] && [ -f ${{ inputs.lookupBasePath }}/.github/workflow.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/workflow.properties; echo; } >> $GITHUB_ENV; fi 
+        # Einlesen beider Dateien, da build.properties in workflow.properties umbenannt werden sollte. Somit bleibt es abwärtskompatibel
+        if [ -f ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}workflow.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}workflow.properties; echo; } >> $GITHUB_ENV; fi
+        if [ -f ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}build.properties ]; then { cat ${{ inputs.lookupBasePath }}/.github/${{ inputs.configurationPrefix }}build.properties; echo; } >> $GITHUB_ENV; fi
+
     # JAVA installieren
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
         distribution: zulu
-        java-version: ${{ inputs.javaVersion }}
+        java-version: ${{ env.JAVA_VERSION }}
 
     # Spotless akualisieren
     - name: Add or replace spotless-files
@@ -62,7 +70,7 @@ runs:
         thisWorkflow: ${{ github.workflow }}
         repositoryGroup: ${{ inputs.repositoryGroup }}
         repositoryName: ${{ inputs.repositoryName }}
-        javaVersion: ${{ inputs.javaVersion }}
+        javaVersion: ${{ env.JAVA_VERSION }}
         artifactoryUserName: ${{ inputs.artifactoryUserName }}
         artifactoryPassword: ${{ inputs.artifactoryPassword }}
       shell: bash
@@ -70,14 +78,19 @@ runs:
         # spotless-Ordner erstellen (falls nicht vorhanden)
         workingDirectory=$(pwd)
         spotlessDirectory=${workingDirectory}/spotless
-        spotlessTargetDirectory=${workingDirectory}/${repositoryName}/spotless
+        mainTargetDirectory=${workingDirectory}/${repositoryName}
+        # bei CA-Projekten liegen die Dateien im gradle-Ordner
+        if [ -d ${mainTargetDirectory}/gradle/spotless ]; then
+          mainTargetDirectory=${mainTargetDirectory}/gradle
+        fi
+        spotlessTargetDirectory=${mainTargetDirectory}/spotless
         ideaDirectory=${workingDirectory}/${repositoryName}/.idea
         gradleFile=${workingDirectory}/${repositoryName}/build.gradle
         cd -- "$repositoryName"
         mkdir -p -- "$spotlessTargetDirectory"
         
         # Gradle-Datei bestimmen
-        if [[ "$javaVersion" == "8" ]]; then
+        if [[ "$javaVersion" != "17" ]]; then
           spotlessGradleFile=$spotlessDirectory/apply-spotless-java8.gradle
         else
           spotlessGradleFile=$spotlessDirectory/apply-spotless.gradle
@@ -85,7 +98,12 @@ runs:
 
         # spotless-Dateien kopieren
         printf 'copying spotless-files\n'
-        cp -v -- $spotlessGradleFile ${workingDirectory}/${repositoryName}
+        # für Java 11 die Einstellungen von 8 übernehmen
+        if [[ "$javaVersion" == "11" ]]; then
+          cp -v -- $spotlessGradleFile ${mainTargetDirectory}/apply-spotless.gradle
+        else
+          cp -v -- $spotlessGradleFile ${mainTargetDirectory}
+        fi
         cp -v -- $spotlessDirectory/spotless-config/* $spotlessTargetDirectory
 
         # Idea-Konfiguration kopieren
