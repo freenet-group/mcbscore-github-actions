@@ -504,6 +504,8 @@ jobs:
           - { name: mcbscore-party-service, branch: develop, group: zap}
           - { name: mcbscore-yaml-transform-plugin, branch: develop, group: zap}
           - { name: scaffold-clean-architecture-gradle-plugin, branch: develop, group: standard }
+          - { name: ms-alteration, branch: develop, group: ms }
+          - { name: mcbscore-logging, branch: develop, group: mcbs }
 
     steps:
       - uses: actions/checkout@v4
