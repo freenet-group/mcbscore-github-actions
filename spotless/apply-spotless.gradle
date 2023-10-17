@@ -54,5 +54,7 @@ spotless {
         eclipse().configFile('spotless/MCBS-format.xml')
         licenseHeaderFile	'spotless/license.java'
         removeUnusedImports()
+        tasks.spotlessJava.dependsOn(processResources)
+        tasks.spotlessJava.dependsOn(compileJava)
     }
 }

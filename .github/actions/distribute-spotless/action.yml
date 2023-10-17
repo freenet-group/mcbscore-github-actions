@@ -81,6 +81,7 @@ runs:
         # bei CA-Projekten liegen die Dateien im gradle-Ordner
         if [ -d ${mainTargetDirectory}/gradle/spotless ]; then
           mainTargetDirectory=${mainTargetDirectory}/gradle
+          differentSpotlessFileName="/spotless.gradle"
         fi
         spotlessTargetDirectory=${mainTargetDirectory}/spotless
         ideaDirectory=${workingDirectory}/${repositoryName}/.idea
@@ -99,10 +100,9 @@ runs:
         printf 'copying spotless-files\n'
         # für Java 11 die Einstellungen von 8 übernehmen
         if [[ "$javaVersion" == "11" ]]; then
-          cp -v -- $spotlessGradleFile ${mainTargetDirectory}/apply-spotless.gradle
-        else
-          cp -v -- $spotlessGradleFile ${mainTargetDirectory}
+          differentSpotlessFileName="/apply-spotless.gradle"
         fi
+        cp -v -- $spotlessGradleFile ${mainTargetDirectory}${differentSpotlessFileName}
         cp -v -- $spotlessDirectory/spotless-config/* $spotlessTargetDirectory
 
         # Idea-Konfiguration kopieren
@@ -114,7 +114,7 @@ runs:
 
         echo "checking $gradleFile..."
 
-        if [ `grep -c "apply-spotless" $gradleFile` -eq 1 ]; then          
+        if [ `grep -c "spotless.gradle" $gradleFile` -eq 1 ]; then          
           # spotless mit der neuen Konfiguratuion ausführen
           sh gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${artifactoryUserName} -PartifactoryPassword=${artifactoryPassword} spotlessApply
           # Änderungen einchecken
