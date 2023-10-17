@@ -19,7 +19,6 @@ on:
           - ms-customerproduct
           - ms-mcbsservices
           - mcbs
-          - mcbsservices
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
@@ -40,7 +39,6 @@ jobs:
       matrix:
         product:
           - { id: mcbs, name: mcbs }
-          - { id: mcbsservices, name: zap }
           - { id: ms-cuba, name: cuba }
           - { id: ms-customer, name: customer }
           - { id: ms-customerelastic, name: customerelastic }
