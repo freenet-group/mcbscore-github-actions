@@ -26,7 +26,6 @@ on:
           - ms-customerproduct
           - ms-mcbsservices
           - mcbs
-          - zap
       epic:
         description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
         required: false
@@ -57,7 +56,6 @@ jobs:
       matrix:
         product:
           - { id: mcbs, name: mcbs, group: standard }
-          - { id: zap, name: zap, group: standard }
           - { id: ms-cuba, name: cuba, group: ms }
           - { id: ms-customer, name: customer, group: ms }
           - { id: ms-customerelastic, name: customerelastic, group: ms }
@@ -250,19 +248,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
       
-      # Release erstellen
-      - name: Create Release
-        id: create_release
-        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (github.event.inputs.product == 'zap' || ( env.PRODUCT == 'ALL' && env.COMPONENT == 'mcbsserv' )) }}
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
-        with:
-          tag_name: '${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}'
-          release_name: '${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}'
-          draft: '${{ env.DRAFT }}'
-          prerelease: false
-      
       # Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
@@ -384,22 +369,6 @@ jobs:
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             }
       
-      # Starte postBuild auf RELEASE (ZAP)
-      - name: Invoke postBuild workflow mcbsservices
-        if: ${{ env.BUILD_TYPE == 'RELEASE' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'zap' }}
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: PostBuild ZAP
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "component": "${{ matrix.product.id }}",
-              "releaseVersion": "${{ env.COMPONENT_VERSION }}",
-              "issueList": "${{ env.ISSUE_LIST }}",
-              "epic": "${{ env.EPIC }}",
-              "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
-            }
-
   publish-test-results:
     name: Publish Unit Tests Results
     needs: build
