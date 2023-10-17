@@ -3,7 +3,9 @@ Hier liegen die Gradle-Konfig-Dateien für das spotless-Plugin, die in den Proje
 ## apply-spotless.gradle
 Enthält die Konfiguration für das spotless-Plugin.
 ## apply-spotless-java8.gradle
-Enthält die Konfiguration für das spotless-Plugin für Java 8.
+Enthält die Konfiguration für das spotless-Plugin für Java 8 (und 11).
+## spotless.gradle
+Enthält die Konfiguration für das spotless-Plugin für CA-Projekte.
 ## Unterordner [spotless-config](spotless-config)
 Enthält die Konfigurationsdateien für das spotless-Plugin:
 ### MCBS-format.xml

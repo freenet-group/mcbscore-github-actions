@@ -51,8 +51,8 @@ spotless {
                     replaceAll('(?xm) ^ ([\\ \\t\\f]*) // [\\ \\t\\f]* J[+] [\\ \\t\\f]* $', '$1// @formatter:on').
                     replaceAll('(?xm) ^ [\\ \\t\\f]* // [\\ \\t\\f]* JDOC- [\\ \\t\\f]* \\r?\\n', '')
         }
-        eclipse().configFile('spotless/MCBS-format.xml')
-        licenseHeaderFile	'spotless/license.java'
+        eclipse().configFile('gradle/spotless/MCBS-format.xml')
+        licenseHeaderFile	'gradle/spotless/license.java'
         removeUnusedImports()
     }
 }
