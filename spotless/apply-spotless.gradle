@@ -6,7 +6,7 @@ spotless {
             exclude '**/generated-sources/**/*.*'
             exclude '**/generated-api/**/*.*'
             exclude 'mcbscore/github/*.*'
-            exclude 'spotless/*.*'
+            exclude '**/spotless/*.*'
             exclude '**/ApiUtil.java'
         }
         custom 'jalopy section comments', {
