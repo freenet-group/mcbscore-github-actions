@@ -5,7 +5,7 @@ spotless {
         target project.fileTree(project.rootDir) {
             include '**/*.java'
             exclude '**/generated/**/*.*'
-            exclude 'spotless/*.*'
+            exclude '**/spotless/*.*'
             exclude 'mcbscore/github/*.*'
             exclude '**/generated-sources/**/*.*'
             exclude '**/generated-api/**/*.*'
