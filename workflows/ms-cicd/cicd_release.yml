@@ -445,6 +445,21 @@ jobs:
               "componentVersion": "${{ steps.bump-semver.outputs.new_version }}"
             }
 
+      - name: Kubernetes Deployment Workflow starten
+        id: deployment_k8s
+        if: hashFiles('.github/**/deployment_k8s.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1.2.2
+        with:
+          workflow: K8s Deployment
+          token: ${{ env.TOKEN }}
+          inputs: >
+            {
+              "environment": "dev",
+              "component": "${{ env.COMPONENT }}",
+              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}",
+              "dryRun": "false"
+            }
+
       - name: Developer Portal Upload starten
         id: developerPortalUpload
         if: hashFiles('.github/**/developerPortal.yml') != ''
@@ -540,6 +555,19 @@ jobs:
               "tagPrefix": "${{ env.TAG_PREFIX }}"
             }
 
+      - name: Bambi Parameter setzen
+        run: |
+          BAMBI_ARGS="{ \
+            \"renovate\": \"${{ steps.update_release_template.outputs.renovate }}\", \
+            \"renovateInfo\": \"${{ steps.update_release_template.outputs.renovate_title }}\", \
+            \"ibnDate\": \"${{ steps.update_release_template.outputs.epic_dueDate }}\", \
+            \"changesInConfiguration\": \"${{ steps.update_release_template.outputs.ms_configuration }}\", \
+            \"changesInDeployment\": \"${{ steps.update_release_template.outputs.ms_deployment }}\", \
+            \"dbChanges\": \"${{ steps.update_release_template.outputs.db_changes }}\", \
+            \"dependencies\": \"${{ steps.update_release_template.outputs.dependencies }}\" \
+          }"
+          echo "BAMBI_ARGS=$(echo "$BAMBI_ARGS" | sed 's/"/\\"/g')" >> $GITHUB_ENV
+
       - name: postBuild Workflow starten
         if: hashFiles('.github/**/cicd_postBuild.yml') != ''
         uses: benc-uk/workflow-dispatch@v1.2.2
@@ -550,7 +578,7 @@ jobs:
             {
               "releaseVersion": "${{ steps.bump-semver.outputs.new_version }}",
               "issueList": "${{ steps.update_release_template.outputs.issue_list }}",
-              "bambiArgs": "{\"renovate\":\"${{ steps.update_release_template.outputs.renovate }}\",\"renovateInfo\":\"${{ steps.update_release_template.outputs.renovate_title }}\",\"ibnDate\":\"${{ steps.update_release_template.outputs.epic_dueDate }}\",\"changesInConfiguration\":\"${{ steps.update_release_template.outputs.ms_configuration }}\",\"changesInDeployment\":\"${{ steps.update_release_template.outputs.ms_deployment }}\",\"dbChanges\":\"${{ steps.update_release_template.outputs.db_changes }}\",\"dependencies\":\"${{ steps.update_release_template.outputs.dependencies }}\"}"
+              "bambiArgs": "${{ env.BAMBI_ARGS }}"
             }
 
       - name: SBOM zu DependencyTrack senden

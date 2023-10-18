@@ -117,31 +117,41 @@ jobs:
       - name: Release bei Bambi melden
         run: |
           issueListWithDelimiter=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
-          renovate="${{ github.event.inputs.renovate }}"
           echo "Create BAMBI-Entry for IssueList: $issueListWithDelimiter"
 
-          API_PAYLOAD="{
-            \"componentName\": \"${{ env.JIRA_COMPONENT }}\",
-            \"versionNo\": \"${{ github.event.inputs.releaseVersion }}\",
-            \"buildUser\": \"mcbstest\",
-            \"issueList\": \"$issueListWithDelimiter\",
-            \"buildInfo\": {
-              \"ibnDate\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.ibnDate')\",
-              \"changesInConfiguration\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.changesInConfiguration')\",
-              \"changesInDeployment\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.changesInDeployment')\",
-              \"dbChanges\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.dbChanges')\",
-              \"dependencies\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.dependencies')\",
-              \"renovateInfo\": \"$(echo '${{ github.event.inputs.bambiArgs }}' | jq -r '.renovateInfo')\"
-            },
-            \"renovate\": \"$renovate\"
-          }"
+          bambiArgs='${{ github.event.inputs.bambiArgs }}'
+          echo "bambiArgs: $bambiArgs"
+          
+          changesInConfiguration=$(echo "$bambiArgs" | jq -r '.changesInConfiguration')
+          changesInDeployment=$(echo "$bambiArgs" | jq -r '.changesInDeployment')
+          dbChanges=$(echo "$bambiArgs" | jq -r '.dbChanges')
+          dependencies=$(echo "$bambiArgs" | jq -r '.dependencies')
+          ibnDate=$(echo "$bambiArgs" | jq -r '.ibnDate')
+          renovateInfo=$(echo "$bambiArgs" | jq -r '.renovateInfo')
+          renovate=$(echo "$bambiArgs" | jq -r '.renovate')
 
-          http_response=$(curl -w "%{http_code}\n" --location --request POST "${{ env.BAMBI_API_URL }}" --header "Content-Type: application/json" --data-raw "$API_PAYLOAD")
-          echo "Response: ${http_response} \n"
+          requestBody="{
+            \"buildInfo\": {
+              \"ibnDate\": \"$ibnDate\",
+              \"changesInConfiguration\": \"$changesInConfiguration\",
+              \"changesInDeployment\": \"$changesInDeployment\",
+              \"dbChanges\": \"$dbChanges\",
+              \"dependencies\": \"$dependencies\",
+              \"renovateInfo\": \"$renovateInfo\"
+            },
+            \"buildUser\": \"mcbstest\",
+            \"componentName\": \"${{ env.JIRA_COMPONENT }}\",
+            \"issueList\": \"$issueListWithDelimiter\",
+            \"renovate\": \"$renovate\",
+            \"versionNo\": \"${{ github.event.inputs.releaseVersion }}\"
+          }"
+          echo "Bambi RequestBody: $requestBody"
+
+          http_response=$(curl -w "%{http_code}\n" --location --request POST "${{ env.BAMBI_API_URL }}" --header "Content-Type: application/json" --data-raw "$requestBody")
+          echo "Response: ${http_response}"
 
           http_code=$(echo "$http_response" | cut -d '}' -f 2)
           if [ "$http_code" != "200" ]; then
-            echo "ErrorCode: $http_code"
             exit 1
           fi
 
@@ -234,3 +244,4 @@ jobs:
           mailTemplate: ${{ env.MAIL_TEMPLATE }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}
+
