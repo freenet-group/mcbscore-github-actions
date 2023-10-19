@@ -130,7 +130,7 @@ jobs:
 
     # jq installieren
     - name: Setup jq
-      uses: freenet-actions/setup-jq@v2
+      uses: freenet-actions/setup-jq@v3
 
     # Prüft, ob ein Verzeichnis für die Komponente in /deployment/properties/ existiert
     - name: Check component name
@@ -314,7 +314,7 @@ jobs:
 
     # jq installieren
     - name: Setup jq
-      uses: freenet-actions/setup-jq@v2
+      uses: freenet-actions/setup-jq@v3
 
     # ssh Konfig
     - name: Setup ssh
