@@ -432,7 +432,7 @@ jobs:
           javaVersion: ${{ env.JAVA_VERSION }}
 
       # Deployment Dev
-      - name: Deployment Workflow starten
+      - name: Deployment Workflow inkl. k8s starten
         id: deployment
         uses: benc-uk/workflow-dispatch@v1.2.2
         with:
@@ -443,21 +443,6 @@ jobs:
               "environment": "dev",
               "component": "${{ env.COMPONENT }}", 
               "componentVersion": "${{ steps.bump-semver.outputs.new_version }}"
-            }
-
-      - name: Kubernetes Deployment Workflow starten
-        id: deployment_k8s
-        if: hashFiles('.github/**/deployment_k8s.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.2
-        with:
-          workflow: K8s Deployment
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "environment": "dev",
-              "component": "${{ env.COMPONENT }}",
-              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}",
-              "dryRun": "false"
             }
 
       - name: Developer Portal Upload starten
