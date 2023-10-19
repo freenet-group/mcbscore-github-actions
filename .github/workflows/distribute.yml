@@ -1,4 +1,5 @@
 name: Distribute
+run-name: Distribute für "${{ github.event.inputs.group }}"
 
 on:
   schedule:
