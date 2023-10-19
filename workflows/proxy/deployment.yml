@@ -197,7 +197,7 @@ jobs:
 
     - name: Setup AWS CLI
       if: hashFiles('./release/secretMappings.txt') != ''
-      uses: freenet-actions/setup-aws-cli@v1
+      uses: freenet-actions/setup-aws-cli@v3
 
     - name: Place Secrets
       if: hashFiles('./release/secretMappings.txt') != ''
