@@ -81,7 +81,7 @@ jobs:
       ACTIONS_PATH: mcbscore/github
       DEPLOYMENT_PATH: mcbscore/deployment
       REPOSITORY_PATH: repository
-      NODEJS_VERSION: 16
+      NODEJS_VERSION: 20
 
     steps:
     - name: Show Params

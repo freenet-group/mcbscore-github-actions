@@ -36,7 +36,7 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       DEPLOYMENT_PATH: mcbscore/deployment
-      NODEJS_VERSION: 12
+      NODEJS_VERSION: 20
       PORTAL_URL: 'https://developer-portal-api.prod.developers.md.de/v2/specifications'
 
     steps:

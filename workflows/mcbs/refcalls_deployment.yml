@@ -18,7 +18,7 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-      NODEJS_VERSION: 16
+      NODEJS_VERSION: 20
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen

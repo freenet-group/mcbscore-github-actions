@@ -44,7 +44,7 @@ Node muß installiert sein
     - name: Setup Node JS
       uses: actions/setup-node@v2
       with:
-        node-version: '12'
+        node-version: '20'
     - run: npm install
 
 Das Release JAR muß im Verzeichnis ./release liegen bzw. - bei Docker-Benutzung - muss stattdessen das Image im Repository vorhanden sein.
