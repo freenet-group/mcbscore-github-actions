@@ -68,7 +68,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -118,7 +118,7 @@ jobs:
           rm -rf *
 
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -135,7 +135,7 @@ jobs:
             /github/secrets/checkmk_password = CHECKMK_PW
 
       - name: checkout mcbscore-github-actions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
@@ -143,7 +143,7 @@ jobs:
           ref: ${{ inputs.actionsRepositoryBranch }}
 
       - name: Checkout Deployment Data / Scripts
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: freenet-group/ms-deployment
           token: ${{ env.TOKEN }}
@@ -218,7 +218,7 @@ jobs:
     needs: create-deployment
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - id: FileExists
         run: |
           echo "k8sExists=${{hashFiles('**/deployment_k8s.yml')}}" >> "$GITHUB_OUTPUT"
@@ -241,7 +241,7 @@ jobs:
     runs-on: [self-hosted, k8s]
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -263,7 +263,7 @@ jobs:
           cat ./.github/workflow.properties >> $GITHUB_ENV
 
       - name: checkout mcbscore-github-actions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}

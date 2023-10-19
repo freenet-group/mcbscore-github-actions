@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -113,7 +113,7 @@ jobs:
 
     - name: Checkout Deployment Data / Scripts
       # Auschecken des Deployment Repositories
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ env.DEPLOYMENT_REPO }}
         token: ${{ env.GITHUB_TOKEN }}
@@ -208,7 +208,7 @@ jobs:
     if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     # Secrets aus AWS auslesen
@@ -222,7 +222,7 @@ jobs:
 
     # Die internen Actions auschecken
     - name: checkout mcbscore-github-actions
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ env.ACTIONS_REPOSITORY }}
         token: ${{ env.TOKEN }}
@@ -281,7 +281,7 @@ jobs:
           rm -rf *
           
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -305,7 +305,7 @@ jobs:
 
     - name: Checkout Deployment Data / Scripts
       # Auschecken des Deployment Repositories
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ env.DEPLOYMENT_REPO }}
         token: ${{ env.GITHUB_TOKEN }}
