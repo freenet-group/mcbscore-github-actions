@@ -50,7 +50,7 @@ jobs:
           echo "Cleaning up previous run"
           rm -rf -- *
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -68,7 +68,7 @@ jobs:
             /github/common/jira/api_url = JIRA_API_URL
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
@@ -151,7 +151,7 @@ jobs:
       # Freigabestatement auf der Releasenote
       # ##################################################################################
       - name: Checkout wiki code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{github.repository}}.wiki
           path: markdown

@@ -64,7 +64,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: AWS Secrets auslesen
         uses: ./.github/actions/read-aws-secrets
@@ -89,7 +89,7 @@ jobs:
           cat ./.github/workflow.properties >> $GITHUB_ENV
 
       - name: Checkout mcbscore-github-actions
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}

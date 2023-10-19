@@ -97,7 +97,7 @@ jobs:
 
       - name: Checkout Repository
         if: ${{ env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -120,7 +120,7 @@ jobs:
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
         if: ${{ env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}

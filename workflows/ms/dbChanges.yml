@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: source
           ref: sql-${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
@@ -39,7 +39,7 @@ jobs:
             /github/secrets/mcbs_token = TOKEN
 
       - name: DB Changes Repository auschecken
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: freenet-group/mcbscore_db-changes
           token: ${{ env.TOKEN }}

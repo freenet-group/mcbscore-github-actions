@@ -44,7 +44,7 @@ jobs:
           rm -rf *
 
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -67,7 +67,7 @@ jobs:
 
       # Auschecken des Deployment Repositories
       - name: Checkout Deployment Data / Scripts
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: freenet-group/ms-deployment
           token: ${{ env.GITHUB_TOKEN }}

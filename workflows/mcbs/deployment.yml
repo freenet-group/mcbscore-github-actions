@@ -37,7 +37,7 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
     # Secrets aus AWS auslesen
@@ -102,7 +102,7 @@ jobs:
 
     - name: Checkout Repository
       # Repository auschecken unter $GITHUB_WORKSPACE
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: ${{ env.REPOSITORY_PATH }}
@@ -120,7 +120,7 @@ jobs:
             /github/secrets/checkmk_password = CHECKMK_PW
     - name: checkout mcbscore-github-actions
       # Die internen Actions auschecken
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ env.ACTIONS_REPOSITORY }}
         token: ${{ env.TOKEN }}
@@ -129,7 +129,7 @@ jobs:
 
     # Auschecken des Deployment Repositories
     - name: Checkout Deployment Data / Scripts
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: freenet-group/ms-deployment
         token: ${{ env.TOKEN }}
