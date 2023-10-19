@@ -60,7 +60,7 @@ env:
   ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
   ACTIONS_PATH: mcbscore/github
   DEPLOYMENT_PATH: mcbscore/deployment
-  NODEJS_VERSION: 16
+  NODEJS_VERSION: 20
 
 jobs:
   create-deployment:
