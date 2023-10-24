@@ -45,7 +45,7 @@ if [ "$assetsJson" == "null" ]; then
 else
   assetPatternParser="map(select(.name|test(\"$PATTERN\")))"
   filteredAssets=$(jq -c "$assetPatternParser" <<< "$assetsJson")
-  echo $filteredAssets
+  echo "filteredAssets:" $filteredAssets
   assetCount=$(jq -c "[. | length] | max" <<< "$filteredAssets")
 
   if [ -z "$assetCount" ]; then
