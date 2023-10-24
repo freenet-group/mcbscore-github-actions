@@ -29,6 +29,8 @@
 #VERSION=$1                       # tag name or the word "latest"
 GITHUB="https://api.github.com"
 
+set -x
+
 alias errcho='>&2 echo'
 
 function gh_curl() {
