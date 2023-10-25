@@ -24,6 +24,10 @@ on:
         description: Welcher Branch von Repository ms-deployment benutzt werden soll
         required: false
         default: main
+      subComponents:
+        description: für Api Doc
+        required: false
+        default: '["nothing"]'
 
 jobs:
   developerPortalUpload:
@@ -32,6 +36,7 @@ jobs:
       matrix:
         type: [open-api, system-api]
         version: [v1, v2]
+        component: ${{ fromJSON(github.event.inputs.subComponents) }}
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
@@ -161,45 +166,73 @@ jobs:
           : ${GENERIC_DEPLOYMENT_FILE:=./$COMPONENT_CONFIG_PATH/properties/$COMPONENT/deployment.properties}
           : ${DEPLOYMENT_FILE:=./$COMPONENT_CONFIG_PATH/properties/$COMPONENT/deployment-$environment.properties}
           readPropertiesIntoMap DEPLOYMENT_PROPS "$GENERIC_DEPLOYMENT_FILE" "$DEPLOYMENT_FILE"
-
-          # ${deployment.api.name}
-          apiName=$(evalValue "${DEPLOYMENT_PROPS[api.name]}")
-          echo "apiName: $apiName"
-
-          if [[ "$MATRIX_TYPE" == "open-api" ]]; then
-            # ${deployment.public.api.ids}
-            publicApiVersions=$(evalValue "${DEPLOYMENT_PROPS[public.api.ids]}")
-            echo "publicApiVersions: $publicApiVersions"
-            for publicApiVersion in $publicApiVersions; do
-              versionAndIdArray=(${publicApiVersion//:/ })            
-              apiVersion=${versionAndIdArray[0]}
-              echo "apiVersion: ${apiVersion}"
-              publicApiId=${versionAndIdArray[1]}
-              echo "publicApiId: $publicApiId"
-              if [[ "$apiVersion" == "$MATRIX_VERSION" ]]; then
+          if [[ "$SUBCOMPONENT" != "" ]] && [[ "$SUBCOMPONENT" != "nothing" ]];  then
+             # ${deployment.api.name}
+            apiName=$(evalValue "${SUBCOMPONENT}")
+            echo "apiName: $apiName"
+          
+            if [[ "$MATRIX_TYPE" == "open-api" ]]; then
+                # ${deployment.public.api.ids}
+                componentId="public.api.ids.${SUBCOMPONENT}"
+                echo "$componentId"
+                publicApiId=$(evalValue "${DEPLOYMENT_PROPS[$componentId]}")
+                echo "publicApiId: $publicApiId"
+          
                 echo "API_ID=$publicApiId" >> "$GITHUB_ENV"
-                publicApiPath=./apiDoc/${apiName}_client_${apiVersion}_${environment}.yaml
+                publicApiPath=./apiDoc/${SUBCOMPONENT}_client_${environment}.yaml
                 echo "publicApiPath: $publicApiPath"
-                echo "API_PATH=$publicApiPath" >> "$GITHUB_ENV"               
-              fi         
-            done
-          else         
-            # ${deployment.system.api.ids}
-            systemApiVersions=$(evalValue "${DEPLOYMENT_PROPS[system.api.ids]}")
-            echo "systemApiVersions: $systemApiVersions"
-            for systemApiVersion in $systemApiVersions; do
-              versionAndIdArray=(${systemApiVersion//:/ })
-              apiVersion=${versionAndIdArray[0]}
-              echo "apiVersion: ${apiVersion}"
-              systemApiId=${versionAndIdArray[1]}
+                echo "API_PATH=$publicApiPath" >> "$GITHUB_ENV"                  
+            else       
+              # ${deployment.system.api.ids}
+              componentId="system.api.ids.${SUBCOMPONENT}"
+              systemApiId=$(evalValue "${DEPLOYMENT_PROPS[$componentId]}")
               echo "systemApiId: $systemApiId"
-              if [[ "$apiVersion" == "$MATRIX_VERSION" ]]; then
-                echo "API_ID=$systemApiId" >> "$GITHUB_ENV"
-                systemApiPath=./apiDoc/${apiName}_system_${apiVersion}_${environment}.yaml
-                echo "systemApiPath: $systemApiPath"
-                echo "API_PATH=$systemApiPath" >> "$GITHUB_ENV"
-              fi
-            done
+          
+              echo "API_ID=$systemApiId" >> "$GITHUB_ENV"
+              systemApiPath=./apiDoc/${SUBCOMPONENT}_system_${environment}.yaml
+              echo "systemApiPath: $systemApiPath"
+              echo "API_PATH=$systemApiPath" >> "$GITHUB_ENV"  
+            fi
+          else 
+            # ${deployment.api.name}
+            apiName=$(evalValue "${DEPLOYMENT_PROPS[api.name]}")
+            echo "apiName: $apiName"
+          
+            if [[ "$MATRIX_TYPE" == "open-api" ]]; then
+              # ${deployment.public.api.ids}
+              publicApiVersions=$(evalValue "${DEPLOYMENT_PROPS[public.api.ids]}")
+              echo "publicApiVersions: $publicApiVersions"
+              for publicApiVersion in $publicApiVersions; do
+                versionAndIdArray=(${publicApiVersion//:/ })            
+                apiVersion=${versionAndIdArray[0]}
+                echo "apiVersion: ${apiVersion}"
+                publicApiId=${versionAndIdArray[1]}
+                echo "publicApiId: $publicApiId"
+                if [[ "$apiVersion" == "$MATRIX_VERSION" ]]; then
+                  echo "API_ID=$publicApiId" >> "$GITHUB_ENV"
+                  publicApiPath=./apiDoc/${apiName}_client_${apiVersion}_${environment}.yaml
+                  echo "publicApiPath: $publicApiPath"
+                  echo "API_PATH=$publicApiPath" >> "$GITHUB_ENV"               
+                fi         
+              done
+            else         
+              # ${deployment.system.api.ids}
+              systemApiVersions=$(evalValue "${DEPLOYMENT_PROPS[system.api.ids]}")
+              echo "systemApiVersions: $systemApiVersions"
+              for systemApiVersion in $systemApiVersions; do
+                versionAndIdArray=(${systemApiVersion//:/ })
+                apiVersion=${versionAndIdArray[0]}
+                echo "apiVersion: ${apiVersion}"
+                systemApiId=${versionAndIdArray[1]}
+                echo "systemApiId: $systemApiId"
+                if [[ "$apiVersion" == "$MATRIX_VERSION" ]]; then
+                  echo "API_ID=$systemApiId" >> "$GITHUB_ENV"
+                  systemApiPath=./apiDoc/${apiName}_system_${apiVersion}_${environment}.yaml
+                  echo "systemApiPath: $systemApiPath"
+                  echo "API_PATH=$systemApiPath" >> "$GITHUB_ENV"
+                fi
+              done
+            fi
           fi
         env:
           COMPONENT: ${{ github.event.inputs.component }}
@@ -208,26 +241,28 @@ jobs:
           STAGE: ${{ github.event.inputs.environment }}
           MATRIX_VERSION: ${{ matrix.version }}
           MATRIX_TYPE: ${{ matrix.type }}
+          SUBCOMPONENT: ${{ matrix.component }}
+
       - name: Checkout Portal Action
         uses: actions/checkout@v4
         with:
-            # For accessing to this Action a service account with a personal access token in this repo is necessary.
-            token: ${{ env.TOKEN }}
-            repository: freenet-group/developer-portal-actions
-            ref: refs/heads/main
-            persist-credentials: false
-            path: ./.github/actions/developer-portal-actions
+          # For accessing to this Action a service account with a personal access token in this repo is necessary.
+          token: ${{ env.TOKEN }}
+          repository: freenet-group/developer-portal-actions
+          ref: refs/heads/main
+          persist-credentials: false
+          path: ./.github/actions/developer-portal-actions
 
       # API ins Portal hochladen
       - name: Publish API Spec
         if: env.API_PATH != ''
         uses: ./.github/actions/developer-portal-actions/publish-api-spec
         with:
-            portalUrl: ${{ env.PORTAL_URL }}
-            documentPath:  ${{ env.API_PATH }}
-            stage: ${{ github.event.inputs.environment }}
-            maturityLevel:  ${{ matrix.type }}
-            apiId: ${{ env.API_ID }}
-            version: ${{ github.event.inputs.componentVersion }}
-            clientId: ${{ env.CLIENT_ID_STS }}
-            clientSecret: ${{ env.CLIENT_SECRET_STS }}
+          portalUrl: ${{ env.PORTAL_URL }}
+          documentPath:  ${{ env.API_PATH }}
+          stage: ${{ github.event.inputs.environment }}
+          maturityLevel:  ${{ matrix.type }}
+          apiId: ${{ env.API_ID }}
+          version: ${{ github.event.inputs.componentVersion }}
+          clientId: ${{ env.CLIENT_ID_STS }}
+          clientSecret: ${{ env.CLIENT_SECRET_STS }}
