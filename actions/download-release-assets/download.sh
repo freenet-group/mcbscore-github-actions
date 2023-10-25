@@ -29,7 +29,6 @@
 #VERSION=$1                       # tag name or the word "latest"
 GITHUB="https://api.github.com"
 
-set -x
 
 alias errcho='>&2 echo'
 
@@ -41,14 +40,13 @@ function gh_curl() {
 
 assetParser=". | map(select(.tag_name == \"$VERSION\"))[0].assets"
 assetsJson=$(gh_curl -s $GITHUB/repos/$REPOSITORY/releases?per_page=100 | jq "$assetParser")
-echo "assetParser:" $assetParser
-echo "assetsJson:" $assetsJson
+
 if [ "$assetsJson" == "null" ]; then
   assetCount=0
 else
   assetPatternParser="map(select(.name|test(\"$PATTERN\")))"
   filteredAssets=$(jq -c "$assetPatternParser" <<< "$assetsJson")
-  echo "filteredAssets:" $filteredAssets
+  
   assetCount=$(jq -c "[. | length] | max" <<< "$filteredAssets")
 
   if [ -z "$assetCount" ]; then
