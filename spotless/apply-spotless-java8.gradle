@@ -48,10 +48,16 @@ spotless {
                     , '')
         }
         custom 'jalopy control comments to Eclipse', {
+            // [\ \t\f] ≈ Whitespace ohne Zeilenumbrüche; das Leerzeichen braucht wegen (?x) Option einen Backslash (auch in []).
             str -> str.replaceAll('(?xm) ^ ([\\ \\t\\f]*) // [\\ \\t\\f]* J- [\\ \\t\\f]* $', '$1// @formatter:off').
                     replaceAll('(?xm) ^ ([\\ \\t\\f]*) // [\\ \\t\\f]* J[+] [\\ \\t\\f]* $', '$1// @formatter:on').
                     replaceAll('(?xm) ^ [\\ \\t\\f]* // [\\ \\t\\f]* JDOC- [\\ \\t\\f]* \\r?\\n', '')
         }
+        // Ersetzt /**…* mit mehr als 2 Sternen durch /** mit genau 2 Sternen (wenn sonst nichts in der Zeile steht)
+        custom 'javadoc: two asteriscs', {
+            str -> str.replaceAll('(?xm) ^ ([\\ \\t\\f]* /[*]{2}) [*]+ [\\ \\t\\f]* $', '$1')
+        }
+
         eclipse().configFile('spotless/MCBS-format.xml')
     }
 }
