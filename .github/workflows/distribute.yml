@@ -453,9 +453,25 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-mandel, branch: develop, group: mandel }
           - { name: mcbs-master, branch: develop, group: mcbs }
+          - { name: mcbs-logging, branch: develop, group: mcbs }
+          - { name: mcbscore-mandel, branch: develop, group: mandel }
+          - { name: mcbscore-bot, branch: develop, group: standard }
+          - { name: mcbscore-business-transaction-service, branch: develop, group: zap }
+          - { name: mcbscore-changelog-editor, branch: develop, group: standard }
+          - { name: mcbscore-contract-service, branch: develop, group: zap}
+          - { name: mcbscore-customer-search-index, branch: develop, group: standard }
+          - { name: mcbscore-db-replica, branch: develop, group: standard }
+          - { name: mcbscore-es-plugin-collection, branch: develop }
+          - { name: mcbscore-framework, branch: develop, group: standard }
+          - { name: mcbscore-fee-service, branch: develop, group: zap}
+          - { name: mcbscore-invoice-service, branch: develop, group: zap}
+          - { name: mcbscore-mark-service, branch: develop, group: zap}
+          - { name: mcbscore-network-service, branch: develop, group: zap}
+          - { name: mcbscore-party-service, branch: develop, group: zap}
+          - { name: mcbscore-yaml-transform-plugin, branch: develop, group: zap}
           - { name: metis, branch: develop, group: metis }
+          - { name: ms-alteration, branch: develop, group: ms }
           - { name: ms-commondata, branch: develop, group: ms-cicd }
           - { name: ms-admin-dashboard, branch: develop, group: ms }
           - { name: ms-agreement, branch: develop, group: ms }
@@ -465,6 +481,7 @@ jobs:
           - { name: ms-businessinteraction-router, branch: develop, group: ms }
           - { name: ms-businesstransaction, branch: develop, group: ms }
           - { name: ms-configserver, branch: develop, group: ms }
+          - { name: ms-cicd, branch: develop, group: ms-cicd }
           - { name: ms-contentprovider, branch: develop, group: ms-cicd }
           - { name: ms-customerchange, branch: develop, group: ms }
           - { name: ms-customerproduct, branch: develop, group: ms }
@@ -489,23 +506,7 @@ jobs:
           - { name: ms-user-cleanup, branch: develop, group: ms }
           - { name: mslib-aws, branch: develop, group: mslib }
           - { name: mslib-rest, branch: develop, group: mslib }
-          - { name: mcbscore-bot, branch: develop, group: standard }
-          - { name: mcbscore-changelog-editor, branch: develop, group: standard }
-          - { name: mcbscore-customer-search-index, branch: develop, group: standard }
-          - { name: mcbscore-db-replica, branch: develop, group: standard }
-          - { name: mcbscore-es-plugin-collection, branch: develop }
-          - { name: mcbscore-framework, branch: develop, group: standard }
-          - { name: mcbscore-business-transaction-service, branch: develop, group: zap }
-          - { name: mcbscore-contract-service, branch: develop, group: zap}
-          - { name: mcbscore-fee-service, branch: develop, group: zap}
-          - { name: mcbscore-invoice-service, branch: develop, group: zap}
-          - { name: mcbscore-mark-service, branch: develop, group: zap}
-          - { name: mcbscore-network-service, branch: develop, group: zap}
-          - { name: mcbscore-party-service, branch: develop, group: zap}
-          - { name: mcbscore-yaml-transform-plugin, branch: develop, group: zap}
           - { name: scaffold-clean-architecture-gradle-plugin, branch: develop, group: standard }
-          - { name: ms-alteration, branch: develop, group: ms }
-          - { name: mcbs-logging, branch: develop, group: mcbs }
 
     steps:
       - uses: actions/checkout@v4
