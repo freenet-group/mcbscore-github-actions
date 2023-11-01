@@ -213,21 +213,8 @@ jobs:
     outputs:
       componentName: ${{ env.JIRA_COMPONENT }}
 
-  deploy_k8s_workflow_exists:
-    runs-on: ubuntu-latest
-    needs: create-deployment
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - id: FileExists
-        run: |
-          echo "k8sExists=${{hashFiles('**/deployment_k8s.yml')}}" >> "$GITHUB_OUTPUT"
-    outputs:
-      k8sWorkflowExists: ${{ steps.FileExists.outputs.k8sExists }}
-
   deploy_k8s:
-    needs: [create-deployment, deploy_k8s_workflow_exists]
-    if: ${{needs.deploy_k8s_workflow_exists.outputs.k8sWorkflowExists != ''}}
+    needs: [create-deployment]
     uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@main
     secrets: inherit
     with:

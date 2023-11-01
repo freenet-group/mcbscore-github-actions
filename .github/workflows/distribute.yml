@@ -425,13 +425,13 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   test:
-    # nur bei Input "test". Auch bei "ALL" wäre redundant.
+    # nur bei Input "test". Auch bei "ALL" wäre üblicherweise redundant, weil hier eine Teilmenge der obigen Repos konfiguriert wird.
     if: ${{ github.event.inputs.group == 'test' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         repository:
-          - { name: ms-deployment, branch: main, group: ms-deployment, workflows: "deployment_k8s" }
+          - { name: ms-appcheck, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -447,7 +447,7 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  spotless:    
+  spotless:
     if: ${{ github.event.inputs.group == 'spotless' }}
     runs-on: ubuntu-latest
     strategy:
@@ -460,7 +460,7 @@ jobs:
           - { name: ms-admin-dashboard, branch: develop, group: ms }
           - { name: ms-agreement, branch: develop, group: ms }
           - { name: ms-appcheck, branch: develop, group: ms }
-          - { name: ms-authorities-information, branch: develop, group: ms }	
+          - { name: ms-authorities-information, branch: develop, group: ms }
           - { name: ms-billingaccount-frontend, branch: develop, group: ms }
           - { name: ms-businessinteraction-router, branch: develop, group: ms }
           - { name: ms-businesstransaction, branch: develop, group: ms }
