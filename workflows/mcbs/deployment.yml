@@ -170,21 +170,6 @@ jobs:
         deploymentUser: ${{ env.DEPLOYMENT_USER }}
         sshKey: ${{ env.SSH_KEY }}
 
-    # Starte Deployment auf K8S
-    - name: Invoke kubernetes workflow
-      if: ${{ hashFiles('./repository/.github/**/deployment_k8s.yml') != ''}}
-      uses: benc-uk/workflow-dispatch@v1
-      with:
-        workflow: K8s Deployment
-        token: ${{ env.TOKEN }}
-        inputs: >
-          {
-            "component": "${{ env.COMPONENT }}",
-            "environment": "${{ github.event.inputs.environment }}",
-            "componentVersion": "${{ github.event.inputs.componentVersion }}",
-            "dryRun": "false"
-          }
-
     - name: Invoke developer portal upload workflow
       # Starte Developer Portal Upload
       if: ${{ hashFiles('./repository/.github/**/developerPortal.yml') != '' && env.API_DOC_YAML_PATTERN != '' && contains('dev,git,prod', github.event.inputs.environment) }}
@@ -221,12 +206,36 @@ jobs:
     outputs:
       componentName: ${{ env.JIRA_COMPONENT }}
 
+  deploy_k8s_workflow_exists:
+    runs-on: ubuntu-latest
+    needs: create-deployment
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - id: FileExists
+        run: |
+          echo "k8sExists=${{hashFiles('**/deployment_k8s.yml')}}" >> "$GITHUB_OUTPUT"
+    outputs:
+      k8sWorkflowExists: ${{ steps.FileExists.outputs.k8sExists }}
+
+  # Starte Deployment auf K8s
+  deploy_k8s:
+    needs: [create-deployment, deploy_k8s_workflow_exists]
+    if: ${{needs.deploy_k8s_workflow_exists.outputs.k8sWorkflowExists != ''}}
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@main
+    secrets: inherit
+    with:
+      component: "${{ env.COMPONENT }}"
+      componentVersion: ${{ github.event.inputs.componentVersion }}
+      environment: ${{ github.event.inputs.environment }}
+
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
-    needs: deploy
-    if: ${{ always() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
-    steps:
+    needs: [deploy, deploy_k8s]
+    # Der Check success() ist nicht true bei übersprungenen workflows. !failure() dahingegen sieht übersprungenen nicht als failure und nur rote Steps
+    if: ${{ always() && !failure() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
+ steps:
     # Deployment als erfolgreich melden
     - name: Report deployment status
       shell: bash
