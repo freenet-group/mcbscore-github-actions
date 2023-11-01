@@ -17,6 +17,10 @@ on:
       environment:
         description: Die Zielumgebung
         required: true
+      reusableWorkflowsVersion:
+        description: Zu benutzende Version des Repositories mcbscore-reusable-workflows (Tag, Commit oder Branchname)
+        required: false
+        default: v1
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         type: string
@@ -44,6 +48,10 @@ on:
         description: Die Zielumgebung
         required: true
         type: string
+      reusableWorkflowsVersion:
+        description: Zu benutzende Version des Repositories mcbscore-reusable-workflows (Tag, Commit oder Branchname)
+        required: false
+        default: v1
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         type: string
@@ -215,7 +223,7 @@ jobs:
 
   deploy_k8s:
     needs: [create-deployment]
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@main
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@${{ github.event.inputs.reusableWorkflowsVersion }}
     secrets: inherit
     with:
       componentVersion: ${{ github.event.inputs.componentVersion }}
