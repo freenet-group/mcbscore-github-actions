@@ -428,7 +428,7 @@ jobs:
         with:
           componentName: ms-${{ env.COMPONENT }}
           componentVersion: ${{ steps.bump-semver.outputs.new_version }}
-          jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}.jar
+          jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.bump-semver.outputs.new_version }}.jar
           javaVersion: ${{ env.JAVA_VERSION }}
 
       # Deployment Dev
