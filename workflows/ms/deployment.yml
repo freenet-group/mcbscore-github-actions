@@ -18,7 +18,7 @@ on:
         description: Die Zielumgebung
         required: true
       platform:
-        description: Die Zielserver-Plattform
+        description: Die Zielserver-Plattform(en)
         type: choice
         options: [ "vm, k8s", "vm", "k8s" ]
         required: false
@@ -51,9 +51,8 @@ on:
         required: true
         type: string
       platform:
-        description: Die Zielserver-Plattform
-        type: choice
-        options: [ "vm, k8s", "vm", "k8s" ]
+        description: Die Zielserver-Plattform(en); gültige Werte siehe gleichnamiger workflow_dispatch Input
+        type: string
         required: false
         default: "vm, k8s"
       actionsRepositoryBranch:
@@ -107,8 +106,8 @@ jobs:
         id: create-deployment
         with:
           token: ${{ env.TOKEN }}
-          environment: ${{ github.event.inputs.environment }}
-          description: "Deployment nach ${{ github.event.inputs.platform }}"
+          environment: ${{ inputs.environment }}
+          description: "Deployment nach ${{ inputs.platform }}"
           ref: ${{ env.DEPLOYMENT_REF }}
 
     outputs:
@@ -118,7 +117,8 @@ jobs:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     needs: create-deployment
-    if: contains(format(', {0}, ', github.event.inputs.platform), ', vm, ')
+    # if: platform enthält "vm" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
+    if: contains(format(', {0}, ', inputs.platform), ', vm, ') || contains(format(',{0},', inputs.platform), ',vm,')
     steps:
       - name: Change Owner to Runner User
         if: ${{ always() }}
@@ -238,7 +238,8 @@ jobs:
 
   sanity_test:
     needs: [deploy, deploy_k8s]
-    if: contains(format(', {0}, ', github.event.inputs.platform), ', k8s, ')
+    # if: platform enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
+    if: contains(format(', {0}, ', inputs.platform), ', k8s, ') || contains(format(',{0},', inputs.platform), ',k8s,')
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     steps:
