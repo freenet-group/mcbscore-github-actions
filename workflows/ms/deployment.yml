@@ -232,14 +232,24 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     env:
+      # Wird nicht benutzt; nur als Debug-Ausgabe, da env automatisch geloggt wird:
+      STATUS_JSON: ${{ toJSON(needs.*.result) }}
       # contains…: Boolean, ob Status-Array "cancelled" oder "failure" enthält;
       # den (zu 0 / 1 gecastet) als Index im Array der gewünschten DEPLOY_STATUS-Werte
       # ["success", "failure"] nehmen:
       DEPLOY_STATUS: >-
-        ${{ fromJSON('["success :-)", "failure :-("]')[
+        ${{ fromJSON('["success", "failure"]')[
             contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'failure')
         ] }}
     steps:
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
       - name: Update deployment status
         if: success()
         uses: chrnorm/deployment-status@v2
