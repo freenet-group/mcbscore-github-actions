@@ -242,6 +242,11 @@ jobs:
             contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'failure')
         ] }}
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
         with:
