@@ -17,7 +17,7 @@ on:
       environment:
         description: Die Zielumgebung
         required: true
-      platform:
+      platforms:
         description: Die Zielserver-Plattform(en)
         type: choice
         options: [ "vm, k8s", "vm", "k8s" ]
@@ -50,7 +50,7 @@ on:
         description: Die Zielumgebung
         required: true
         type: string
-      platform:
+      platforms:
         description: Die Zielserver-Plattform(en); gültige Werte siehe gleichnamiger workflow_dispatch Input
         type: string
         required: false
@@ -78,6 +78,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Show Params
+        env:
+          INPUTS_JSON: ${{ toJSON(inputs) }}
+        run: printf '%s\n' "$INPUTS_JSON"
+
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
@@ -107,7 +112,7 @@ jobs:
         with:
           token: ${{ env.TOKEN }}
           environment: ${{ inputs.environment }}
-          description: "Deployment nach ${{ inputs.platform }}"
+          description: "Deployment nach ${{ inputs.platforms }}"
           ref: ${{ env.DEPLOYMENT_REF }}
 
     outputs:
@@ -117,8 +122,8 @@ jobs:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     needs: create-deployment
-    # if: platform enthält "vm" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
-    if: contains(format(', {0}, ', inputs.platform), ', vm, ') || contains(format(',{0},', inputs.platform), ',vm,')
+    # if: platforms enthält "vm" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
+    if: contains(format(', {0}, ', inputs.platforms), ', vm, ') || contains(format(',{0},', inputs.platforms), ',vm,')
     steps:
       - name: Change Owner to Runner User
         if: ${{ always() }}
@@ -238,8 +243,8 @@ jobs:
 
   sanity_test:
     needs: [deploy, deploy_k8s]
-    # if: platform enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
-    if: contains(format(', {0}, ', inputs.platform), ', k8s, ') || contains(format(',{0},', inputs.platform), ',k8s,')
+    # if: platforms enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
+    if: contains(format(', {0}, ', inputs.platforms), ', k8s, ') || contains(format(',{0},', inputs.platforms), ',k8s,')
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     steps:
