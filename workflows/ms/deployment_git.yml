@@ -11,6 +11,12 @@ on:
       componentVersion:
         description: Die Version der Komponente
         required: true
+      platforms:
+        description: Die Zielserver-Plattform(en)
+        type: choice
+        options: [ "vm, k8s", "vm", "k8s" ]
+        required: false
+        default: "vm, k8s"
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
@@ -51,13 +57,14 @@ jobs:
           workflow: Deployment
           token: ${{ env.TOKEN }}
           inputs: >
-            { 
-              "component": "${{ env.COMPONENT }}", 
+            {
+              "component": "${{ env.COMPONENT }}",
+              "componentVersion": "${{ inputs.componentVersion }}",
               "environment": "git",
-              "componentVersion": "${{ github.event.inputs.componentVersion }}",
-              "additionalDeploymentComponent": "${{ github.event.inputs.additionalDeploymentComponent }}",
-              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}",
-              "deploymentRepositoryBranch": "${{ github.event.inputs.deploymentRepositoryBranch }}"
+              "platforms": "${{ inputs.platforms }}",
+              "additionalDeploymentComponent": "${{ inputs.additionalDeploymentComponent }}",
+              "actionsRepositoryBranch": "${{ inputs.actionsRepositoryBranch }}",
+              "deploymentRepositoryBranch": "${{ inputs.deploymentRepositoryBranch }}"
             }
 
       # Starte Developer Portal Upload
