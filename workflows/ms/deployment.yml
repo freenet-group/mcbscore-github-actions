@@ -230,6 +230,7 @@ jobs:
   deployment_status:
     needs: [create-deployment, deploy, deploy_k8s]
     if: always()
+    runs-on: ubuntu-latest
     env:
       # contains…: Boolean, ob Status-Array "cancelled" oder "failure" enthält;
       # den (zu 0 / 1 gecastet) als Index im Array der gewünschten DEPLOY_STATUS-Werte
