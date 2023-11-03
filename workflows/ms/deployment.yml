@@ -23,10 +23,6 @@ on:
         options: [ "vm, k8s", "vm", "k8s" ]
         required: false
         default: "vm, k8s"
-      reusableWorkflowsVersion:
-        description: Zu benutzende Version des Repositories mcbscore-reusable-workflows (Tag, Commit oder Branchname)
-        required: false
-        default: v1
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         type: string
@@ -60,10 +56,6 @@ on:
         options: [ "vm, k8s", "vm", "k8s" ]
         required: false
         default: "vm, k8s"
-      reusableWorkflowsVersion:
-        description: Zu benutzende Version des Repositories mcbscore-reusable-workflows (Tag, Commit oder Branchname)
-        required: false
-        default: v1
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         type: string
@@ -237,7 +229,7 @@ jobs:
 
   deploy_k8s:
     needs: [create-deployment]
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@${{github.event.inputs.reusableWorkflowsVersion}}
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@main
     secrets: inherit
     with:
       componentVersion: ${{ github.event.inputs.componentVersion }}
