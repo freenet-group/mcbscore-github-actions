@@ -234,6 +234,8 @@ jobs:
 
   deploy_k8s:
     needs: [create-deployment]
+    # if: platforms enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
+    if: contains(format(', {0}, ', inputs.platforms), ', k8s, ') || contains(format(',{0},', inputs.platforms), ',k8s,')
     uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@main
     secrets: inherit
     with:
@@ -243,8 +245,6 @@ jobs:
 
   sanity_test:
     needs: [deploy, deploy_k8s]
-    # if: platforms enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
-    if: contains(format(', {0}, ', inputs.platforms), ', k8s, ') || contains(format(',{0},', inputs.platforms), ',k8s,')
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     steps:
