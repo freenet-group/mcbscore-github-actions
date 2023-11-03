@@ -153,6 +153,7 @@ jobs:
         if: always()
         with:
           junit_files: '**/test-results/**/*.xml'
+          large_files: true
 
       # Existierende Draft Releases löschen
       - name: Delete draft releases
