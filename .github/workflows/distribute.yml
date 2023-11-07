@@ -185,7 +185,7 @@ jobs:
           - { name: ms-configserver, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_dev, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
-r          - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-discovery, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../developerPortal, postBuild, setPRIssueDone" }
