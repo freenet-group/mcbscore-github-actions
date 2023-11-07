@@ -1,0 +1,113 @@
+name: K8s Deployment
+# Launcher Workflow für den reusable Workflow deployment_k8s.yml und Github-Deployment-Status.
+# Für Microservices, die (den jetzt reusable Workflow) deployment_k8s.yml brauchen und kein ganzes deployment.yml.
+# Nicht nötig für Microservices, die deployment.yml haben, da der auch den reusable Workflow deployment_k8s.yml startet.
+
+#Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
+run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.component }} ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: Der Name der Komponente
+        required: true
+      componentVersion:
+        description: Die Version der Komponente
+        required: true
+      environment:
+        description: Die Zielumgebung
+        required: true
+
+env:
+  ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+  ACTIONS_PATH: mcbscore/github
+  NODEJS_VERSION: 20
+
+jobs:
+  create-deployment:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Show Params
+        env:
+          INPUTS_JSON: ${{ toJSON(inputs) }}
+        run: printf '%s\n' "$INPUTS_JSON"
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read and set AWS credentials
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      - name: Determine deployment ref
+        shell: bash
+        run: |
+          if  [[ ${{ github.event.inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
+          then
+            echo "DEPLOYMENT_REF=develop" >> $GITHUB_ENV
+          else
+            echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
+          fi
+
+      - name: Create GitHub deployment
+        uses: chrnorm/deployment-action@v2
+        id: create-deployment
+        with:
+          token: ${{ env.TOKEN }}
+          environment: ${{ inputs.environment }}
+          description: "Deployment nach k8s"
+          ref: ${{ env.DEPLOYMENT_REF }}
+
+    outputs:
+      deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
+
+  deploy_k8s:
+    needs: [create-deployment]
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@1.0.0
+    secrets: inherit
+    with:
+      componentVersion: ${{ github.event.inputs.componentVersion }}
+      environment: ${{ github.event.inputs.environment }}
+      component: ${{ github.event.inputs.component }}
+
+  deployment_status:
+    needs: [create-deployment, deploy_k8s]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      - name: Update deployment status (success)
+        if: success()
+        uses: chrnorm/deployment-status@v2
+        with:
+          token: ${{ env.TOKEN }}
+          state: "success"
+          deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
+
+      - name: Update deployment status (failure)
+        if: failure()
+        uses: chrnorm/deployment-status@v2
+        with:
+          token: ${{ env.TOKEN }}
+          state: "failure"
+          deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
