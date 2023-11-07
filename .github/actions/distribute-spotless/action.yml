@@ -120,8 +120,8 @@ runs:
 
         echo "checking $gradleFile..."
 
-        if [ `grep -c "spotless.gradle" $gradleFile` -eq 1 || 
-        `grep -c "spotless-java8.gradle" $gradleFile` -eq 1 ]; then
+        if [ `grep -c "spotless.gradle" $gradleFile` -eq 1 ] || 
+        [ `grep -c "spotless-java8.gradle" $gradleFile` -eq 1 ]; then
           # spotless mit der neuen Konfiguratuion ausführen
           sh gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PartifactoryUsername=${artifactoryUserName} -PartifactoryPassword=${artifactoryPassword} spotlessApply
           # Änderungen einchecken
