@@ -190,7 +190,7 @@ jobs:
             "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json"
           do
             printf '%s existiert' "$f" >&2
-            if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
+            if [ -e "$f" ]; then echo . >&2; cat -- "$f"; else echo ' nicht.' >&2; fi
           done | jq -s -r 'add | .enabled'
         )
 
