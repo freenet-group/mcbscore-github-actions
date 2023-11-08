@@ -228,7 +228,7 @@ jobs:
   deploy_k8s:
     needs: [create-deployment, deploy_k8s_workflow_exists]
     if: ${{needs.deploy_k8s_workflow_exists.outputs.k8sWorkflowExists != ''}}
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@main
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@1.0.0
     secrets: inherit
     with:
       componentVersion: ${{ github.event.inputs.componentVersion }}
