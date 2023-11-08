@@ -34,6 +34,7 @@ on:
         default: main
       deploymentRepositoryBranch:
         description: Branch von Repository ms-deployment, der benutzt werden soll
+        type: string
         required: false
         default: main
 
@@ -42,10 +43,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Show Params
-        env:
-          INPUTS_JSON: ${{ toJSON(inputs) }}
-        run: printf '%s\n' "$INPUTS_JSON"
+    - name: Show Params
+      env:
+        INPUTS_JSON: ${{ toJSON(inputs) }}
+      run: printf '%s\n' "$INPUTS_JSON"
 
     - name: Checkout Repository
       uses: actions/checkout@v4
@@ -251,7 +252,7 @@ jobs:
     needs: [deploy, deploy_k8s]
     # Der Check success() ist nicht true bei übersprungenen workflows. !failure() dahingegen sieht übersprungenen nicht als failure und nur rote Steps
     if: ${{ always() && !failure() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
- steps:
+    steps:
     # Deployment als erfolgreich melden
     - name: Report deployment status
       shell: bash
