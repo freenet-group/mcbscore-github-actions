@@ -4,7 +4,7 @@ name: K8s Deployment
 # Nicht nötig für Microservices, die deployment.yml haben, da der auch den reusable Workflow deployment_k8s.yml startet.
 
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.component }} ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
+run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.component }} ${{ github.event.inputs.componentVersion }}
 
 on:
   workflow_dispatch:
