@@ -433,7 +433,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbs-master, branch: "feature/MCBS-4537-k8s-deployment-wie-ms", group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../developerPortal, ../encoding, postBuild_MCBS, postBuild_MS, sonarqube, MCBS-Freigabe, refcalls_deployment, setPRIssueDone" }
+          - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s_only, ../encoding, postBuild,setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
