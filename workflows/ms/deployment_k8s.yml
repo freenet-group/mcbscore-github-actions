@@ -1,6 +1,6 @@
 name: K8s Deployment
 #Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu koennen.
-run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.component }} ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
+run-name: K8s ${{ inputs.environment }} Deployment ${{ inputs.component }} ${{ inputs.componentVersion }} dry=${{ inputs.dryRun }}
 
 on:
   #für direkten workflow start über githubactions
@@ -233,14 +233,6 @@ jobs:
         else
           echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
         fi
-
-    - name: Create GitHub deployment
-      uses: chrnorm/deployment-action@v2
-      id: create-deployment
-      with:
-        token: ${{ env.TOKEN }}
-        environment: ${{ github.event.inputs.environment }}
-        ref: ${{ env.DEPLOYMENT_REF }}
 
   ################################################################################
   # Job helm-deployment
