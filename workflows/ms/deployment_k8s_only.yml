@@ -18,6 +18,23 @@ on:
       environment:
         description: Die Zielumgebung
         required: true
+      timeout:
+        description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
+        required: false
+        default: 10m0s
+      deploymentRepositoryBranch:
+        description: Branch von Repository ms-deployment, der benutzt werden soll
+        required: false
+        default: main
+      maxWaitForDeployment:
+        description: maximale Zeit, die beim Helm-Statusscheck auf ein Deployment gewartet wird
+        required: false
+        default: 11m0s
+      dryRun:
+        type: boolean
+        description: Nicht deployen, nur Helm Chart Ergebnis anzeigen (helm --dry-run)
+        required: false
+        default: false
 
 env:
   ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
@@ -74,9 +91,13 @@ jobs:
     uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@1.0.0
     secrets: inherit
     with:
-      componentVersion: ${{ github.event.inputs.componentVersion }}
-      environment: ${{ github.event.inputs.environment }}
-      component: ${{ github.event.inputs.component }}
+      componentVersion: ${{ inputs.componentVersion }}
+      environment: ${{ inputs.environment }}
+      component: ${{ inputs.component }}
+      timeout: ${{ inputs.timeout }}
+      deploymentRepositoryBranch: ${{ inputs.deploymentRepositoryBranch }}
+      maxWaitForDeployment: ${{ inputs.maxWaitForDeployment }}
+      dryRun: ${{ inputs.dryRun }}
 
   deployment_status:
     needs: [create-deployment, deploy_k8s]
