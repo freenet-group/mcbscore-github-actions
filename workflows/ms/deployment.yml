@@ -342,7 +342,7 @@ jobs:
     runs-on: [self-hosted, k8s]
     needs: [deploy, deploy_k8s]
     # Der Check success() ist nicht true bei übersprungenen workflows. !failure() dahingegen sieht übersprungenen nicht als failure und nur rote Steps
-    if: ${{ always() && !failure() && !contains(needs.deploy.result, 'failure') && !contains(needs.deploy.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
+    if: ${{ always() && !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
       - name: Report deployment status
         shell: bash
