@@ -67,6 +67,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      - name: Show Params
+        run: echo '${{ toJSON(inputs) }}'
+        
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
