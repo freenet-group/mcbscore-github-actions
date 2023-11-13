@@ -1,4 +1,4 @@
-name: Deployment (ReST-Service)
+name: Deployment (ReST-Service auf alte Server metis-…)
 
 on:
   workflow_dispatch:

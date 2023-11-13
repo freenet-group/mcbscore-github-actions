@@ -1,6 +1,6 @@
 name: K8s Deployment
 #Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu koennen.
-run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.component }} ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
+run-name: K8s ${{ inputs.environment }} Deployment ${{ inputs.component }} ${{ inputs.componentVersion }} dry=${{ inputs.dryRun }}
 
 on:
   #für direkten workflow start über githubactions
@@ -87,6 +87,11 @@ jobs:
   build-matrix:
     runs-on: ubuntu-latest
     steps:
+    - name: Show Params
+      env:
+        INPUTS_JSON: ${{ toJSON(inputs) }}
+      run: printf '%s\n' "$INPUTS_JSON"
+
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
@@ -190,7 +195,7 @@ jobs:
             "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json"
           do
             printf '%s existiert' "$f" >&2
-            if [ -e "$f" ]; then echo >&2; cat -- "$f"; else echo ' nicht' >&2; fi
+            if [ -e "$f" ]; then echo . >&2; cat -- "$f"; else echo ' nicht.' >&2; fi
           done | jq -s -r 'add | .enabled'
         )
 
@@ -200,51 +205,11 @@ jobs:
       deployment-enabled: ${{ steps.deployment-check.outputs.deploymentEnabled }}
       domain-matrix: ${{ steps.set-matrix.outputs.domainMatrix }}
 
-  create-deployment:
-    runs-on: ubuntu-latest
-    needs: build-matrix
-    if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
-    steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    # Secrets aus AWS auslesen
-    - name: Read and set AWS credentials
-      uses: ./.github/actions/read-aws-secrets
-      with:
-        awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        awsParameterPairs: |
-          /github/secrets/mcbs_token = TOKEN
-
-    - name: Determine deployment ref
-      # DEPLOYMENT_REF Umgebungsvariable setzen
-      shell: bash
-      run: |
-        if  [[ ${{ github.event.inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
-        then
-          echo "DEPLOYMENT_REF=develop" >> $GITHUB_ENV
-        else
-          echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
-        fi
-
-    - name: Create GitHub deployment
-      uses: chrnorm/deployment-action@v2
-      id: create-deployment
-      with:
-        token: ${{ env.TOKEN }}
-        environment: ${{ github.event.inputs.environment }}
-        ref: ${{ env.DEPLOYMENT_REF }}
-
-    outputs:
-      deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
-
   ################################################################################
   # Job helm-deployment
   ################################################################################
   helm-deployment:
-    needs: [build-matrix, create-deployment]
+    needs: [build-matrix]
     if: ${{ needs.build-matrix.outputs.deployment-enabled == 'true' }}
     runs-on: [self-hosted, k8s]
     strategy:
@@ -338,24 +303,6 @@ jobs:
         deploymentPath: ${{ env.DEPLOYMENT_PATH }}
         awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
         awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
-
-    # Deployment als erfolgreich markieren
-    - name: Update deployment status (success)
-      if: success()
-      uses: chrnorm/deployment-status@v2
-      with:
-        token: ${{ env.GITHUB_TOKEN }}
-        state: "success"
-        deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
-
-    # Deployment als fehlerhaft markieren
-    - name: Update deployment status (failure)
-      if: failure()
-      uses: chrnorm/deployment-status@v2
-      with:
-        token: ${{ env.GITHUB_TOKEN }}
-        state: "failure"
-        deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
     - name: Cleanup
       if: ${{ always() }}

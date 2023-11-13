@@ -227,7 +227,7 @@ jobs:
           inputs: >
             {
               "additionalDeploymentComponent": "${{ env.ADDITIONAL_DEPLOYMENT_COMPONENT }}",
-              "componentVersion": "${{ env.COMPONENT_VERSION }}", 
+              "componentVersion": "${{ env.COMPONENT_VERSION }}",
               "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
             }
 
