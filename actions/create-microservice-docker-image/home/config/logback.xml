@@ -24,6 +24,12 @@
 				<threadName/>
 				<message/>
 				<loggerName/>
+				<pattern>
+					<pattern>
+						{"serviceName":"${serviceName}",
+						"environment":"${environment}"}
+					</pattern>
+				</pattern>
 				<logstashMarkers/>
 				<version/>
 				<stackTrace>
@@ -41,12 +47,6 @@
 				<mdc/>
 				<tags/>
 				<logLevelValue/>
-				<pattern>
-					<pattern>
-						{"serviceName":"${serviceName}",
-						 "environment":"${environment}"}
-					</pattern>
-				</pattern>
 			</providers>
 			<jsonFactoryDecorator class="de.md.ms.logging.decorator.JsonFactoryLoggingDecorator"/>
 		</encoder>

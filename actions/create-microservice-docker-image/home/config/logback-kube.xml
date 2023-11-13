@@ -25,6 +25,12 @@
 				<threadName/>
 				<message/>
 				<loggerName/>
+				<pattern>
+					<pattern>
+						{"serviceName":"${serviceName}",
+						"environment":"${environment}"}
+					</pattern>
+				</pattern>
 				<logstashMarkers/>
 				<version/>
 				<stackTrace>
@@ -39,12 +45,6 @@
 						<rootCauseFirst>true</rootCauseFirst>
 					</throwableConverter>
 				</stackTrace>
-				<pattern>
-					<pattern>
-					{"serviceName":"${serviceName}",
-					 "environment":"${environment}"}
-					</pattern>
-				</pattern>
 			</providers>
 		</encoder>
 	</appender>
