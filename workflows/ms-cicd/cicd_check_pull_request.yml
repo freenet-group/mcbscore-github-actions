@@ -84,3 +84,12 @@ jobs:
           Es muss exakt eines dieser Labels gesetzt werden: \n
           - ms-deployment:yes\n
           - ms-deployment:no"
+
+      - name: DOGS Benachrichtigung
+        if: always()
+        uses: freenet-group/notify-on-label@1.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          label_list: 'ms-configuration:yes, ms-deployment:yes'
+          user_name_list: '@adermrc, @zandeget, @lbuesen, @ihleyon'
+          pull_request_number: ${{ github.event.pull_request.number }}
