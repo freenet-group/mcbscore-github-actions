@@ -567,7 +567,7 @@ jobs:
             }
 
       - name: SBOM zu DependencyTrack senden
-        uses: DependencyTrack/gh-upload-sbom@v2.0.1
+        uses: DependencyTrack/gh-upload-sbom@v2.1.0
         with:
           protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
           serverHostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
