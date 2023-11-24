@@ -1,7 +1,7 @@
 ARG JAVA_VERSION=11
 FROM ghcr.io/freenet-group/container-base-images/azuljdk-${JAVA_VERSION}:latest
-MAINTAINER MCBS Entwicklung <it.abba.abr.entw@md.de>
-LABEL author="it.abba.abr.entw@md.de"
+MAINTAINER MCBS Entwicklung <tp.sd.back.mcbs@freenet.ag>
+LABEL author="tp.sd.back.mcbs@freenet.ag"
 
 ARG JASYPT_ENCRYPTOR_PASSWORD
 ARG SERVICE_NAME
