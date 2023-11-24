@@ -45,7 +45,8 @@ unten einen eigenen Abschnitt.
 
 ```properties
 #...
-DEPENDENCYTRACK_BOM=./build/reports/bom.json
+DEPENDENCYTRACK_BOM_PATH=./build/reports/
+DEPENDENCYTRACK_BOM_NAME=bom.json
 ```
 
 * build.gradle publishing sicherstellen
@@ -82,7 +83,8 @@ property "sonar.projectVersion", project.ARTIFACT_VERSION
 
 ```properties
 #...
-DEPENDENCYTRACK_BOM=./build/reports/bom.json
+DEPENDENCYTRACK_BOM_PATH=./build/reports/
+DEPENDENCYTRACK_BOM_NAME=bom.json
 ```
 
 * cyclonedx-gradle-plugin in der build.gradle hinzufügen

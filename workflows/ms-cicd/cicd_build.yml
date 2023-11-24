@@ -1,9 +1,6 @@
 name: CICD Build
 
 on:
-  push:
-    branches-ignore:
-      - main
   pull_request:
     types: [ opened, reopened, synchronize ]
     branches-ignore:
@@ -21,6 +18,8 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+
+concurrency: conc-pr-${{ github.repository }}
 
 jobs:
   build:
