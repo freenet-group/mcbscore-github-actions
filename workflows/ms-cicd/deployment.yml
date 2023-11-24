@@ -227,6 +227,59 @@ jobs:
       environment: ${{ github.event.inputs.environment }}
       component: ${{ github.event.inputs.component }}
 
+  upload_sbom:
+    runs-on: [ self-hosted, k8s ]
+    needs: [deploy, deploy_k8s]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: AWS Secrets auslesen
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
+            /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
+            /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
+            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
+
+      - name: Read workflow.properties
+        shell: bash
+        run: |
+          cat ./.github/workflow.properties >> $GITHUB_ENV
+
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
+
+      - name: Download SBOM 
+        id: downloadRelease
+        uses: ./mcbscore/github/actions/download-release-assets
+        with:
+          version: ${{ github.event.inputs.componentVersion }}
+          assetPattern: ${{ env.DEPENDENCYTRACK_BOM_NAME }}
+          targetPath: ${{ env.DEPENDENCYTRACK_BOM_PATH }}
+          token: ${{ env.TOKEN }}
+
+      - name: DependencyTrack Upload
+        uses: freenet-group/gh-upload-sbom-with-tagging@0.1.0
+        with:
+          component: ${{ env.JIRA_COMPONENT }}
+          component_version: ${{ github.event.inputs.componentVersion }}
+          stage_tag: ${{ github.event.inputs.environment }}
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          bomfilename: ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
+
   deployment_status:
     needs: [create-deployment, deploy, deploy_k8s]
     if: always()

@@ -19,30 +19,6 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
-      # expected aws properties
-      USER: ''
-      TOKEN: ''
-      MCBSTEST_CREDENTIALS: ''
-      JIRA_CLOUD_URL: ''
-      DEPENDENCYTRACK_PROTOCOL: ''
-      DEPENDENCYTRACK_HOSTNAME: ''
-      DEPENDENCYTRACK_PORT: ''
-      DEPENDENCYTRACK_API_KEY: ''
-      JASYPT_ENCRYPTOR_PASSWORD: ''
-      # expected workflow.properties
-      JAVA_VERSION: ''
-      JIRA_COMPONENT: ''
-      JIRA_PROJECT: ''
-      ATLASSIAN_DEVELOPER_TOOLS_VERSION: ''
-      APPLICATION_JAR_PATH: ''
-      APPLICATION_JAR_NAME: ''
-      COVERAGE_LIMIT: ''
-      COVERAGE_FAIL: ''
-      COVERAGE_PATH: ''
-      COVERAGE_APP: ''
-      COMPONENT: ''
-      RELEASENOTES_JAVA_RELEASE: ''
-      DEPENDENCYTRACK_BOM: ''
 
     outputs:
       current_version: ${{ steps.get-latest-tag.outputs.tag  }}
@@ -76,12 +52,12 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
+            /github/common/sonar/api_url = SONAR_API_URL,
             /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
             /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
             /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
-            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
-            /github/common/sonar/api_url = SONAR_API_URL
+            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
 
       - name: Read workflow.properties
         shell: bash
@@ -403,7 +379,9 @@ jobs:
       - name: Release erstellen
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.bump-semver.outputs.new_version }}.jar
+          files: |
+            ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.bump-semver.outputs.new_version }}.jar
+            ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
           body_path: ".github/templates/release_template.md"
           token: ${{ env.TOKEN }}
           generate_release_notes: true
@@ -565,15 +543,3 @@ jobs:
               "issueList": "${{ steps.update_release_template.outputs.issue_list }}",
               "bambiArgs": "${{ env.BAMBI_ARGS }}"
             }
-
-      - name: SBOM zu DependencyTrack senden
-        uses: DependencyTrack/gh-upload-sbom@v2.0.1
-        with:
-          protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
-          serverHostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
-          port: ${{ env.DEPENDENCYTRACK_PORT }}
-          apiKey: ${{ env.DEPENDENCYTRACK_API_KEY }}
-          projectName: ${{ env.JIRA_COMPONENT }}
-          projectVersion: ${{ steps.bump-semver.outputs.new_version }}
-          bomFilename: ${{env.DEPENDENCYTRACK_BOM}}
-          autoCreate: true
