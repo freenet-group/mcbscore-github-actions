@@ -126,7 +126,7 @@ jar.enabled = false
 
 bootJar {
     // Sets output jar name
-    archiveFileName = "${project.ARTIFACT_NAME}.${archiveExtension.get()}"
+    archiveFileName = "${project.getParent().getName()}-${project.ARTIFACT_VERSION}.${archiveExtension.get()}"
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 ```
