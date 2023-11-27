@@ -4,6 +4,8 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
 
+concurrency: conc-check-code-${{ github.repository }}
+
 jobs:
   utf8:
     runs-on: ubuntu-latest

@@ -1,8 +1,9 @@
 name: CICD Check Pull-Request
 
+concurrency: conc-check-pr-${{ github.repository }}
+
 on:
   pull_request:
-    types: [opened, reopened, labeled, unlabeled, review_requested, review_request_removed]
 
 jobs:
   syncLabels:
@@ -53,9 +54,9 @@ jobs:
           add_comment: true
           message: "Pull-Request wurde aufgrund fehlender Release-Labels abgelehnt. \n
           Es muss exakt eines dieser Labels gesetzt werden: \n
-          - release:patch\n
-          - release:minor\n
-          - release:major"
+            - release:patch\n
+            - release:minor\n
+            - release:major"
 
       - name: MS-Configuration Labels prüfen
         if: always()
@@ -68,8 +69,8 @@ jobs:
           add_comment: true
           message: "Pull-Request wurde aufgrund fehlender MS-Configuration-Labels abgelehnt. \n
           Es muss exakt eines dieser Labels gesetzt werden: \n
-          - ms-configuration:yes\n
-          - ms-configuration:no"
+            - ms-configuration:yes\n
+            - ms-configuration:no"
 
       - name: MS-Deployment Labels prüfen
         if: always()
@@ -82,8 +83,8 @@ jobs:
           add_comment: true
           message: "Pull-Request wurde aufgrund fehlender MS-Deployment-Labels abgelehnt. \n
           Es muss exakt eines dieser Labels gesetzt werden: \n
-          - ms-deployment:yes\n
-          - ms-deployment:no"
+            - ms-deployment:yes\n
+            - ms-deployment:no"
 
       - name: DOGS Benachrichtigung
         if: always()
