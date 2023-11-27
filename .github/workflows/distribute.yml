@@ -16,6 +16,7 @@ on:
           - ALL
           - aws
           - errorcodes
+          - framework
           - mandel
           - mcbs
           - metis
@@ -383,6 +384,28 @@ jobs:
           - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Distribute Workflows
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  framework:
+    if: ${{ github.event.inputs.group == 'framework' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        repository:
+          - { name: lib-amount, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v4
         with:
