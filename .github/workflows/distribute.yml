@@ -407,6 +407,7 @@ jobs:
         repository:
           - { name: lib-amount, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-annotation, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: lib-common, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v4
         with:
