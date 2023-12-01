@@ -25,6 +25,7 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
+      TZ: Europe/Berlin
 
     steps:
       # Repository auschecken unter $GITHUB_WORKSPACE
