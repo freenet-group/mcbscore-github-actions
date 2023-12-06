@@ -408,6 +408,7 @@ jobs:
           - { name: lib-amount, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-annotation, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-common, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: lib-process, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -481,6 +482,9 @@ jobs:
       matrix:
         repository:
           - { name: lib-amount, branch: develop, group: standard }
+          - { name: lib-annotation, branch: develop, group: standard }
+          - { name: lib-common, branch: develop, group: standard }
+          - { name: lib-process, branch: develop, group: standard }
           - { name: mcbs-master, branch: develop, group: mcbs }
           - { name: mcbs-logging, branch: develop, group: mcbs }
           - { name: mcbscore-mandel, branch: develop, group: mandel }
