@@ -202,7 +202,6 @@ jobs:
           - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, postBuild,setPRIssueDone" }
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
-          - { name: ms-usageprices, branch: develop, group: ms, workflows: "../check, build, deployment, deployment_dev, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../developerPortal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s_only, ../encoding, postBuild,setPRIssueDone" }
 
@@ -383,7 +382,6 @@ jobs:
           - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-usageprices-ui, branch: develop, group: standard, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -533,7 +531,6 @@ jobs:
           - { name: ms-oms-router, branch: develop, group: ms }
           - { name: ms-proxy-support, branch: develop, group: ms }
           - { name: ms-rating, branch: develop, group: ms }
-          - { name: ms-usageprices, branch: develop, group: ms }
           - { name: ms-user, branch: develop, group: ms }
           - { name: ms-user-cleanup, branch: develop, group: ms }
           - { name: mslib-aws, branch: develop, group: mslib }
