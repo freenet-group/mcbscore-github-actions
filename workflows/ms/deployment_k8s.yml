@@ -216,6 +216,8 @@ jobs:
       fail-fast: false
       matrix:
         domain: ${{ fromJson(needs.build-matrix.outputs.domain-matrix) }}
+    outputs:
+      helmStatusJson: ${{ steps.helmDeployment.outputs.helmStatusJson }}
     steps:
     # Leeren Workspace sicherstellen
     - name: Ensure clean workspace
@@ -226,7 +228,7 @@ jobs:
           # https://askubuntu.com/questions/740805/how-can-i-remove-all-files-from-current-directory-using-terminal
           shopt -s dotglob
           rm -rf *
-          
+
     - name: Checkout Repository
       uses: actions/checkout@v4
       with:
@@ -289,8 +291,9 @@ jobs:
           echo 'Keine Keystore-Dateien kopiert (aber vielleicht ja gar nicht gefordert)'
         fi
 
+    # Haupt-Deployment-Action
     - name: Deploy to K8s
-      # Haupt-Deployment-Action
+      id: helmDeployment
       uses: ./.github/actions/deploy-to-k8s
       with:
         component: ${{ inputs.component }}
