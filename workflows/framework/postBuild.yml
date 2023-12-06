@@ -21,8 +21,7 @@ on:
 
 jobs:
   postBuild:
-    # self-hosted Runner für den Systeminternen Zugriff
-    runs-on: [self-hosted, vm]
+    runs-on: ubuntu-latest
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
@@ -31,19 +30,6 @@ jobs:
       JIRA_PROJECT: MCBS
 
     steps:
-      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
-      - name: Change Owner to Runner User
-        if: ${{ always() }}
-        run: |
-          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
-          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
-
-      # Leeren Workspace sicherstellen
-      - name: Ensure clean workspace
-        run: |
-          echo "Cleaning up previous run"
-          rm -rf *
-
       # Repository auschecken unter $GITHUB_WORKSPACE
       - id: checkout-repository
         name: Checkout Repository
