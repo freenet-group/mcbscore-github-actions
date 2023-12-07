@@ -8,11 +8,6 @@ on:
 jobs:
   syncLabels:
     runs-on: ubuntu-latest
-    env:
-      # expected aws properties
-      USER: ''
-      TOKEN: ''
-      JASYPT_ENCRYPTOR_PASSWORD: ''
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
