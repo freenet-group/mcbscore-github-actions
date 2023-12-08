@@ -197,6 +197,7 @@ jobs:
             prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
             prLabels=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels" | jq -r ".[].name")
             
+            # ABRMS-5265 ist ein Renovate-Platzhalterticket für DOGS
             if echo "$prLabels" | grep -q "renovate"; then
               if [ -z "$uniqueIssueList" ]; then
                 uniqueIssueList="ABRMS-5265"
