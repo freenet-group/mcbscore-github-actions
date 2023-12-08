@@ -407,6 +407,7 @@ jobs:
           - { name: lib-annotation, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-common, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-io, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: lib-persistence, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-process, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-relation, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-security, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
@@ -487,6 +488,7 @@ jobs:
           - { name: lib-annotation, branch: develop, group: standard }
           - { name: lib-common, branch: develop, group: standard }
           - { name: lib-io, branch: develop, group: standard }
+          - { name: lib-persistence, branch: develop, group: standard }
           - { name: lib-process, branch: develop, group: standard }
           - { name: lib-relation, branch: develop, group: standard }
           - { name: lib-security, branch: develop, group: standard }
