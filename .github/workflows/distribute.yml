@@ -409,6 +409,7 @@ jobs:
           - { name: lib-io, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-process, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-relation, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: lib-security, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
           - { name: lib-service, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v4
@@ -488,6 +489,7 @@ jobs:
           - { name: lib-io, branch: develop, group: standard }
           - { name: lib-process, branch: develop, group: standard }
           - { name: lib-relation, branch: develop, group: standard }
+          - { name: lib-security, branch: develop, group: standard }
           - { name: lib-service, branch: develop, group: standard }
           - { name: mcbs-master, branch: develop, group: mcbs }
           - { name: mcbs-logging, branch: develop, group: mcbs }
