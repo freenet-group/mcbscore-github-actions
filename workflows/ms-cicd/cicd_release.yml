@@ -6,10 +6,10 @@ on:
   workflow_dispatch:
     inputs:
       release-branch:
-        description: 'Welcher Branch soll released werden? (z.B. feature/* oder bugfix/*)'
+        description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
         required: true
       version:
-        description: 'Welche Version für das neue Release (z.B. 8.32.1)?'
+        description: 'Welche Version für das neue Release z.B. "8.32.1"?'
         required: true
       pre-release:
         default: false
