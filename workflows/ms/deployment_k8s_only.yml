@@ -88,6 +88,7 @@ jobs:
 
   deploy_k8s:
     needs: [create-deployment]
+#TODO
 #    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@1.0.1
     uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@feature/METIS-1372-sanitytest
     secrets: inherit
@@ -152,27 +153,15 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
-            /config/metis/test/readUserLoginData = SANITY_USER_AND_PASSWORD
+            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.client.mcbs-test-client.clientId = SANITY_CLIENT_ID,
+            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.client.mcbs-test-client.clientSecret = SANITY_CLIENT_SECRET,
+            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.base.url = SANITY_STS_URL,
+            /config/ms/application_${{ github.event.inputs.environment}}/api.gateway.md.${{ github.event.inputs.environment}}.base.url = SANITY_API_GATEWAY
 
       - name: Read workflow.properties
         shell: bash
         run: |
-          cat ./.github/workflow.properties >> $GITHUB_ENV
-
-      - name: checkout mcbscore-github-actions
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.ACTIONS_REPOSITORY }}
-          token: ${{ env.TOKEN }}
-          path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ inputs.actionsRepositoryBranch }}
-
-      - name: Initialize Workflow
-        uses: ./mcbscore/github/actions/init-workflow
-        with:
-          installJava: true
-          installNodeJs: true
-          installJq: true
+          cat ./.github/workflow.properties >> "$GITHUB_ENV"
 
       - name: Prüfe ob SanityTest.feature existiert und aktiviert ist
         id: checkFeatureFileExists
@@ -189,31 +178,81 @@ jobs:
             fi
           fi
 
-      - name: Token holen (POST /metis-rest/login)
+      # Dynamische AWS Parameter gemäß Workflow Property SANITY_TESTS_AWS_PARAMETERS:
+      # Z.B. SANITY_TESTS_AWS_PARAMETERS={ "propA": "/config/foo/a", "propB": "/config/foo/b" }
+      # => Umgebungsvariable DYNAMIC_AWS_PARAM_PAIRS setzen mit mehrzeiligem Wert
+      #   /config/foo/a = SANITY_TESTS_AWS_PARAM_propA,
+      #   /config/foo/b = SANITY_TESTS_AWS_PARAM_propB
+      # (um dann an karate-action Input properties auf
+      # { "propA": ${{ env.SANITY_TESTS_AWS_PARAM_propA }}, "propB": ${{ env.SANITY_TESTS_AWS_PARAM_propB }} }
+      # zu setzen)
+      - name: dynamische AWS-Parameter Bedarf ermitteln
+        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
+        run: |
+          out=$(jq --raw-output 'to_entries | map(.value + " = SANITY_TESTS_AWS_PARAM_" + .key) | join(",\n")' \
+            <<<"$SANITY_TESTS_AWS_PARAMETERS" \
+            | tee /dev/stderr)
+          printf '%s<<...snip...\n%s\n...snip...\n' DYNAMIC_AWS_PARAM_PAIRS "$out" >>"$GITHUB_ENV"
+
+      - name: dynamische AWS-Parameter für Sanity-Test auslesen
+        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: ${{ env.DYNAMIC_AWS_PARAM_PAIRS }}
+
+      # Dynamische AWS Parameter (jetzt in Umgebungsvariablen) als JSON formatieren, wie man es an karate-action übergeben kann:
+      # Beispiel Fortsetzung: Umgebungsvariablen:
+      # - SANITY_TESTS_AWS_PARAM_propA = <Wert von AWS Param /config/foo/a>
+      # - SANITY_TESTS_AWS_PARAM_propB = <Wert von AWS Param /config/foo/b>
+      # => Setze Output auf {"propA": <Wert von Umg.Var. SANITY_TESTS_AWS_PARAM_propA>, "propB": <Wert von Umg.Var. SANITY_TESTS_AWS_PARAM_propB>}
+      - name: dynamische AWS-Parameter als JSON formatieren
+        id: getAwsKarateProperties
+        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
+        run: |
+          out=$(jq --compact-output '
+            [
+              to_entries
+              | map({"key": .key, "value": env["SANITY_TESTS_AWS_PARAM_" + .key]}) []
+              | select(.value != null)
+            ]
+            | from_entries' <<<"$SANITY_TESTS_AWS_PARAMETERS")
+          printf 'properties=%s\n' "$out" >>"$GITHUB_OUTPUT"
+
+      - name: checkout mcbscore-github-actions
+        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
+
+      - name: Initialize Workflow
+        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJava: true
+          installNodeJs: true
+          installJq: true
+
+      - name: Token holen
         if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
         id: getToken
-        env:
-          RUN_ID: ${{ github.run_id }}
-          HELM_STATUS_JSON: ${{ needs.deploy_k8s.outputs.helmStatusJson }}
-        shell: bash
-        run: |
-          hostname=$(jq --raw-output '.config.hostnames[0] //("kein Hostname im Helm Status gefunden\n"|halt_error)' <<<"$HELM_STATUS_JSON")
-          url="https://$hostname/metis-rest/login"
-          auth="Authorization: Basic $(printf %s "${SANITY_USER_AND_PASSWORD?}" | base64)"
-          token=$(curl --fail-with-body --location --dump-header /dev/stderr \
-            --header 'Content-Type: application/json' --header 'Accept: application/json' \
-            --header "x-request-id: sanitytest-$(date +%Y%m%dT%H%M%S)-$RUN_ID" \
-            --header "$auth" --data '' "$url" \
-            | jq --raw-output '.token // ""')
-          printf '%s => .token Länge %d\n' "$url" ${#token}
-          printf 'msMetisToken=%s\n' "$token" >> "$GITHUB_OUTPUT"
+        uses: ./mcbscore/github/actions/get-application-token
+        with:
+          clientId: ${{ env.SANITY_CLIENT_ID }}
+          clientSecret: ${{ env.SANITY_CLIENT_SECRET }}
+          tokenUrl: ${{ env.SANITY_STS_URL }}/v1/oidc/token
 
       - name: Karate Tests ausführen
         if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
-        uses: DasBen/karate-action@0.1.0
+        uses: DasBen/karate-action@0.3.0
         with:
           karateVersion: ${{ env.KARATE_VERSION }}
           baseUrl: ${{ env.SANITY_API_GATEWAY }}
           testDir: './sanityTests'
           testFilePath: 'SanityTest.feature'
-          authToken: ${{ steps.getToken.outputs.msMetisToken }}
+          authToken: "Bearer ${{ steps.getToken.outputs.accessToken }}"
+          properties: '${{ steps.getAwsKarateProperties.outputs.properties }}'
