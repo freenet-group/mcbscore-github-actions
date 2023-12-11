@@ -82,7 +82,7 @@ jobs:
         name: Determine Component Version
         uses: ./mcbscore/github/actions/determine-component-version-jc
         with:
-          component: ${{ env.COMPONENT }}
+          component: ${{ env.JIRA_COMPONENT }}
           includedComponents: ${{ env.INCLUDED_COMPONENTS }}
 
       # ##################################################################################

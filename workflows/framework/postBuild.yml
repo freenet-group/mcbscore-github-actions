@@ -193,7 +193,7 @@ jobs:
           hasDependencies: "NEIN"
           dependentIssues: "keine"
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
-          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
+          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}"
           junitResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
           cucumberResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
           javaVersion: ${{ env.RELEASENOTES_JAVA_RELEASE }}
