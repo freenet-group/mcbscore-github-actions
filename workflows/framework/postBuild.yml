@@ -21,8 +21,7 @@ on:
 
 jobs:
   postBuild:
-    # self-hosted Runner für den Systeminternen Zugriff
-    runs-on: [self-hosted, vm]
+    runs-on: ubuntu-latest
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
@@ -31,19 +30,6 @@ jobs:
       JIRA_PROJECT: MCBS
 
     steps:
-      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
-      - name: Change Owner to Runner User
-        if: ${{ always() }}
-        run: |
-          docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
-          docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
-
-      # Leeren Workspace sicherstellen
-      - name: Ensure clean workspace
-        run: |
-          echo "Cleaning up previous run"
-          rm -rf *
-
       # Repository auschecken unter $GITHUB_WORKSPACE
       - id: checkout-repository
         name: Checkout Repository
@@ -151,7 +137,7 @@ jobs:
       # ##################################################################################
       - name: Fetch Sonar-Coverage
         id: fetch-coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
+        if: ${{ env.COVERAGE_APP != '' }}
         uses: ./mcbscore/github/actions/sonar-check
         with:
           sonarUrl: ${{ env.SONAR_API_URL }}
@@ -161,7 +147,7 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Evaluate Sonar-Coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
+        if: ${{ (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
         uses: ./mcbscore/github/actions/create-sonar-issue
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
@@ -207,7 +193,7 @@ jobs:
           hasDependencies: "NEIN"
           dependentIssues: "keine"
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
-          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
+          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/download/${{ github.event.inputs.releaseVersion }}/${{ env.JIRA_COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
           junitResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
           cucumberResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
           javaVersion: ${{ env.RELEASENOTES_JAVA_RELEASE }}
