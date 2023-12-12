@@ -41,20 +41,22 @@ runs:
     - name: AWS Secrets für Sanity-Test auslesen
       uses: ./.github/actions/read-aws-secrets
       with:
-        awsAccessKeyId: '${{inputs.awsAccessKeyId}}'
-        awsSecretAccessKey: '${{inputs.awsSecretAccessKey}}'
+        awsAccessKeyId: '${{ inputs.awsAccessKeyId }}'
+        awsSecretAccessKey: '${{ inputs.awsSecretAccessKey }}'
         awsParameterPairs: |
           /github/secrets/mcbs_token = TOKEN,
-          /config/ms/application_${{inputs.environment}}/sts.md.client.mcbs-test-client.clientId = SANITY_CLIENT_ID,
-          /config/ms/application_${{inputs.environment}}/sts.md.client.mcbs-test-client.clientSecret = SANITY_CLIENT_SECRET,
-          /config/ms/application_${{inputs.environment}}/sts.md.base.url = SANITY_STS_URL,
-          /config/ms/application_${{inputs.environment}}/api.gateway.md.${{inputs.environment}}.base.url = SANITY_API_GATEWAY
+          /config/ms/application_${{ inputs.environment }}/sts.md.client.mcbs-test-client.clientId = SANITY_CLIENT_ID,
+          /config/ms/application_${{ inputs.environment }}/sts.md.client.mcbs-test-client.clientSecret = SANITY_CLIENT_SECRET,
+          /config/ms/application_${{ inputs.environment }}/sts.md.base.url = SANITY_STS_URL,
+          /config/ms/application_${{ inputs.environment }}/api.gateway.md.${{ inputs.environment }}.base.url = SANITY_API_GATEWAY,
+          /config/ms/application_${{ inputs.environment }}/test.sanity.config = SANITY_GLOBAL_CONFIG,
+          /config/ms/${{ inputs.component }}_${{ inputs.environment }}/test.sanity.config = SANITY_COMPONENT_CONFIG
 
     - name: Prüfe ob SanityTest.feature existiert und aktiviert ist
       id: checkEnabled
       env:
-        ENABLED: '${{inputs.enabled}}'
-        TEST_DIR: '${{inputs.testDir}}'
+        ENABLED: '${{ inputs.enabled }}'
+        TEST_DIR: '${{ inputs.testDir }}'
       run: |
         if [ "$ENABLED" == false ]; then
           echo 'enabled=false'
@@ -64,6 +66,12 @@ runs:
         else
           echo 'enabled=false'
         fi >> "$GITHUB_OUTPUT"
+
+    - name: spezifischsten AWS Parameter test.sanity.config auswählen
+      id: selectAwsTestConfig
+      if: steps.checkEnabled.outputs.enabled=false == 'true'
+      run: |
+        printf 'config=%s\n' "${SANITY_COMPONENT_CONFIG:-$SANITY_GLOBAL_CONFIG}" >>"$GITHUB_OUTPUT"
 
     # Dynamische AWS Parameter gemäß Workflow Property SANITY_TESTS_AWS_PARAMETERS:
     # Z.B. SANITY_TESTS_AWS_PARAMETERS={ "propA": "/config/foo/a", "propB": "/config/foo/b" }
@@ -86,9 +94,9 @@ runs:
       if: steps.checkEnabled.outputs.enabled == 'true'
       uses: ./.github/actions/read-aws-secrets
       with:
-        awsAccessKeyId: '${{inputs.awsAccessKeyId}}'
-        awsSecretAccessKey: '${{inputs.awsSecretAccessKey}}'
-        awsParameterPairs: '${{env.DYNAMIC_AWS_PARAM_PAIRS}}'
+        awsAccessKeyId: '${{ inputs.awsAccessKeyId }}'
+        awsSecretAccessKey: '${{ inputs.awsSecretAccessKey }}'
+        awsParameterPairs: '${{ env.DYNAMIC_AWS_PARAM_PAIRS }}'
 
     # Dynamische AWS Parameter (jetzt in Umgebungsvariablen) als JSON formatieren, wie man es an karate-action übergeben kann:
     # Beispiel Fortsetzung: Umgebungsvariablen:
@@ -113,27 +121,27 @@ runs:
       if: steps.checkEnabled.outputs.enabled == 'true'
       uses: actions/checkout@v4
       with:
-        repository: '${{env.ACTIONS_REPOSITORY}}'
-        token: '${{env.TOKEN}}'
-        path: '${{env.ACTIONS_PATH}}'
-        ref: '${{inputs.actionsRepositoryBranch}}'
+        repository: '${{ env.ACTIONS_REPOSITORY }}'
+        token: '${{ env.TOKEN }}'
+        path: '${{ env.ACTIONS_PATH }}'
+        ref: '${{ inputs.actionsRepositoryBranch }}'
 
     - name: Token holen
       if: steps.checkEnabled.outputs.enabled == 'true'
       id: getToken
       uses: ./mcbscore/github/actions/get-application-token
       with:
-        clientId: '${{env.SANITY_CLIENT_ID}}'
-        clientSecret: '${{env.SANITY_CLIENT_SECRET}}'
-        tokenUrl: '${{env.SANITY_STS_URL}}/v1/oidc/token'
+        clientId: '${{ env.SANITY_CLIENT_ID }}'
+        clientSecret: '${{ env.SANITY_CLIENT_SECRET }}'
+        tokenUrl: '${{ env.SANITY_STS_URL }}/v1/oidc/token'
 
     - name: Karate Tests ausführen
       if: steps.checkEnabled.outputs.enabled == 'true'
       uses: DasBen/karate-action@0.3.0
       with:
-        karateVersion: '${{inputs.karateVersion}}'
-        baseUrl: '${{inputs.baseUrl}}'
-        testDir: '${{inputs.testDir}}'
-        testFilePath: '${{inputs.testFiles}}'
-        properties: '${{inputs.testProperties}}'
-        authToken: 'Bearer ${{steps.getToken.outputs.accessToken}}'
+        karateVersion: '${{ inputs.karateVersion }}'
+        baseUrl: '${{ inputs.baseUrl }}'
+        testDir: '${{ inputs.testDir }}'
+        testFilePath: '${{ inputs.testFiles }}'
+        properties: '${{ steps.selectAwsTestConfig.outputs.config }}'
+        authToken: 'Bearer ${{ steps.getToken.outputs.accessToken }}'
