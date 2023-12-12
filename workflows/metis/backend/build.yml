@@ -254,15 +254,15 @@ jobs:
           jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           javaVersion: ${{ env.JAVA_VERSION }}
 
-      # Starte Deployment auf K8S
+      # Starte Deployment auf K8s
       - name: Invoke kubernetes workflow
-        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_k8s.yml') != ''
+        if: env.BUILD_TYPE == 'DEVELOP'
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: K8s Deployment
+          workflow: deployment_k8s_only
           token: ${{ env.TOKEN }}
           inputs: >
-            { 
+            {
               "component": "${{ env.COMPONENT }}",
               "componentVersion": "${{ env.COMPONENT_VERSION }}",
               "environment": "dev",

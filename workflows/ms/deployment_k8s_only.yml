@@ -88,9 +88,7 @@ jobs:
 
   deploy_k8s:
     needs: [create-deployment]
-#TODO
-#    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@1.0.1
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@feature/METIS-1372-sanitytest
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@1.0.1
     secrets: inherit
     with:
       componentVersion: ${{ inputs.componentVersion }}
