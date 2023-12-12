@@ -146,113 +146,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: AWS Secrets für Sanity-Test auslesen
-        uses: ./.github/actions/read-aws-secrets
-        with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          awsParameterPairs: |
-            /github/secrets/mcbs_token = TOKEN,
-            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.client.mcbs-test-client.clientId = SANITY_CLIENT_ID,
-            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.client.mcbs-test-client.clientSecret = SANITY_CLIENT_SECRET,
-            /config/ms/application_${{ github.event.inputs.environment}}/sts.md.base.url = SANITY_STS_URL,
-            /config/ms/application_${{ github.event.inputs.environment}}/api.gateway.md.${{ github.event.inputs.environment}}.base.url = SANITY_API_GATEWAY
-
-      - name: Read workflow.properties
-        shell: bash
-        run: |
-          cat ./.github/workflow.properties >> "$GITHUB_ENV"
-
-      - name: Prüfe ob SanityTest.feature existiert und aktiviert ist
-        id: checkFeatureFileExists
-        run: |
-          # Disable sanity tests if feature file does not exist
-          if [[ "${{ env.SANITY_TESTS_ENABLED }}" == "false" ]]; then
-            echo "sanityTestExists=false" >> "$GITHUB_OUTPUT"
-          else
-            # Check if feature file exists
-            if [[ -z "${{ hashFiles('**/sanityTests/*.feature') }}" ]]; then
-              echo "sanityTestExists=false" >> "$GITHUB_OUTPUT"
-            else
-              echo "sanityTestExists=true" >> "$GITHUB_OUTPUT"
-            fi
-          fi
-
-      # Dynamische AWS Parameter gemäß Workflow Property SANITY_TESTS_AWS_PARAMETERS:
-      # Z.B. SANITY_TESTS_AWS_PARAMETERS={ "propA": "/config/foo/a", "propB": "/config/foo/b" }
-      # => Umgebungsvariable DYNAMIC_AWS_PARAM_PAIRS setzen mit mehrzeiligem Wert
-      #   /config/foo/a = SANITY_TESTS_AWS_PARAM_propA,
-      #   /config/foo/b = SANITY_TESTS_AWS_PARAM_propB
-      # (um dann an karate-action Input properties auf
-      # { "propA": ${{ env.SANITY_TESTS_AWS_PARAM_propA }}, "propB": ${{ env.SANITY_TESTS_AWS_PARAM_propB }} }
-      # zu setzen)
-      - name: dynamische AWS-Parameter Bedarf ermitteln
-        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
-        run: |
-          out=$(jq --raw-output 'to_entries | map(.value + " = SANITY_TESTS_AWS_PARAM_" + .key) | join(",\n")' \
-            <<<"$SANITY_TESTS_AWS_PARAMETERS" \
-            | tee /dev/stderr)
-          printf '%s<<...snip...\n%s\n...snip...\n' DYNAMIC_AWS_PARAM_PAIRS "$out" >>"$GITHUB_ENV"
-
-      - name: dynamische AWS-Parameter für Sanity-Test auslesen
-        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
-        uses: ./.github/actions/read-aws-secrets
-        with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          awsParameterPairs: ${{ env.DYNAMIC_AWS_PARAM_PAIRS }}
-
-      # Dynamische AWS Parameter (jetzt in Umgebungsvariablen) als JSON formatieren, wie man es an karate-action übergeben kann:
-      # Beispiel Fortsetzung: Umgebungsvariablen:
-      # - SANITY_TESTS_AWS_PARAM_propA = <Wert von AWS Param /config/foo/a>
-      # - SANITY_TESTS_AWS_PARAM_propB = <Wert von AWS Param /config/foo/b>
-      # => Setze Output auf {"propA": <Wert von Umg.Var. SANITY_TESTS_AWS_PARAM_propA>, "propB": <Wert von Umg.Var. SANITY_TESTS_AWS_PARAM_propB>}
-      - name: dynamische AWS-Parameter als JSON formatieren
-        id: getAwsKarateProperties
-        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
-        run: |
-          out=$(jq --compact-output '
-            [
-              to_entries
-              | map({"key": .key, "value": env["SANITY_TESTS_AWS_PARAM_" + .key]}) []
-              | select(.value != null)
-            ]
-            | from_entries' <<<"$SANITY_TESTS_AWS_PARAMETERS")
-          printf 'properties=%s\n' "$out" >>"$GITHUB_OUTPUT"
-
-      - name: checkout mcbscore-github-actions
-        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.ACTIONS_REPOSITORY }}
-          token: ${{ env.TOKEN }}
-          path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ inputs.actionsRepositoryBranch }}
-
       - name: Initialize Workflow
-        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
         uses: ./mcbscore/github/actions/init-workflow
         with:
-          installJava: true
+          installJava: false
           installNodeJs: true
           installJq: true
 
-      - name: Token holen
-        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
-        id: getToken
-        uses: ./mcbscore/github/actions/get-application-token
-        with:
-          clientId: ${{ env.SANITY_CLIENT_ID }}
-          clientSecret: ${{ env.SANITY_CLIENT_SECRET }}
-          tokenUrl: ${{ env.SANITY_STS_URL }}/v1/oidc/token
-
       - name: Karate Tests ausführen
-        if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
         uses: DasBen/karate-action@0.3.0
         with:
-          karateVersion: ${{ env.KARATE_VERSION }}
-          baseUrl: ${{ env.SANITY_API_GATEWAY }}
+          enabled: '${{ env.SANITY_TESTS_ENABLED }}'
+          environment: '${{ inputs.environment }}'
+          awsAccessKeyId: '${{ secrets.AWS_ACCESS_KEY_ID }}'
+          awsSecretAccessKey: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          karateVersion: '${{ env.KARATE_VERSION }}'	#aus workflow.properties per init-workflow
           testDir: './sanityTests'
           testFilePath: 'SanityTest.feature'
-          authToken: "Bearer ${{ steps.getToken.outputs.accessToken }}"
-          properties: '${{ steps.getAwsKarateProperties.outputs.properties }}'
