@@ -56,11 +56,14 @@ runs:
       run: |
         if [ "$ENABLED" == false ]; then
           echo 'enabled=false'
-        # Check if feature file exists
-        elif find "$TEST_DIR/" -iname '*.feature' -print -quit | grep -q .; then
-          echo 'enabled=true'
         else
-          echo 'enabled=false'
+          # Check if feature file exists
+          anyFeatureFile=$(find "$TEST_DIR/" -iname '*.feature' -print -quit)
+          if [ -n "$anyFeatureFile" ]; then
+            echo 'enabled=true'
+          else
+            echo 'enabled=false'
+          fi
         fi >> "$GITHUB_OUTPUT"
 
     - name: spezifischsten AWS Parameter test.sanity.config auswählen
