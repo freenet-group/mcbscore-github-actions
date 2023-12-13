@@ -22,6 +22,11 @@ on:
         description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
         required: false
         default: 10m0s
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        type: string
+        required: false
+        default: main
       deploymentRepositoryBranch:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
@@ -144,10 +149,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v4
+        with:
+          repository: '${{ env.ACTIONS_REPOSITORY }}'
+          token: '${{ env.TOKEN }}'
+          path: '${{ env.ACTIONS_PATH }}'
+          ref: '${{ inputs.actionsRepositoryBranch }}'
+
       - name: Initialize Workflow
         uses: ./mcbscore/github/actions/init-workflow
         with:
-          installJava: false
+          installJava: true
           installNodeJs: true
           installJq: true
 

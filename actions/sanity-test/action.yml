@@ -71,7 +71,7 @@ runs:
 
     - name: spezifischsten AWS Parameter test.sanity.config auswählen
       id: selectAwsTestConfig
-      if: steps.checkEnabled.outputs.enabled=false == 'true'
+      if: steps.checkEnabled.outputs.enabled == 'true'
       run: |
         value=''
         for varName in SANITY_ENV_COMPONENT_CONFIG SANITY_ENV_CONFIG SANITY_COMPONENT_CONFIG SANITY_GLOBAL_CONFIG; do
@@ -79,59 +79,6 @@ runs:
           if [ -n "$tmpValue" ]; then value="$tmpValue"; break; fi
         done
         printf 'config=%s\n' "$value" >>"$GITHUB_OUTPUT"
-
-    # Dynamische AWS Parameter gemäß Workflow Property SANITY_TESTS_AWS_PARAMETERS:
-    # Z.B. SANITY_TESTS_AWS_PARAMETERS={ "propA": "/config/foo/a", "propB": "/config/foo/b" }
-    # => Umgebungsvariable DYNAMIC_AWS_PARAM_PAIRS setzen mit mehrzeiligem Wert
-    #   /config/foo/a = SANITY_TESTS_AWS_PARAM_propA,
-    #   /config/foo/b = SANITY_TESTS_AWS_PARAM_propB
-    # (um dann an karate-action Input properties auf
-    # { "propA": ${{ env.SANITY_TESTS_AWS_PARAM_propA }}, "propB": ${{ env.SANITY_TESTS_AWS_PARAM_propB }} }
-    # zu setzen)
-    - name: dynamische AWS-Parameter Bedarf ermitteln
-      if: steps.checkEnabled.outputs.enabled == 'true'
-      run: |
-        # TODO: Input-Ersatz für Variable SANITY_TESTS_AWS_PARAMETERS
-        out=$(jq --raw-output 'to_entries | map(.value + " = SANITY_TESTS_AWS_PARAM_" + .key) | join(",\n")' \
-          <<<"$SANITY_TESTS_AWS_PARAMETERS" \
-          | tee /dev/stderr)
-        printf '%s<<...snip...\n%s\n...snip...\n' DYNAMIC_AWS_PARAM_PAIRS "$out" >>"$GITHUB_ENV"
-
-    - name: dynamische AWS-Parameter für Sanity-Test auslesen
-      if: steps.checkEnabled.outputs.enabled == 'true'
-      uses: ./.github/actions/read-aws-secrets
-      with:
-        awsAccessKeyId: '${{ inputs.awsAccessKeyId }}'
-        awsSecretAccessKey: '${{ inputs.awsSecretAccessKey }}'
-        awsParameterPairs: '${{ env.DYNAMIC_AWS_PARAM_PAIRS }}'
-
-    # Dynamische AWS Parameter (jetzt in Umgebungsvariablen) als JSON formatieren, wie man es an karate-action übergeben kann:
-    # Beispiel Fortsetzung: Umgebungsvariablen:
-    # - SANITY_TESTS_AWS_PARAM_propA = <Wert von AWS Param /config/foo/a>
-    # - SANITY_TESTS_AWS_PARAM_propB = <Wert von AWS Param /config/foo/b>
-    # => Setze Output auf {"propA": <Wert von Umg.Var. SANITY_TESTS_AWS_PARAM_propA>, "propB": <Wert von Umg.Var. SANITY_TESTS_AWS_PARAM_propB>}
-    - name: dynamische AWS-Parameter als JSON formatieren
-      id: getAwsKarateProperties
-      if: steps.checkEnabled.outputs.enabled == 'true'
-      run: |
-        # TODO: Input-Ersatz für Variable SANITY_TESTS_AWS_PARAMETERS
-        out=$(jq --compact-output '
-          [
-            to_entries
-            | map({"key": .key, "value": env["SANITY_TESTS_AWS_PARAM_" + .key]}) []
-            | select(.value != null)
-          ]
-          | from_entries' <<<"$SANITY_TESTS_AWS_PARAMETERS")
-        printf 'properties=%s\n' "$out" >>"$GITHUB_OUTPUT"
-
-    - name: checkout mcbscore-github-actions
-      if: steps.checkEnabled.outputs.enabled == 'true'
-      uses: actions/checkout@v4
-      with:
-        repository: '${{ env.ACTIONS_REPOSITORY }}'
-        token: '${{ env.TOKEN }}'
-        path: '${{ env.ACTIONS_PATH }}'
-        ref: '${{ inputs.actionsRepositoryBranch }}'
 
     - name: Token holen
       if: steps.checkEnabled.outputs.enabled == 'true'
