@@ -47,22 +47,30 @@ env:
 
 jobs:
   build:
-    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted, vm]
+    runs-on: ${{ matrix.product.runner }}
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
+      TZ: Europe/Berlin
+      LANG: de_DE.UTF-8
     strategy:
       matrix:
         product:
-          - { id: mcbs, name: mcbs, group: standard }
-          - { id: ms-cuba, name: cuba, group: ms }
-          - { id: ms-customer, name: customer, group: ms }
-          - { id: ms-customerelastic, name: customerelastic, group: ms }
-          - { id: ms-customerproduct, name: customerproduct, group: ms }
-          - { id: ms-mcbsservices, name: mcbsservices, group: ms }
+          - { id: mcbs, name: mcbs, group: standard, runner: ubuntu-latest-8-cores }
+          - { id: ms-cuba, name: cuba, group: ms, runner: ubuntu-latest }
+          - { id: ms-customer, name: customer, group: ms, runner: ubuntu-latest-4-cores }
+          - { id: ms-customerelastic, name: customerelastic, group: ms, runner: ubuntu-latest }
+          - { id: ms-customerproduct, name: customerproduct, group: ms, runner: ubuntu-latest }
+          - { id: ms-mcbsservices, name: mcbsservices, group: ms, runner: ubuntu-latest-8-cores }
 
     steps:
+      # ##################################################################################
+      # Locale installieren und auf de_DE setzen
+      # ##################################################################################
+      - name: Set locale to German
+        run: |
+          sudo locale-gen de_DE.UTF-8 && sudo update-locale LANG=de_DE.UTF-8
+
       - name: Show Params
         run: echo '${{ toJSON(inputs) }}'
 
@@ -78,22 +86,6 @@ jobs:
           if [ "${{ inputs.product }}" != '' ]; then
             echo "PRODUCT=${{ inputs.product }}" >> $GITHUB_ENV
           fi
-
-      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
-      - name: Change Owner to Runner User
-        if: ${{ always() && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
-        run: |
-          githubUser='${{ github.actor }}'
-          githubToken='${{ secrets.GH_R_PACKAGES }}'
-          docker login ghcr.io -u "$githubUser" -p "$githubToken"
-          docker run --rm -v "$(pwd):/target" -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
-
-      # Leeren Workspace sicherstellen
-      - name: Ensure clean workspace
-        if: ${{ env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL' }}
-        run: |
-          echo "Cleaning up previous run"
-          rm -rf -- *
 
       - name: Checkout Repository
         if: ${{ env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL' }}
@@ -247,7 +239,7 @@ jobs:
           done
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
-      
+
       # Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
@@ -352,7 +344,7 @@ jobs:
               "epic": "${{ env.EPIC }}",
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             } 
-      
+
       # Starte postBuild auf RELEASE (MCBS)
       - name: Invoke postBuild workflow mcbs
         if: ${{ env.BUILD_TYPE == 'RELEASE' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'mcbs' }}
