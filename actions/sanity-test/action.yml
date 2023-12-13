@@ -52,6 +52,7 @@ runs:
       env:
         ENABLED: '${{ inputs.enabled }}'
         TEST_DIR: '${{ inputs.testDir }}'
+      shell: bash
       run: |
         if [ "$ENABLED" == false ]; then
           echo 'enabled=false'
@@ -65,6 +66,7 @@ runs:
     - name: spezifischsten AWS Parameter test.sanity.config auswählen
       id: selectAwsTestConfig
       if: steps.checkEnabled.outputs.enabled == 'true'
+      shell: bash
       run: |
         value=''
         for varName in SANITY_ENV_COMPONENT_CONFIG SANITY_ENV_CONFIG SANITY_COMPONENT_CONFIG SANITY_GLOBAL_CONFIG; do
