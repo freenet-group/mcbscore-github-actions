@@ -97,5 +97,6 @@ runs:
         baseUrl: '${{ inputs.baseUrl }}'
         testDir: '${{ inputs.testDir }}'
         testFilePath: '${{ inputs.testFiles }}'
+        tags: '${{ inputs.tags }}'
         properties: '${{ steps.selectAwsTestConfig.outputs.config }}'
         authToken: 'Bearer ${{ steps.getToken.outputs.accessToken }}'
