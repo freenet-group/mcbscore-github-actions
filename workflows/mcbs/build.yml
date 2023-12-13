@@ -47,7 +47,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.product.runner }}
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
@@ -56,12 +56,12 @@ jobs:
     strategy:
       matrix:
         product:
-          - { id: mcbs, name: mcbs, group: standard }
-          - { id: ms-cuba, name: cuba, group: ms }
-          - { id: ms-customer, name: customer, group: ms }
-          - { id: ms-customerelastic, name: customerelastic, group: ms }
-          - { id: ms-customerproduct, name: customerproduct, group: ms }
-          - { id: ms-mcbsservices, name: mcbsservices, group: ms }
+          - { id: mcbs, name: mcbs, group: standard, runner: ubuntu-latest-8-cores }
+          - { id: ms-cuba, name: cuba, group: ms, runner: ubuntu-latest }
+          - { id: ms-customer, name: customer, group: ms, runner: ubuntu-latest-4-cores }
+          - { id: ms-customerelastic, name: customerelastic, group: ms, runner: ubuntu-latest }
+          - { id: ms-customerproduct, name: customerproduct, group: ms, runner: ubuntu-latest }
+          - { id: ms-mcbsservices, name: mcbsservices, group: ms, runner: ubuntu-latest-8-cores }
 
     steps:
       # ##################################################################################
