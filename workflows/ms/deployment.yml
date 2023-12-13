@@ -303,7 +303,7 @@ jobs:
           awsSecretAccessKey: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
           karateVersion: '${{ env.KARATE_VERSION }}'	#aus workflow.properties per init-workflow
           testDir: './sanityTests'
-          testFilePath: 'SanityTest.feature'
+          testFiles: 'SanityTest.feature'
 
   bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben

@@ -181,4 +181,4 @@ jobs:
           awsSecretAccessKey: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
           karateVersion: '${{ env.KARATE_VERSION }}'	#aus workflow.properties per init-workflow
           testDir: './sanityTests'
-          testFilePath: 'SanityTest.feature'
+          testFiles: 'SanityTest.feature'
