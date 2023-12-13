@@ -49,8 +49,10 @@ runs:
           /config/ms/application_${{ inputs.environment }}/sts.md.client.mcbs-test-client.clientSecret = SANITY_CLIENT_SECRET,
           /config/ms/application_${{ inputs.environment }}/sts.md.base.url = SANITY_STS_URL,
           /config/ms/application_${{ inputs.environment }}/api.gateway.md.${{ inputs.environment }}.base.url = SANITY_API_GATEWAY,
-          /config/ms/application_${{ inputs.environment }}/test.sanity.config = SANITY_GLOBAL_CONFIG,
-          /config/ms/${{ inputs.component }}_${{ inputs.environment }}/test.sanity.config = SANITY_COMPONENT_CONFIG
+          /config/ms/application/test.sanity.config = SANITY_GLOBAL_CONFIG,
+          /config/ms/application_${{ inputs.environment }}/test.sanity.config = SANITY_ENV_CONFIG,
+          /config/ms/${{ inputs.component }}/test.sanity.config = SANITY_COMPONENT_CONFIG,
+          /config/ms/${{ inputs.component }}_${{ inputs.environment }}/test.sanity.config = SANITY_ENV_COMPONENT_CONFIG
 
     - name: Prüfe ob SanityTest.feature existiert und aktiviert ist
       id: checkEnabled
@@ -71,7 +73,12 @@ runs:
       id: selectAwsTestConfig
       if: steps.checkEnabled.outputs.enabled=false == 'true'
       run: |
-        printf 'config=%s\n' "${SANITY_COMPONENT_CONFIG:-$SANITY_GLOBAL_CONFIG}" >>"$GITHUB_OUTPUT"
+        value=''
+        for varName in SANITY_ENV_COMPONENT_CONFIG SANITY_ENV_CONFIG SANITY_COMPONENT_CONFIG SANITY_GLOBAL_CONFIG; do
+          eval "tmpValue=$varName"
+          if [ -n "$tmpValue" ]; then value="$tmpValue"; break; fi
+        done
+        printf 'config=%s\n' "$value" >>"$GITHUB_OUTPUT"
 
     # Dynamische AWS Parameter gemäß Workflow Property SANITY_TESTS_AWS_PARAMETERS:
     # Z.B. SANITY_TESTS_AWS_PARAMETERS={ "propA": "/config/foo/a", "propB": "/config/foo/b" }
