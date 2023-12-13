@@ -271,6 +271,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Read and set AWS credentials
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
       - name: checkout mcbscore-github-actions
         uses: actions/checkout@v4
         with:
