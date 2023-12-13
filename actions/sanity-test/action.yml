@@ -27,13 +27,6 @@ inputs:
     description: Tags zur Auswahl welche Tests gestartet werden sollen
     required: false
     default: ''
-  baseUrl:
-    description: Basis-URL
-    required: true
-  testProperties:
-    description: JSON Map mit Einträgen, die dem Test als Properties zur Verfügung stehen sollen
-    required: false
-    default: ''
 
 runs:
   using: composite
@@ -94,7 +87,7 @@ runs:
       uses: DasBen/karate-action@0.3.0
       with:
         karateVersion: '${{ inputs.karateVersion }}'
-        baseUrl: '${{ inputs.baseUrl }}'
+        baseUrl: '${{ env.SANITY_API_GATEWAY }}'
         testDir: '${{ inputs.testDir }}'
         testFilePath: '${{ inputs.testFiles }}'
         tags: '${{ inputs.tags }}'

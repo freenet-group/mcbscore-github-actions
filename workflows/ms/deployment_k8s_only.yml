@@ -173,7 +173,7 @@ jobs:
           installJq: true
 
       - name: Karate Tests ausführen
-        uses: DasBen/karate-action@0.3.0
+        uses: ./mcbscore/github/actions/sanity-test
         with:
           enabled: '${{ env.SANITY_TESTS_ENABLED }}'
           environment: '${{ inputs.environment }}'
