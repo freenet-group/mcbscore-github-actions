@@ -120,6 +120,12 @@ jobs:
         run: |
           sudo locale-gen de_DE.UTF-8 && sudo update-locale LANG=de_DE.UTF-8
 
+      - name: Docker Login
+        run: |
+          githubUser='${{ github.actor }}'
+          githubToken='${{ secrets.GH_R_PACKAGES }}'
+          docker login ghcr.io -u "$githubUser" -p "$githubToken"
+
       - name: Show Params
         run: echo '${{ toJSON(inputs) }}'
 
