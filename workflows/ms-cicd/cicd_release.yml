@@ -5,7 +5,7 @@ on:
     types: [ closed ]
   workflow_dispatch:
     inputs:
-      release-branch:
+      branch:
         description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
         required: true
       version:
@@ -31,7 +31,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.release-branch || 'main' }}
+          ref: ${{ github.event.inputs.branch || 'main' }}
 
       - name: AWS Secrets auslesen und in ENV schreiben
         uses: ./.github/actions/read-aws-secrets
