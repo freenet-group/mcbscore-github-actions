@@ -44,25 +44,82 @@ env:
   ACTIONS_REPO_BRANCH: main
   EPIC: META-170
   PRODUCT: ALL
+  ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+  ACTIONS_PATH: mcbscore/github
 
 jobs:
-  build:
-    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+  validate:
+    # self-hosted Runner für den Systeminternen Zugriff
     runs-on: [self-hosted, vm]
+    steps:
+      - name: Checkout Repository
+        if: ${{ inputs.product == 'mcbs' || inputs.product == 'ALL' || inputs.product == '' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read AWS Secrets
+        if: ${{ inputs.product == 'mcbs' || inputs.product == 'ALL' || inputs.product == '' }}
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER, 
+            /github/secrets/mcbstest_username = LIQUIBASE_USERNAME,
+            /github/secrets/mcbstest_password = LIQUIBASE_PASSWORD
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore-github-actions
+        if: ${{ inputs.product == 'mcbs' || inputs.product == 'ALL' || inputs.product == '' }}
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ env.ACTIONS_REPO_BRANCH }}
+
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - name: Initialize Workflow
+        if: ${{ inputs.product == 'mcbs' || inputs.product == 'ALL' || inputs.product == '' }}
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJava: true
+          installGithubCli: true
+          installJq: true
+          configurationPrefix: ${{ matrix.product.name }}_
+
+      - name: Scripte prüfen
+        if: ${{ inputs.product == 'mcbs' || inputs.product == 'ALL' || inputs.product == '' }}
+        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }} -PLI_contexts=PROD -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PINCLUDED_MODULES=${{ env.GRADLE_MODULES }} createReleaseScripts ${{ github.event.inputs.gradleOptions }}
+
+  build:
+    runs-on: ${{ matrix.product.runner }}
     env:
-      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
-      ACTIONS_PATH: mcbscore/github
+      TZ: Europe/Berlin
+      LANG: de_DE.UTF-8
     strategy:
       matrix:
         product:
-          - { id: mcbs, name: mcbs, group: standard }
-          - { id: ms-cuba, name: cuba, group: ms }
-          - { id: ms-customer, name: customer, group: ms }
-          - { id: ms-customerelastic, name: customerelastic, group: ms }
-          - { id: ms-customerproduct, name: customerproduct, group: ms }
-          - { id: ms-mcbsservices, name: mcbsservices, group: ms }
+          - { id: mcbs, name: mcbs, group: standard, runner: ubuntu-latest-8-cores }
+          - { id: ms-cuba, name: cuba, group: ms, runner: ubuntu-latest }
+          - { id: ms-customer, name: customer, group: ms, runner: ubuntu-latest-4-cores }
+          - { id: ms-customerelastic, name: customerelastic, group: ms, runner: ubuntu-latest }
+          - { id: ms-customerproduct, name: customerproduct, group: ms, runner: ubuntu-latest }
+          - { id: ms-mcbsservices, name: mcbsservices, group: ms, runner: ubuntu-latest-8-cores }
 
     steps:
+      # ##################################################################################
+      # Locale installieren und auf de_DE setzen
+      # ##################################################################################
+      - name: Set locale to German
+        run: |
+          sudo locale-gen de_DE.UTF-8 && sudo update-locale LANG=de_DE.UTF-8
+
       - name: Show Params
         run: echo '${{ toJSON(inputs) }}'
 
@@ -78,22 +135,6 @@ jobs:
           if [ "${{ inputs.product }}" != '' ]; then
             echo "PRODUCT=${{ inputs.product }}" >> $GITHUB_ENV
           fi
-
-      # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
-      - name: Change Owner to Runner User
-        if: ${{ always() && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
-        run: |
-          githubUser='${{ github.actor }}'
-          githubToken='${{ secrets.GH_R_PACKAGES }}'
-          docker login ghcr.io -u "$githubUser" -p "$githubToken"
-          docker run --rm -v "$(pwd):/target" -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
-
-      # Leeren Workspace sicherstellen
-      - name: Ensure clean workspace
-        if: ${{ env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL' }}
-        run: |
-          echo "Cleaning up previous run"
-          rm -rf -- *
 
       - name: Checkout Repository
         if: ${{ env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL' }}
@@ -206,10 +247,6 @@ jobs:
           git tag -f -a sql-${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}"
           git push --tags -f
 
-      - name: Scripte prüfen
-        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'mcbs' }}
-        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }} -PLI_contexts=PROD -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PINCLUDED_MODULES=${{ env.GRADLE_MODULES }} createReleaseScripts ${{ github.event.inputs.gradleOptions }}
-
       - id: gradle-build
         name: Gradle Build
         if: ${{ env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL' }}
@@ -247,7 +284,7 @@ jobs:
           done
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
-      
+
       # Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
@@ -352,7 +389,7 @@ jobs:
               "epic": "${{ env.EPIC }}",
               "actionsRepositoryBranch": "${{ env.ACTIONS_REPO_BRANCH }}"
             } 
-      
+
       # Starte postBuild auf RELEASE (MCBS)
       - name: Invoke postBuild workflow mcbs
         if: ${{ env.BUILD_TYPE == 'RELEASE' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'mcbs' }}
@@ -385,3 +422,12 @@ jobs:
         with:
           junit_files: 'artifacts/**/*.xml'
           ignore_runs: true
+
+  complete-build:
+    needs: [validate, publish-test-results]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dummy step
+        shell: bash
+        run: |
+          echo "dummy"
