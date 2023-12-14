@@ -424,7 +424,7 @@ jobs:
           ignore_runs: true
 
   complete-build:
-    needs: [validate, publish-test-results]
+    needs: [validate, build]
     runs-on: ubuntu-latest
     steps:
       - name: Dummy step
