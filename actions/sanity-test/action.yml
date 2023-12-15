@@ -76,7 +76,7 @@ runs:
           eval "tmpValue=$varName"
           if [ -n "$tmpValue" ]; then
             value="$tmpValue"
-#TODO            echo "$varName == ${tmpValue//?/*}"
+            #TODO echo "$varName == ${tmpValue//?/*}"
             echo "$varName == $tmpValue"
             break
           fi
