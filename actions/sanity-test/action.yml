@@ -74,7 +74,11 @@ runs:
         value=''
         for varName in SANITY_ENV_COMPONENT_CONFIG SANITY_ENV_CONFIG SANITY_COMPONENT_CONFIG SANITY_GLOBAL_CONFIG; do
           eval "tmpValue=$varName"
-          if [ -n "$tmpValue" ]; then value="$tmpValue"; break; fi
+          if [ -n "$tmpValue" ]; then
+            value="$tmpValue"
+            echo "$varName == ${tmpValue//?/*}"
+            break
+          fi
         done
         printf 'config=%s\n' "$value" >>"$GITHUB_OUTPUT"
 
