@@ -5,14 +5,21 @@ on:
     types: [ closed ]
   workflow_dispatch:
     inputs:
-      release:
-        description: 'Release wirklich erstellen?'
+      branch:
+        description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
         required: true
+      version:
+        description: 'Welche Version für das neue Release z.B. "8.32.1"?'
+        required: true
+      pre-release:
+        default: false
+        description: 'Ist dies ein Pre-Release?'
+        required: false
         type: boolean
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true || github.event.inputs.release == 'true'
+    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: [ self-hosted, k8s ]
 
     env:
@@ -20,29 +27,13 @@ jobs:
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
 
-    outputs:
-      current_version: ${{ steps.get-latest-tag.outputs.tag  }}
-      level: ${{ steps.release-label.outputs.level || 'patch' }}
-      new_version: ${{ steps.bump-semver.outputs.new_version }}
-      issue_keys: ${{ steps.jira_keys.outputs.issue-keys }}
-      issue_list: ${{ steps.update_release_template.outputs.issue_list }}
-      renovate: ${{ steps.update_release_template.outputs.renovate }}
-      renovate_title: ${{ steps.update_release_template.outputs.renovate_title }}
-      epic_list: ${{ steps.update_release_template.outputs.epic_list }}
-      epic_due_date: ${{ steps.update_release_template.outputs.epic_dueDate }}
-      ms_configuration: ${{ steps.update_release_template.outputs.ms_configuration }}
-      ms_deployment: ${{ steps.update_release_template.outputs.ms_deployment }}
-      db_changes: ${{ steps.update_release_template.outputs.db_changes }}
-      dependencies: ${{ steps.update_release_template.outputs.dependencies }}
-      deploymentWorkflowRunId: ${{ steps.deployment.outputs.workflowId }}
-      deploymentK8sWorkflowRunId: ${{ steps.deployment_k8s.outputs.workflowId }}
-      developerPortalUploadWorkflowRunId: ${{ steps.developerPortalUpload.outputs.workflowId }}
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || 'main' }}
 
-      - name: AWS Secrets auslesen
+      - name: AWS Secrets auslesen und in ENV schreiben
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -59,26 +50,26 @@ jobs:
             /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
             /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
 
-      - name: Read workflow.properties
+      - name: workflow.properties einlesen und in ENV schreiben
         shell: bash
         run: |
           cat ./.github/workflow.properties >> $GITHUB_ENV
 
-      - name: Checkout mcbscore-github-actions
+      - name: Interne mcbscore-github-actions local auschecken
         uses: actions/checkout@v4
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
 
-      - name: Initialize Workflow
+      - name: Workflow initialisieren
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
           installGithubCli: true
           installJq: true
 
-      - name: Copy keystore-files
+      - name: keystore-files kopieren
         if: env.KEY_SERVER != ''
         shell: bash
         run: |
@@ -92,7 +83,7 @@ jobs:
         with:
           label_prefix: 'release:'
 
-      - name: Letzten Release Tag holen
+      - name: Letztes Release Tag holen
         id: get-latest-tag
         uses: actions-ecosystem/action-get-latest-tag@v1
         with:
@@ -106,11 +97,22 @@ jobs:
           current_version: ${{ steps.get-latest-tag.outputs.tag  }}
           level: ${{ steps.release-label.outputs.level || 'patch' }}
 
+      - name: Semantiv Version überschreiben, wenn eine spezifische Version angegeben wurde
+        id: version-calculation
+        run: |
+          # Set the new version to the bumped version initially
+          echo "new_version=${{ steps.bump-semver.outputs.new_version }}" >> $GITHUB_OUTPUT
+
+          # Overwrite if a specific version was provided
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "new_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Component Version setzen (legacy)
         shell: bash
         run: |
-          echo "COMPONENT_VERSION=${{ steps.bump-semver.outputs.new_version }}" >> $GITHUB_ENV
-          echo "RAW_VERSION=${{ steps.bump-semver.outputs.new_version }}" >> $GITHUB_ENV
+          echo "COMPONENT_VERSION=${{ steps.version-calculation.outputs.new_version }}" >> $GITHUB_ENV
+          echo "RAW_VERSION=${{ steps.version-calculation.outputs.new_version }}" >> $GITHUB_ENV
           echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
 
       - name: Release Version in DB Changes eintragen
@@ -119,7 +121,7 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          find ./${{ env.DB_CHANGES_DIRECTORY }} -type f -exec sed -i 's/{releaseVersion}/${{ steps.bump-semver.outputs.new_version }}/g' {} +
+          find ./${{ env.DB_CHANGES_DIRECTORY }} -type f -exec sed -i 's/{releaseVersion}/${{ steps.version-calculation.outputs.new_version }}/g' {} +
           changesDetected=`git status --porcelain`
           if [ -n "$changesDetected" ]
           then
@@ -127,9 +129,9 @@ jobs:
             git commit -am "Release Version in DB Changes eingetragen"
             git push
           fi
-          git tag -f -a sql-${{ env.TAG_PREFIX }}${{ steps.bump-semver.outputs.new_version }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ steps.bump-semver.outputs.new_version }}"
+          git tag -f -a sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }}"
 
-      - name: Gradle Build with Sonar Upload and CyclonedxBom (SBOM)
+      - name: Gradle Build mit Sonar Upload und CyclonedxBom (SBOM)
         uses: ./mcbscore/github/actions/gradle-build
         with:
           artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
@@ -144,26 +146,26 @@ jobs:
         if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
         uses: ./mcbscore/github/actions/sonar-check
         with:
-          sonarUrl: ${{ env.SONAR_API_URL }}
+          sonarUrl: ${{ env.SONAR_API_URL }} 
           sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           projectKeyPath: ${{ env.COVERAGE_PATH }}
           projectKeyName: ${{ env.COVERAGE_APP }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
-      - name: Tag einchecken
+      - name: Neuen Versions-Tag einchecken
         uses: actions-ecosystem/action-push-tag@v1
         with:
-          tag: ${{ steps.bump-semver.outputs.new_version }}
-          message: '${{ steps.bump-semver.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
+          tag: ${{ steps.version-calculation.outputs.new_version }}
+          message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
-      - name: Issue-List Alternative erzeugen
+      - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
         uses: varnerknut/jira-extract-issue-keys-from-tags@1.3
         with:
           token: ${{ env.TOKEN }}
-          head-tag: ${{ steps.bump-semver.outputs.new_version }}
+          head-tag: ${{ steps.version-calculation.outputs.new_version }}
 
-      - name: Release-Template ausfüllen
+      - name: Release-Template einlesen und ausfüllen
         id: update_release_template
         run: |
           template_file=".github/templates/release_template.md"
@@ -175,10 +177,6 @@ jobs:
           linkedIssuesListLines=""
           epicList=""
           
-          # Alle Issues auslesen
-          uniqueIssueList=$(echo "${{ steps.jira_keys.outputs.issue-keys }}" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
-          uniqueIssueList=${uniqueIssueList#"[]"}
-          
           # Setting default outputs
           echo "issue_list=" >> "$GITHUB_OUTPUT"
           echo "renovate=false" >> "$GITHUB_OUTPUT"
@@ -189,16 +187,23 @@ jobs:
           echo "ms_deployment=false" >> "$GITHUB_OUTPUT"
           echo "db_changes=false" >> "$GITHUB_OUTPUT"
           echo "dependencies=false" >> "$GITHUB_OUTPUT"
-
-          # Prüfen ob das label "renovate" gesetzt wurde
-          PR_NUMBER=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
-          LABELS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/labels" | jq -r ".[].name")
           
-          if echo "$LABELS" | grep -q "renovate"; then
-            if [ -z "$uniqueIssueList" ]; then
-              uniqueIssueList="ABRMS-5265"
-            else
-              uniqueIssueList+=",ABRMS-5265"
+          # Alle Issues auslesen
+          uniqueIssueList=$(echo "${{ steps.jira_keys.outputs.issue-keys }}" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+          uniqueIssueList=${uniqueIssueList#"[]"}
+
+          # Prüfen ob das label "renovate" im PR gesetzt wurde
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
+            prLabels=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels" | jq -r ".[].name")
+            
+            # ABRMS-5265 ist ein Renovate-Platzhalterticket für DOGS
+            if echo "$prLabels" | grep -q "renovate"; then
+              if [ -z "$uniqueIssueList" ]; then
+                uniqueIssueList="ABRMS-5265"
+              else
+                uniqueIssueList+=",ABRMS-5265"
+              fi
             fi
           fi
           
@@ -248,9 +253,9 @@ jobs:
             echo "Titel zu $issueNumber extrahieren"
             title=$(echo "$issue_info" | jq -r '.fields.summary')
           
-            # Labels einlesen
-            echo "Labels zu $issueNumber extrahieren"
-            labels=$(echo "$issue_info" | jq -r '.fields.labels[]' | paste -sd ", ")
+            # Jira-Labels einlesen
+            echo "Jira-Labels zu $issueNumber extrahieren"
+            jiraLabels=$(echo "$issue_info" | jq -r '.fields.labels[]' | paste -sd ", ")
           
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
@@ -268,7 +273,7 @@ jobs:
 
             # Ticket Tabelle ausfüllen
             echo "Tabelleneintrag zum Ticket $issueNumber wird erstellt"
-            issueListLines+="| $issueNumber | $title | $labels | $componentList |\n"
+            issueListLines+="| $issueNumber | $title | $jiraLabels | $componentList |\n"
           
             # Verknüpfte Tickets
             echo "Verknüpfte Tickets zu $issueNumber einlesen und Tabelle befüllen"
@@ -379,22 +384,23 @@ jobs:
       - name: Release erstellen
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.bump-semver.outputs.new_version }}.jar
-            ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
           body_path: ".github/templates/release_template.md"
-          token: ${{ env.TOKEN }}
+          files: |
+            ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.version-calculation.outputs.new_version }}.jar
+            ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
           generate_release_notes: true
-          tag_name: ${{ steps.bump-semver.outputs.new_version }}
-          name: ${{ steps.bump-semver.outputs.new_version }}
+          name: ${{ steps.version-calculation.outputs.new_version }}
+          prerelease: ${{ github.event.inputs.pre-release == 'true' }}
+          tag_name: ${{ steps.version-calculation.outputs.new_version }}
+          token: ${{ env.TOKEN }}
 
       - name: Upload API Doc
         uses: ./mcbscore/github/actions/upload-api-doc-assets
         with:
-          componentVersion: ${{ steps.bump-semver.outputs.new_version }}
+          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
           apiDocYmlPattern: ${{ env.API_DOC_YAML_PATTERN }}
 
-      - name: Login to GitHub Container Registry
+      - name: Login GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -405,11 +411,10 @@ jobs:
         uses: ./mcbscore/github/actions/create-microservice-docker-image
         with:
           componentName: ms-${{ env.COMPONENT }}
-          componentVersion: ${{ steps.bump-semver.outputs.new_version }}
-          jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.bump-semver.outputs.new_version }}.jar
+          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
+          jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.version-calculation.outputs.new_version }}.jar
           javaVersion: ${{ env.JAVA_VERSION }}
 
-      # Deployment Dev
       - name: Deployment Workflow inkl. k8s starten
         id: deployment
         uses: benc-uk/workflow-dispatch@v1.2.2
@@ -420,7 +425,7 @@ jobs:
             {
               "environment": "dev",
               "component": "${{ env.COMPONENT }}", 
-              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}"
+              "componentVersion": "${{ steps.version-calculation.outputs.new_version }}"
             }
 
       - name: Developer Portal Upload starten
@@ -434,12 +439,10 @@ jobs:
             {
               "environment": "dev",
               "component": "${{ env.COMPONENT }}",
-              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}"
+              "componentVersion": "${{ steps.version-calculation.outputs.new_version }}"
             }
 
-      # Post Deployment Steps
-      # @todo create an action for this
-      - name: Check Deployment Workflow Status
+      - name: Deployment Workflow Status prüfen
         run: |
           # Set max checks and initialize counter
           MAX_CHECKS=30  # Number of checks before timeout, for 15 minutes total.
@@ -514,7 +517,7 @@ jobs:
           inputs: >
             {
               "component": "${{ env.COMPONENT }}",
-              "componentVersion": "${{ steps.bump-semver.outputs.new_version }}",
+              "componentVersion": "${{ steps.version-calculation.outputs.new_version }}",
               "tagPrefix": "${{ env.TAG_PREFIX }}"
             }
 
@@ -539,7 +542,7 @@ jobs:
           token: ${{ env.TOKEN }}
           inputs: >
             {
-              "releaseVersion": "${{ steps.bump-semver.outputs.new_version }}",
+              "releaseVersion": "${{ steps.version-calculation.outputs.new_version }}",
               "issueList": "${{ steps.update_release_template.outputs.issue_list }}",
               "bambiArgs": "${{ env.BAMBI_ARGS }}"
             }
