@@ -76,11 +76,10 @@ runs:
       run: |
         value=''
         for varName in SANITY_ENV_COMPONENT_CONFIG SANITY_ENV_CONFIG SANITY_COMPONENT_CONFIG SANITY_GLOBAL_CONFIG; do
-          eval "tmpValue=$varName"
+          eval "tmpValue=\$$varName"
           if [ -n "$tmpValue" ]; then
             value="$tmpValue"
-            #TODO echo "$varName == ${tmpValue//?/*}"
-            echo "$varName == $tmpValue"
+            echo "$varName == ${tmpValue//?/*}"
             break
           fi
         done
