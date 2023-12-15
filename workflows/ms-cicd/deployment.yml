@@ -351,6 +351,7 @@ jobs:
         uses: ./mcbscore/github/actions/sanity-test
         with:
           enabled: '${{ env.SANITY_TESTS_ENABLED }}'
+          component: '${{ inputs.component }}'
           environment: '${{ inputs.environment }}'
           awsAccessKeyId: '${{ secrets.AWS_ACCESS_KEY_ID }}'
           awsSecretAccessKey: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'

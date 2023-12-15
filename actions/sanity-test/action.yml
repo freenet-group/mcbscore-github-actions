@@ -5,6 +5,9 @@ inputs:
     description: Ob der Test ausgeführt werden soll
     required: false
     default: "true"
+  component:
+    description: Der Name der Komponente
+    required: true
   environment:
     description: Die Zielumgebung
     required: true
