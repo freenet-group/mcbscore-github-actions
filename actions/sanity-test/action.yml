@@ -83,6 +83,7 @@ runs:
             break
           fi
         done
+        if [ -z "$value" ]; then echo 'keine test.sanity.config vorhanden'; fi
         printf 'config=%s\n' "$value" >>"$GITHUB_OUTPUT"
 
     - name: Token holen
