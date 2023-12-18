@@ -216,8 +216,6 @@ jobs:
       fail-fast: false
       matrix:
         domain: ${{ fromJson(needs.build-matrix.outputs.domain-matrix) }}
-    outputs:
-      helmStatusJson: ${{ steps.helmDeployment.outputs.helmStatusJson }}
     steps:
     # Leeren Workspace sicherstellen
     - name: Ensure clean workspace
@@ -293,7 +291,6 @@ jobs:
 
     # Haupt-Deployment-Action
     - name: Deploy to K8s
-      id: helmDeployment
       uses: ./.github/actions/deploy-to-k8s
       with:
         component: ${{ inputs.component }}
