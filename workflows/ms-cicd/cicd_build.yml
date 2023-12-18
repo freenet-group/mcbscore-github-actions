@@ -27,10 +27,6 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-      # expected aws properties
-      USER: ''
-      TOKEN: ''
-      JASYPT_ENCRYPTOR_PASSWORD: ''
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
