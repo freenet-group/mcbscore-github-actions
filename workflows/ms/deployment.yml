@@ -329,7 +329,7 @@ jobs:
 
       - name: Karate Tests ausführen
         if: ${{steps.checkFeatureFileExists.outputs.sanityTestExists == 'true'}}
-        uses: DasBen/karate-action@0.1.0
+        uses: DasBen/karate-action@0.3.3
         with:
           karateVersion: ${{ env.KARATE_VERSION }}
           baseUrl: ${{ env.SANITY_API_GATEWAY }}
