@@ -79,5 +79,6 @@ jobs:
               "component": "${{ env.COMPONENT }}",
               "environment": "dev",
               "componentVersion": "${{ github.event.inputs.componentVersion }}",
-              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
+              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}",
+              "subComponents": "${{ env.SUBCOMPONENTS }}"
             }
