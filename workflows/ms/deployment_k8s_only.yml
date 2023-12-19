@@ -140,7 +140,7 @@ jobs:
 
 
   sanity_test:
-    if: env.SANITY_TESTS_ENABLED == 'true'
+    if: ${{ env.SANITY_TESTS_ENABLED == 'true' }}
     needs: [deploy_k8s]
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
