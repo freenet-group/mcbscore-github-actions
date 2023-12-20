@@ -23,7 +23,7 @@ jobs:
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
       - name: Sync GitHub PR Labels with Jira Components
-        uses: freenet-group/github-pr-label-sync-with-jira@0.1.5
+        uses: freenet-group/github-pr-label-sync-with-jira@0.1.6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-labels: ms-deployment:yes, ms-configuration:yes
@@ -83,7 +83,7 @@ jobs:
 
       - name: DOGS Benachrichtigung
         if: always()
-        uses: freenet-group/notify-on-label@1.0.0
+        uses: freenet-group/notify-on-label@1.0.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           label_list: 'ms-configuration:yes, ms-deployment:yes'
