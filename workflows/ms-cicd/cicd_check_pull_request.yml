@@ -83,7 +83,7 @@ jobs:
 
       - name: DOGS Benachrichtigung
         if: always()
-        uses: freenet-group/notify-on-label@1.0.0
+        uses: freenet-group/notify-on-label@1.0.4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           label_list: 'ms-configuration:yes, ms-deployment:yes'
