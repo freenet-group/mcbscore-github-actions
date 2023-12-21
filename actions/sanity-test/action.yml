@@ -1,0 +1,100 @@
+name: Sanity-Test
+
+inputs:
+  component:
+    description: Der Name der Komponente
+    required: true
+  environment:
+    description: Die Zielumgebung
+    required: true
+  awsAccessKeyId:
+    description: AWS Access Key Id
+    required: true
+  awsSecretAccessKey:
+    description: AWS Secret Access Key
+    required: true
+  karateVersion:
+    description: Karate-Version
+    required: true
+  testDir:
+    description: Verzeichnis der Tests
+    required: true
+  testFiles:
+    description: Dateinamen der Tests
+    required: true
+  tags:
+    description: Tags zur Auswahl welche Tests gestartet werden sollen
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: AWS Secrets für Sanity-Test auslesen
+      uses: ./.github/actions/read-aws-secrets
+      with:
+        awsAccessKeyId: '${{ inputs.awsAccessKeyId }}'
+        awsSecretAccessKey: '${{ inputs.awsSecretAccessKey }}'
+        awsParameterPairs: |
+          /github/secrets/mcbs_token = TOKEN,
+          /config/ms/application_${{ inputs.environment }}/sts.md.client.mcbs-test-client.clientId = SANITY_CLIENT_ID,
+          /config/ms/application_${{ inputs.environment }}/sts.md.client.mcbs-test-client.clientSecret = SANITY_CLIENT_SECRET,
+          /config/ms/application_${{ inputs.environment }}/sts.md.base.url = SANITY_STS_URL,
+          /config/ms/application_${{ inputs.environment }}/api.gateway.md.${{ inputs.environment }}.base.url = SANITY_API_GATEWAY,
+          /config/ms/application/test.sanity.config = SANITY_GLOBAL_CONFIG,
+          /config/ms/application_${{ inputs.environment }}/test.sanity.config = SANITY_ENV_CONFIG,
+          /config/ms/${{ inputs.component }}/test.sanity.config = SANITY_COMPONENT_CONFIG,
+          /config/ms/${{ inputs.component }}_${{ inputs.environment }}/test.sanity.config = SANITY_ENV_COMPONENT_CONFIG
+
+    - name: Prüfe ob SanityTest.feature existiert und aktiviert ist
+      id: checkEnabled
+      env:
+        TEST_DIR: '${{ inputs.testDir }}'
+      shell: bash
+      run: |
+        # Check if feature file exists
+        anyFeatureFile=$(find "$TEST_DIR/" -iname '*.feature' -print -quit)
+        if [ -n "$anyFeatureFile" ]; then
+          echo 'enabled=true' >> "$GITHUB_OUTPUT"
+        else
+          printf 'Keine Datei *.feature in %s gefunden\n' "$TEST_DIR"
+          echo 'enabled=false' >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: spezifischsten AWS Parameter test.sanity.config auswählen
+      id: selectAwsTestConfig
+      if: steps.checkEnabled.outputs.enabled == 'true'
+      shell: bash
+      run: |
+        value=''
+        for varName in SANITY_ENV_COMPONENT_CONFIG SANITY_ENV_CONFIG SANITY_COMPONENT_CONFIG SANITY_GLOBAL_CONFIG; do
+          eval "tmpValue=\$$varName"
+          if [ -n "$tmpValue" ]; then
+            value="$tmpValue"
+            echo "$varName == ${tmpValue//?/*}"
+            break
+          fi
+        done
+        if [ -z "$value" ]; then echo 'keine test.sanity.config vorhanden'; fi
+        printf 'config=%s\n' "$value" >>"$GITHUB_OUTPUT"
+
+    - name: Token holen
+      if: steps.checkEnabled.outputs.enabled == 'true'
+      id: getToken
+      uses: ./mcbscore/github/actions/get-application-token
+      with:
+        clientId: '${{ env.SANITY_CLIENT_ID }}'
+        clientSecret: '${{ env.SANITY_CLIENT_SECRET }}'
+        tokenUrl: '${{ env.SANITY_STS_URL }}/v1/oidc/token'
+
+    - name: Karate Tests ausführen
+      if: steps.checkEnabled.outputs.enabled == 'true'
+      uses: DasBen/karate-action@0.3.3
+      with:
+        karateVersion: '${{ inputs.karateVersion }}'
+        baseUrl: '${{ env.SANITY_API_GATEWAY }}'
+        testDir: '${{ inputs.testDir }}'
+        testFilePath: '${{ inputs.testFiles }}'
+        tags: '${{ inputs.tags }}'
+        properties: '${{ steps.selectAwsTestConfig.outputs.config }}'
+        authToken: 'Bearer ${{ steps.getToken.outputs.accessToken }}'

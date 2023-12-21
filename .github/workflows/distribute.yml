@@ -463,7 +463,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-commondata, branch: develop, group: ms-cicd, workflows: "../check, ../developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, setPRIssueDone" }
+          - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
     steps:
       - uses: actions/checkout@v4
         with:

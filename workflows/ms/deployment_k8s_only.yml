@@ -1,6 +1,6 @@
 name: K8s Deployment
-# Launcher Workflow für den reusable Workflow deployment_k8s.yml und Github-Deployment-Status.
-# Für Microservices, die (den jetzt reusable Workflow) deployment_k8s.yml brauchen und kein ganzes deployment.yml.
+# Launcher Workflow für den reusable Workflow deployment_k8s.yml, Sanity Test und Github-Deployment-Status.
+# Für Microservices, die (den jetzt reusable Workflow) deployment_k8s.yml brauchen und kein klassisches Appserver-Deployment (deployment.yml).
 # Nicht nötig für Microservices, die deployment.yml haben, da der auch den reusable Workflow deployment_k8s.yml startet.
 
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
@@ -22,6 +22,11 @@ on:
         description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
         required: false
         default: 10m0s
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        type: string
+        required: false
+        default: main
       deploymentRepositoryBranch:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
@@ -132,3 +137,49 @@ jobs:
           token: ${{ env.TOKEN }}
           state: "failure"
           deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
+
+
+  sanity_test:
+    needs: [deploy_k8s]
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted, k8s]
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read and set AWS credentials
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v4
+        with:
+          repository: '${{ env.ACTIONS_REPOSITORY }}'
+          token: '${{ env.TOKEN }}'
+          path: '${{ env.ACTIONS_PATH }}'
+          ref: '${{ inputs.actionsRepositoryBranch }}'
+
+      - name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJava: true
+          installNodeJs: true
+          installJq: true
+
+      - name: Karate Tests ausführen
+        if: env.SANITY_TESTS_ENABLED == 'true'
+        uses: ./mcbscore/github/actions/sanity-test
+        with:
+          component: '${{ inputs.component }}'
+          environment: '${{ inputs.environment }}'
+          awsAccessKeyId: '${{ secrets.AWS_ACCESS_KEY_ID }}'
+          awsSecretAccessKey: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          karateVersion: '${{ env.KARATE_VERSION }}'	#aus workflow.properties per init-workflow
+          testDir: './sanityTests'
+          testFiles: 'SanityTest.feature'

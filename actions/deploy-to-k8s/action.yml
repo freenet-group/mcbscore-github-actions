@@ -81,7 +81,7 @@ runs:
             < kubernetes-deployment.generated.json \
           | tee -a -- "$GITHUB_ENV"
 
-          # parameterPairs für aws-ssm-getparameters-action ermitteln aus .secrets in kubernetes-deployment.generated.json
+          # awsParameterPairs für aws-ssm-getparameters-action ermitteln aus .secrets in kubernetes-deployment.generated.json
           # Beispiel:
           # kubernetes-deployment.generated.json enthält:
           # {
