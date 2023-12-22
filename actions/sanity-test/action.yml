@@ -97,4 +97,4 @@ runs:
         testFilePath: '${{ inputs.testFiles }}'
         tags: '${{ inputs.tags }}'
         properties: '${{ steps.selectAwsTestConfig.outputs.config }}'
-        authToken: 'Bearer ${{ steps.getToken.outputs.accessToken }}'
+        authToken: Bearer ${{ steps.getToken.outputs.accessToken }}
