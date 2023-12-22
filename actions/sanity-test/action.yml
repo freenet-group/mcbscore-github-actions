@@ -89,7 +89,7 @@ runs:
 
     - name: Karate Tests ausführen
       if: steps.checkEnabled.outputs.enabled == 'true'
-      uses: DasBen/karate-action@0.3.4
+      uses: DasBen/karate-action@patch
       with:
         karateVersion: '${{ inputs.karateVersion }}'
         baseUrl: '${{ env.SANITY_API_GATEWAY }}'
