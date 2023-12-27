@@ -259,7 +259,7 @@ jobs:
         if: env.BUILD_TYPE == 'DEVELOP'
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: deployment_k8s_only
+          workflow: deployment_k8s_only.yml
           token: ${{ env.TOKEN }}
           inputs: >
             {
