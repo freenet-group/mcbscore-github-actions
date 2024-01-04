@@ -372,6 +372,7 @@ bambi-notification:
           echo "DEPLOY_STATE=successful" >> $GITHUB_ENV
         else
           echo "DEPLOY_STATE=failure" >> $GITHUB_ENV
+        fi
 
     - name: Meldung an Bambi API
       shell: bash
