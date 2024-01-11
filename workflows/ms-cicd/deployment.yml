@@ -365,7 +365,7 @@ jobs:
     if: ${{ always() && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
       - name: Feststellen ob Deployment erfolgreich war
-        id: get_error_state
+        id: get_success_state
         if: ${{ !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
         shell: bash
         run:   echo "DEPLOY_STATE=successful" >> $GITHUB_OUTPUT
