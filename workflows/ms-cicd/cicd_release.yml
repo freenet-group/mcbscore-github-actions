@@ -31,8 +31,7 @@ jobs:
       - name: Welcher Branch als Fallback?
         id: check_branch
         run: |
-          if git ls-remote --heads https://github.com/<owner>/<repo>.git develop; then
-            echo "FALLBACK_BRANCH=develop" >> $GITHUB_OUTPUT
+          if git ls-remote --heads https://github.com/${{ github.repository }}.git develop; then            echo "FALLBACK_BRANCH=develop" >> $GITHUB_OUTPUT
           else
             echo "FALLBACK_BRANCH=main" >> $GITHUB_OUTPUT
           fi
