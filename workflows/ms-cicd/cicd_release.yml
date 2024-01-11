@@ -28,18 +28,10 @@ jobs:
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
 
     steps:
-      - name: Welcher Branch als Fallback?
-        id: check_branch
-        run: |
-          if git ls-remote --heads https://github.com/${{ github.repository }}.git develop; then            echo "FALLBACK_BRANCH=develop" >> $GITHUB_OUTPUT
-          else
-            echo "FALLBACK_BRANCH=main" >> $GITHUB_OUTPUT
-          fi
-
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || steps.check_branch.outputs.FALLBACK_BRANCH }}
+          ref: ${{ github.event.inputs.branch }}
 
       - name: AWS Secrets auslesen und in ENV schreiben
         uses: ./.github/actions/read-aws-secrets
