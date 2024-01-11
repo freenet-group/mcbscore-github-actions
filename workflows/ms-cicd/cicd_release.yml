@@ -7,10 +7,10 @@ on:
     inputs:
       branch:
         description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
-        required: true
+        required: false
       version:
         description: 'Welche Version für das neue Release z.B. "8.32.1"?'
-        required: true
+        required: false
       pre-release:
         default: false
         description: 'Ist dies ein Pre-Release?'
