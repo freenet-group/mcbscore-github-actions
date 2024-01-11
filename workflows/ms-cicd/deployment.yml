@@ -364,8 +364,20 @@ jobs:
     needs: [deploy, deploy_k8s]
     if: ${{ always() && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
-      - name: Status bei Erfolgreichem Deployment
-        id: deploy_state_success
+      - name: Feststellen ob Deployment erfolgreich war
+        id: get_error_state
+        if: ${{ !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+        shell: bash
+        run:   echo "DEPLOY_STATE=successful" >> $GITHUB_OUTPUT
+
+      - name: Feststellen ob Deployment fehlgeschlagen ist
+        id: get_error_state
+        if: ${{ failure() || contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        shell: bash
+        run:   echo "DEPLOY_STATE=failed" >> $GITHUB_OUTPUT
+
+      - name: Bambi Meldung
+        id: deploy_state
         if: ${{ !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
         shell: bash
         run: |
@@ -379,34 +391,7 @@ jobs:
             "environment": "${{ github.event.inputs.environment }}",
             "extern": false,
             "workflowRunId": ${{ github.run_id }},
-            "deployState": "success",
-            "deployUser": "${{ github.actor }}"
-          }')
-          echo "Result: $curlResult"
-          statusCode="${curlResult:${#curlResult}-3}"
-          echo "statusCode: $statusCode"
-
-          if [[ "statusCode" -ge "400" ]]; then
-            echo "Result: $curlResult"
-            exit 1
-          fi
-
-      - name: Status bei Fehlerhaftem Deployment
-        id: deploy_state_failure
-        if: ${{ failure() || contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
-        shell: bash
-        run: |
-          curlResult=$(curl -sw %{http_code} --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v2/bambi/deployment/environmentversion' \
-          --header 'Content-Type: application/json' \
-          --data-raw '{
-            "version": "${{ github.event.inputs.componentVersion }}",
-            "componentName": "${{ needs.deploy.outputs.componentName }}",
-            "originComponentName": "${{ github.event.inputs.component }}",
-            "workflowName": "${{ github.workflow }}",
-            "environment": "${{ github.event.inputs.environment }}",
-            "extern": false,
-            "workflowRunId": ${{ github.run_id }},
-            "deployState": "failure",
+            "deployState": "${{ steps.get_error_state.outputs.DEPLOY_STATE }}",
             "deployUser": "${{ github.actor }}"
           }')
           echo "Result: $curlResult"
