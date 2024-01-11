@@ -378,7 +378,6 @@ jobs:
 
       - name: Bambi Meldung
         id: deploy_state
-        if: ${{ !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
         shell: bash
         run: |
           curlResult=$(curl -sw %{http_code} --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v2/bambi/deployment/environmentversion' \
