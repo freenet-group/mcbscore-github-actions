@@ -379,7 +379,7 @@ jobs:
             "environment": "${{ github.event.inputs.environment }}",
             "extern": false,
             "workflowRunId": ${{ github.run_id }},
-            "deployState": "failure",
+            "deployState": "success",
             "deployUser": "${{ github.actor }}"
           }')
           echo "Result: $curlResult"
