@@ -393,7 +393,7 @@ jobs:
             "deployState": "${{ steps.get_error_state.outputs.DEPLOY_STATE }}",
             "deployUser": "${{ github.actor }}"
           }')
-          echo "Result: $curlResult"
+          
           statusCode="${curlResult:${#curlResult}-3}"
           echo "statusCode: $statusCode"
 
