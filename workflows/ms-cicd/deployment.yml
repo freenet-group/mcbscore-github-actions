@@ -368,13 +368,13 @@ jobs:
         id: get_success_state
         if: ${{ !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
         shell: bash
-        run:   echo "DEPLOY_STATE=successful" >> $GITHUB_OUTPUT
+        run: echo "DEPLOY_STATE=successful" >> $GITHUB_ENV
 
       - name: Feststellen ob Deployment fehlgeschlagen ist
         id: get_error_state
         if: ${{ failure() || contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
         shell: bash
-        run:   echo "DEPLOY_STATE=failed" >> $GITHUB_OUTPUT
+        run:   echo "DEPLOY_STATE=failed" >> $GITHUB_ENV
 
       - name: Bambi Meldung
         id: deploy_state
@@ -390,7 +390,7 @@ jobs:
             "environment": "${{ github.event.inputs.environment }}",
             "extern": false,
             "workflowRunId": ${{ github.run_id }},
-            "deployState": "${{ steps.get_error_state.outputs.DEPLOY_STATE }}",
+            "deployState": "${{ env.DEPLOY_STATE }}",
             "deployUser": "${{ github.actor }}"
           }')
           
