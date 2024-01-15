@@ -8,7 +8,7 @@ on:
         required: true
       issueList:
         description: Die Liste der integrierten JIRA-Issues
-        required: true
+        required: false
       epic:
         description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
         required: false

@@ -7,10 +7,10 @@ on:
     inputs:
       branch:
         description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
-        required: true
+        required: false
       version:
         description: 'Welche Version für das neue Release z.B. "8.32.1"?'
-        required: true
+        required: false
       pre-release:
         default: false
         description: 'Ist dies ein Pre-Release?'
@@ -31,7 +31,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || 'main' }}
+          ref: ${{ github.event.inputs.branch }}
 
       - name: AWS Secrets auslesen und in ENV schreiben
         uses: ./.github/actions/read-aws-secrets
