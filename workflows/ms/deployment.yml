@@ -295,7 +295,7 @@ jobs:
           installJq: true
 
       - name: Karate Tests ausführen
-        if: env.SANITY_TESTS_ENABLED == 'true'
+        if: env.SANITY_TESTS_ENABLED != 'false'
         uses: ./mcbscore/github/actions/sanity-test
         with:
           component: '${{ inputs.component }}'

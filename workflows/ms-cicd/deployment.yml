@@ -279,6 +279,17 @@ jobs:
           dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
           dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
           bomfilename: ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
+      
+      - name: DependencyTrack Cleanup
+        uses: freenet-group/sbom-cleanup@1.1.0
+        with:
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          project_prefix: ${{ env.JIRA_COMPONENT }}
+          days_to_keep: '90'
+          dry_run: 'false'
 
   deployment_status:
     needs: [create-deployment, deploy, deploy_k8s]
@@ -348,7 +359,7 @@ jobs:
           installJq: true
 
       - name: Karate Tests ausführen
-        if: env.SANITY_TESTS_ENABLED == 'true'
+        if: env.SANITY_TESTS_ENABLED != 'false'
         uses: ./mcbscore/github/actions/sanity-test
         with:
           component: '${{ inputs.component }}'
@@ -360,13 +371,24 @@ jobs:
           testFiles: 'SanityTest.feature'
 
   bambi-notification:
-    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     needs: [deploy, deploy_k8s]
-    # Der Check success() ist nicht true bei übersprungenen workflows. !failure() dahingegen sieht übersprungenen nicht als failure und nur rote Steps
-    if: ${{ always() && !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
+    if: ${{ always() && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
-      - name: Report deployment status
+      - name: Feststellen ob Deployment erfolgreich war
+        id: get_success_state
+        if: ${{ !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
+        shell: bash
+        run: echo "DEPLOY_STATE=successful" >> $GITHUB_ENV
+
+      - name: Feststellen ob Deployment fehlgeschlagen ist
+        id: get_error_state
+        if: ${{ failure() || contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+        shell: bash
+        run:   echo "DEPLOY_STATE=failed" >> $GITHUB_ENV
+
+      - name: Bambi Meldung
+        id: deploy_state
         shell: bash
         run: |
           curlResult=$(curl -sw %{http_code} --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v2/bambi/deployment/environmentversion' \
@@ -379,10 +401,10 @@ jobs:
             "environment": "${{ github.event.inputs.environment }}",
             "extern": false,
             "workflowRunId": ${{ github.run_id }},
-            "deployState": "successfull",
+            "deployState": "${{ env.DEPLOY_STATE }}",
             "deployUser": "${{ github.actor }}"
           }')
-          echo "Result: $curlResult"
+          
           statusCode="${curlResult:${#curlResult}-3}"
           echo "statusCode: $statusCode"
 
