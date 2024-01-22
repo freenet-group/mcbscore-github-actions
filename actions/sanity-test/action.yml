@@ -53,7 +53,9 @@ runs:
       shell: bash
       run: |
         # Check if feature file exists
-        anyFeatureFile=$(find "$TEST_DIR/" -iname '*.feature' -print -quit)
+        if [ -d "$TEST_DIR" ]; then
+          anyFeatureFile=$(test -d "$TEST_DIR" && find "$TEST_DIR/" -iname '*.feature' -print -quit)
+        fi
         if [ -n "$anyFeatureFile" ]; then
           echo 'enabled=true' >> "$GITHUB_OUTPUT"
         else
