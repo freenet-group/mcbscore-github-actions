@@ -59,7 +59,7 @@ runs:
         if [ -n "$anyFeatureFile" ]; then
           echo 'enabled=true' >> "$GITHUB_OUTPUT"
         else
-          printf 'Keine Datei *.feature in %s gefunden\n' "$TEST_DIR"
+          printf 'Keine Datei %s/**/*.feature gefunden\n' "$TEST_DIR"
           echo 'enabled=false' >> "$GITHUB_OUTPUT"
         fi
 
