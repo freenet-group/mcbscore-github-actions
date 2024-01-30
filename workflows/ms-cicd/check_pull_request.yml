@@ -8,7 +8,6 @@ concurrency:
 on:
   pull_request:
 
-
 jobs:
   # Syncronisiert die GitHub PR Labels mit den Jira Components
   syncLabels:

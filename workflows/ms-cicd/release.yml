@@ -113,6 +113,12 @@ jobs:
           echo "RAW_VERSION=${{ steps.version-calculation.outputs.new_version }}" >> $GITHUB_ENV
           echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
 
+      - name: Neuen Versions-Tag einchecken
+        uses: actions-ecosystem/action-push-tag@v1
+        with:
+          tag: ${{ steps.version-calculation.outputs.new_version }}
+          message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
+
       - name: Release Version in DB Changes eintragen
         if: hashFiles('.github/**/dbChanges.yml') != ''
         shell: bash
@@ -149,12 +155,6 @@ jobs:
           projectKeyPath: ${{ env.COVERAGE_PATH }}
           projectKeyName: ${{ env.COVERAGE_APP }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-
-      - name: Neuen Versions-Tag einchecken
-        uses: actions-ecosystem/action-push-tag@v1
-        with:
-          tag: ${{ steps.version-calculation.outputs.new_version }}
-          message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
