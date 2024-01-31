@@ -53,11 +53,13 @@ runs:
       shell: bash
       run: |
         # Check if feature file exists
-        anyFeatureFile=$(find "$TEST_DIR/" -iname '*.feature' -print -quit)
+        if [ -d "$TEST_DIR" ]; then
+          anyFeatureFile=$(test -d "$TEST_DIR" && find "$TEST_DIR/" -iname '*.feature' -print -quit)
+        fi
         if [ -n "$anyFeatureFile" ]; then
           echo 'enabled=true' >> "$GITHUB_OUTPUT"
         else
-          printf 'Keine Datei *.feature in %s gefunden\n' "$TEST_DIR"
+          printf 'Keine Datei %s/**/*.feature gefunden\n' "$TEST_DIR"
           echo 'enabled=false' >> "$GITHUB_OUTPUT"
         fi
 

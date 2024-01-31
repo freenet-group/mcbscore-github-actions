@@ -149,7 +149,7 @@ jobs:
     if: ${{ github.event.inputs.group == 'ms-cicd' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     env:
-      defaultWorkflows: "../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, cicd_deployment"
+      defaultWorkflows: "../encoding, build, check_code, check_pull_request, postBuild, release, deployment"
     strategy:
       matrix:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
@@ -386,6 +386,7 @@ jobs:
           - { name: mcbscore-db-replica, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-es-plugin-collection, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
           - { name: mcbscore-framework, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: mcbs-connector-api, branch: develop, group: standard, workflows: "../check, build, ../encoding, postBuild" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -498,6 +499,7 @@ jobs:
           - { name: lib-relation, branch: develop, group: standard }
           - { name: lib-security, branch: develop, group: standard }
           - { name: lib-service, branch: develop, group: standard }
+          - { name: mcbs-connector-api, branch: develop, group: standard }
           - { name: mcbs-master, branch: develop, group: mcbs }
           - { name: mcbs-logging, branch: develop, group: mcbs }
           - { name: mcbscore-mandel, branch: develop, group: mandel }

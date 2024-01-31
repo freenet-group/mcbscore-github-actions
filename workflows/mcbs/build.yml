@@ -210,13 +210,18 @@ jobs:
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'mcbs' }}
         run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }} -PLI_contexts=PROD -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PINCLUDED_MODULES=${{ env.GRADLE_MODULES }} createReleaseScripts ${{ github.event.inputs.gradleOptions }}
 
+      - name: build connector
+        if: ${{ (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'ms-mcbsservices' }}
+        uses: ./mcbscore/github/actions/gradle-build
+        with:
+          gradleDirectory: './mcbs-connector-java8'
+          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+
       - id: gradle-build
         name: Gradle Build
         if: ${{ env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL' }}
         uses: ./mcbscore/github/actions/gradle-build
         with:
-          artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
-          artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
           gradleCommand: ${{ env.GRADLE_COMMAND }}
