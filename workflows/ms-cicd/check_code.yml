@@ -22,14 +22,11 @@ jobs:
       - name: UTF-8 encoding prüfen und invalide Dateien auflisten
         shell: bash
         run: |
-          NON_UTF8_FILES=$(find "$GITHUB_WORKSPACE" -type f -not '(' -iname '*.properties' -o -iname '*.xml' ')' -exec file --mime '{}' ';' \
-              | grep --invert-match --perl-regexp '\bcharset=(binary|us-ascii|utf-8)$')
-          if [ -n "$NON_UTF8_FILES" ]; then
-            echo "Non-UTF-8 encoded files found:"
-            echo "$NON_UTF8_FILES"
+          if find "$GITHUB_WORKSPACE" -type f -not '(' -iname '*.properties' -o -iname '*.xml' ')' -exec file --mime '{}' ';' \
+              | grep --invert-match --perl-regexp '\bcharset=(binary|us-ascii|utf-8)$'; then
+            echo "Non-UTF-8 Dateien gefunden"
             exit 1
           fi
-
 
   # Prüft, ob gewisse Tags im Code vorhanden sind
   markierungen:
