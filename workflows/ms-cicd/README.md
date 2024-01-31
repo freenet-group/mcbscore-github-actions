@@ -10,7 +10,7 @@
     * [Anpassung der distribute.yml](#anpassung-der-distributeyml)
     * [Anpassung des GitHub Repo](#anpassung-des-github-repo)
     * [Anpassung eines CA-Projektes](#anpassung-eines-ca-projektes)
-    * [Anpassung eines nicht-CA-Projektes wie ms-contentprovider](#anpassung-eines-nicht-ca-projektes-wie-ms-contentprovider)
+    * [Anpassung eines nicht-CA-Projektes wie ms-contentprovider](#anpassung-eines-nicht-ca-projektes)
 
 ## Features der neuen automatischen CICD-Pipeline
 
@@ -23,7 +23,7 @@
     * Wenn eines der beiden Labels mit ":yes" gesetzt wird, dann gibt es eine Meldung an DOGS (Dispatching and OnGoing Support)
       und in den Release-Notes, um mitzuteilen, dass Konfigurationsänderungen während des Deployments notwendig sind.
   * Prüfung auf release labels: release:patch, release:minor, release:major über das Semantic Version Feld aus Jira
-* Automatische Erstellung von Release-Notes im Release und nicht mehr als Wiki-Seite
+* Automatische Erstellung von Release-Notes im GitHub-Release und nicht mehr als Wiki-Seite
 * Bambi-Notification (Meldung über neue Releases) beinhaltet nun auch Release-Informationen und eine Info, ob es ein
   Renovate-Release ist
 * Deployment-Scripte wurden zusammengefasst
@@ -59,7 +59,7 @@ graph TD;
 ## Installation
 
 🛑 Es ist nicht möglich, einfach nur den Microservice in der distribute.yml umzuhängen.
-Sollten Probleme auftreten, dann bitte die alte distribute.yml wiederherstellen und bei Benjamin Pahl melden.
+Sollten Probleme auftreten, dann bitte die alte distribute.yml wiederherstellen und Problem bei den GitHub / CICD Leuten melden.
 
 ### Anpassung der distribute.yml
 
@@ -91,6 +91,8 @@ Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
       * Require branches to be up to date before merging
       * Status checks that are required
         * build, checkLabels
+          * build -> Job in der build.yml
+          * checkLabels -> Job in der check_pull_request.yml
   * Labels
     * Labels sind ein wenig versteckt, können aber unter Issues->Labels gefunden werden
     * Folgende Labels anlegen oder Farben anpassen:
@@ -143,7 +145,9 @@ unten einen eigenen Abschnitt.
     //...
     ```
 
-### Anpassung eines nicht-CA-Projektes wie ms-contentprovider
+### Anpassung eines nicht-CA-projektes
+
+Als Beispiel hierzu wurde ms-contentprovider umgebaut.
 
 * Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
 * workflow.properties erweitern
