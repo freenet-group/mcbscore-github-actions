@@ -449,7 +449,7 @@ jobs:
           RETRY_SLEEP=30
           
           echo "Starting the Check Deployment Workflow Status..."
-          sleep INITIAL_SLEEP  # 1 Minute warten, damit der Workflow gestartet werden kann
+          sleep $INITIAL_SLEEP  # 1 Minute warten, damit der Workflow gestartet werden kann
 
           # Workflow Läufe abrufen
           echo "Fetching workflow runs for workflow ID: ${{ steps.deployment.outputs.workflowId }}"
