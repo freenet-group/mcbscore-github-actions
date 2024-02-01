@@ -428,20 +428,6 @@ jobs:
               "componentVersion": "${{ steps.version-calculation.outputs.new_version }}"
             }
 
-      - name: Developer Portal Upload starten
-        id: developerPortalUpload
-        if: hashFiles('.github/**/developerPortal.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.2
-        with:
-          workflow: DeveloperPortal Upload
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "environment": "dev",
-              "component": "${{ env.COMPONENT }}",
-              "componentVersion": "${{ steps.version-calculation.outputs.new_version }}"
-            }
-
       - name: Deployment Workflow Status prüfen
         run: |
           # Set max checks and initialize counter
