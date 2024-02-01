@@ -79,6 +79,11 @@ jobs:
     outputs:
       deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
     steps:
+      - name: Aufrufparameter des Workflows ausgeben
+        env:
+          INPUTS_JSON: ${{ toJSON(inputs) }}
+        run: printf '%s\n' "$INPUTS_JSON"
+
       - name: Repository auschecken
         uses: actions/checkout@v4
         with:
