@@ -444,13 +444,12 @@ jobs:
         run: |
           # Maximal 30 Checks, alle 30 Sekunden, also 15 Minuten maximal
           MAX_CHECKS=30  # Number of checks before timeout, for 15 minutes total.
-          COUNTER=0
-          FOUND_RUN_ID=""
+          counter=0
           INITIAL_SLEEP=60
           RETRY_SLEEP=30
           
           echo "Starting the Check Deployment Workflow Status..."
-          sleep 60  # 1 Minute warten, damit der Workflow gestartet werden kann
+          sleep INITIAL_SLEEP  # 1 Minute warten, damit der Workflow gestartet werden kann
 
           # Workflow Läufe abrufen
           echo "Fetching workflow runs for workflow ID: ${{ steps.deployment.outputs.workflowId }}"
@@ -467,11 +466,11 @@ jobs:
           # Status des letzten Workflow Runs prüfen
           while true; do
             # Zähler erhöhen
-            COUNTER=$(( COUNTER + 1 ))
-            REMAINING_CHECKS=$(( MAX_CHECKS - COUNTER ))
-            REMAINING_TIME=$(( REMAINING_CHECKS * RETRY_SLEEP / 60 ))  # Convert to minutes
+            counter=$(( counter + 1 ))
+            remainingChecks=$(( MAX_CHECKS - counter ))
+            remainingTime=$(( remainingChecks * RETRY_SLEEP / 60 ))  # Convert to minutes
           
-            echo "Check attempt $COUNTER of $MAX_CHECKS. Remaining checks: $REMAINING_CHECKS. Time left before timeout: ~$REMAINING_TIME minutes."
+            echo "Check attempt $counter of $MAX_CHECKS. Remaining checks: $remainingChecks. Time left before timeout: ~$remainingTime minutes."
           
             # Details des Workflow Runs abrufen
             RUN_DETAILS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -486,7 +485,7 @@ jobs:
             if [[ "$RUN_STATUS" == "queued" || "$RUN_STATUS" == "in_progress" || "$RUN_STATUS" == "null" ]]; then
               echo "Deployment Workflow is $RUN_STATUS..."
           
-              if [[ "$COUNTER" -ge "$MAX_CHECKS" ]]; then
+              if [[ "$counter" -ge "$MAX_CHECKS" ]]; then
                 echo "Timeout waiting for the Deployment Workflow."
                 exit 1
               fi

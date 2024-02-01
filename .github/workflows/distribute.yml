@@ -149,7 +149,7 @@ jobs:
     if: ${{ github.event.inputs.group == 'ms-cicd' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     env:
-      defaultWorkflows: "../encoding, build, check_code, check_pull_request, postBuild, release, deployment"
+      DEFAULT_WORKFLOWS: "../encoding, ../developerPortal, build, check_code, check_pull_request, postBuild, release, deployment"
     strategy:
       matrix:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
@@ -169,7 +169,7 @@ jobs:
           repositoryName: ${{ matrix.repository.name }}
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
-          workflows: ${{ matrix.repository.workflows || env.defaultWorkflows }}
+          workflows: ${{ matrix.repository.workflows || env.DEFAULT_WORKFLOWS  }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
