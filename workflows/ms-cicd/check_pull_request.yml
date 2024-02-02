@@ -98,5 +98,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           label_list: 'ms-configuration:yes, ms-deployment:yes'
-          user_name_list: '@adermrc, @zandeget, @lbuesen, @ihleyon'
+          user_name_list: '@freenet-group/abr-ms-gh-deployments'
           pull_request_number: ${{ github.event.pull_request.number }}

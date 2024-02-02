@@ -21,7 +21,7 @@
   * Pull-Request-Labels werden mit Jira synchronisiert, um automatisch ms-configuration:yes oder ms-deployment:yes zu
       setzen
     * Wenn eines der beiden Labels mit ":yes" gesetzt wird, dann gibt es eine Meldung an DOGS (Dispatching and OnGoing Support)
-      und in den Release-Notes, um mitzuteilen, dass Konfigurationsänderungen während des Deployments notwendig sind.
+      und in den Release-Notes, um mitzuteilen, dass Konfigurationsänderungen während des Deployments notwendig sind. Diese Mitteilung erfolgt über eine Meldung per '@freenet-group/abr-ms-gh-deployments' Markierung.
   * Prüfung auf release labels: release:patch, release:minor, release:major über das Semantic Version Feld aus Jira
 * Automatische Erstellung von Release-Notes im GitHub-Release und nicht mehr als Wiki-Seite
 * Bambi-Notification (Meldung über neue Releases) beinhaltet nun auch Release-Informationen und eine Info, ob es ein
@@ -51,7 +51,7 @@ graph TD;
 | -------- | ------------ |
 | build.yml | Baut das Projekt und führt die Tests aus |
 | check_code.yml | Prüft den Code auf UTF und Markierungen. Bei Auffäligkeiten wird ein Kommentar erstellt. |
-| check_pull_request.yml | Synchronisiert die Labels mit unserem ABRMS/MCBS-Jira-Projekt. Danach wird auf Pflichtlabels geprüft und gegebenfalls Bambi+DOGS informiert. Auch hier wird bei Auffälligkeiten ein Kommentar erstellt. |
+| check_pull_request.yml | Synchronisiert die Labels mit unserem ABRMS/MCBS-Jira-Projekt. Danach wird auf Pflichtlabels geprüft und gegebenfalls Bambi (API) und DOGS (@freenet-group/abr-ms-gh-deployments) informiert. Auch hier wird bei Auffälligkeiten ein Kommentar erstellt. |
 | release.yml | Erstellt ein Release mit Release-Notes und deployt das Release auf DEV |
 | postBuild.yml | Verteilt die Release-Information an Jira und Teams |
 | deployment.yml | Deployt das Projekt auf der gewählten Umgebung für VM und K8s. Nach dem Deployment erfolgt ein Sanity-Test. Im Anschluss wird ein SBOM-File mit der jeweiligen Version und Environment hochgeladen und Bambi informiert. |
