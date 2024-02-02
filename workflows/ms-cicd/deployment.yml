@@ -363,6 +363,27 @@ jobs:
           testDir: './sanityTests'
           testFiles: 'SanityTest.feature'
 
+  upload_developerportal:
+    needs: [sanity_test]
+    # Im Developer Portal gibt es keine Umgebung "b2b"
+    if: $(github.event.inputs.environment != 'b2b'}}
+    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
+    runs-on: [self-hosted, k8s]
+    steps:
+      - name: Developer Portal Upload starten
+        id: developerPortalUpload
+        if: hashFiles('.github/**/developerPortal.yml') != ''
+        uses: benc-uk/workflow-dispatch@v1.2.2
+        with:
+          workflow: DeveloperPortal Upload
+          token: ${{ env.TOKEN }}
+          inputs: >
+            {
+              "environment": ${{ github.event.inputs.environment }},
+              "component": "${{ github.event.inputs.component }}",
+              "componentVersion": "${{ github.event.inputs.componentVersion }}"
+            }
+
   bambi-notification:
     runs-on: [self-hosted, k8s]
     needs: [deploy, deploy_k8s]
