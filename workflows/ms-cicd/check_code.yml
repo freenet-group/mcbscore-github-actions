@@ -1,21 +1,25 @@
-name: CICD Check Code
+name: Check Code
 
 on:
   pull_request:
     types: [opened, reopened, synchronize]
 
-concurrency: conc-check-code-${{ github.repository }}
+# Concurrency beendet alle anderen Jobs mit der gleichen Gruppe, wenn ein neuer Job startet
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  # Prüft, ob die Dateien UTF-8 kodiert sind
   utf8:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Repository auschecken
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: UTF-8 encoding prüfen
+      - name: UTF-8 encoding prüfen und invalide Dateien auflisten
         shell: bash
         run: |
           if find "$GITHUB_WORKSPACE" -type f -not '(' -iname '*.properties' -o -iname '*.xml' ')' -exec file --mime '{}' ';' \
@@ -23,6 +27,8 @@ jobs:
             echo "Non-UTF-8 Dateien gefunden"
             exit 1
           fi
+
+  # Prüft, ob gewisse Tags im Code vorhanden sind
   markierungen:
     runs-on: ubuntu-latest
     steps:
@@ -36,6 +42,6 @@ jobs:
         with:
           comment-title: "Markierungen im Code"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          ignore-pattern: '.md$|^\.github/workflows/'
+          ignore-pattern: '\.ya?ml$|\.md$|^\.github/'
           review-message: "Bitte die Einträge prüfen :eyes:"
-          tags:  "TODO,FIXME,BUG,DOCME,DEPRECATED"
+          tags: "TODO,FIXME,BUG,DOCME,DEPRECATED"
