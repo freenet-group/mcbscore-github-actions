@@ -1,4 +1,5 @@
 # workflows
+
 Enthält alle Workflows für MCBS Core
 
 Über den Distribute Workflow kann der aktuelle Stand auf die Repositories vom MCBS Core übertragen werden.
@@ -10,7 +11,8 @@ Enthält alle Workflows für MCBS Core
 Die Konfiguration der Verteilung erfolgt über eine Github Matrix mit dem Namen *repository*:
 
 Beispiel:
-```
+
+```yml
 jobs:
   dispatch:
     runs-on: ubuntu-latest
@@ -19,13 +21,16 @@ jobs:
        repository:
           - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "build, deployment, deployment_dev, deployment_git, dockerImage, postBuild" }
 ```
+
 Die Matrix Repository hat folgende Attribute:
+
 - name: Name des Zielrepositories ohne Organisation (hier wird freenet-group vorausgesetzt)
 - branch: Branch des Zielrepositories, auf dem die Aktualisierung erfolgen soll
 - group: Workflow Gruppe. Verweis auf das zu verwendende Quellverzeichnis unter [workflows](workflows)
 - workflows: Kommaseparierte Liste der Dateinamen (ohne .yml Endung), der zu übertragenden Workflows
 
 Für die Verteilung der Workflows gelten folgende Regeln.
+
 - geänderte Workflows werden aktualisiert
 - neue Workflows werden hinzugefügt
 - existierende Workflows, die nicht mehr in der Matrix (Attribut matrix.repository.workflows) aufgeführt sind, werden gelöscht

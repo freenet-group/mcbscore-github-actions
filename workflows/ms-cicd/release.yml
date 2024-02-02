@@ -1,4 +1,4 @@
-name: CICD Release
+name: Release
 
 on:
   pull_request:
@@ -21,14 +21,12 @@ jobs:
   release:
     if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
     runs-on: [ self-hosted, k8s ]
-
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
-
     steps:
-      - name: Checkout Repository
+      - name: Repository auschecken
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
@@ -97,23 +95,29 @@ jobs:
           current_version: ${{ steps.get-latest-tag.outputs.tag  }}
           level: ${{ steps.release-label.outputs.level || 'patch' }}
 
-      - name: Semantiv Version überschreiben, wenn eine spezifische Version angegeben wurde
+      - name: Semantic Version überschreiben, wenn eine spezifische Version angegeben wurde
         id: version-calculation
         run: |
-          # Set the new version to the bumped version initially
+          # Setze die neue kalkulierte Version in die Outputs
           echo "new_version=${{ steps.bump-semver.outputs.new_version }}" >> $GITHUB_OUTPUT
 
-          # Overwrite if a specific version was provided
+          # Überschreibe die neue kalkulierte Version, wenn eine spezifische Version angegeben wurde
           if [ -n "${{ github.event.inputs.version }}" ]; then
             echo "new_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Component Version setzen (legacy)
+      - name: Component Version setzen (legacy - Für die Kompatibilität mit alten Actions)
         shell: bash
         run: |
           echo "COMPONENT_VERSION=${{ steps.version-calculation.outputs.new_version }}" >> $GITHUB_ENV
           echo "RAW_VERSION=${{ steps.version-calculation.outputs.new_version }}" >> $GITHUB_ENV
           echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
+
+      - name: Neuen Versions-Tag einchecken
+        uses: actions-ecosystem/action-push-tag@v1
+        with:
+          tag: ${{ steps.version-calculation.outputs.new_version }}
+          message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
       - name: Release Version in DB Changes eintragen
         if: hashFiles('.github/**/dbChanges.yml') != ''
@@ -151,12 +155,6 @@ jobs:
           projectKeyPath: ${{ env.COVERAGE_PATH }}
           projectKeyName: ${{ env.COVERAGE_APP }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-
-      - name: Neuen Versions-Tag einchecken
-        uses: actions-ecosystem/action-push-tag@v1
-        with:
-          tag: ${{ steps.version-calculation.outputs.new_version }}
-          message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
@@ -415,7 +413,7 @@ jobs:
           jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.version-calculation.outputs.new_version }}.jar
           javaVersion: ${{ env.JAVA_VERSION }}
 
-      - name: Deployment Workflow inkl. k8s starten
+      - name: Deployment Workflow starten
         id: deployment
         uses: benc-uk/workflow-dispatch@v1.2.2
         with:
@@ -430,38 +428,37 @@ jobs:
 
       - name: Deployment Workflow Status prüfen
         run: |
-          # Set max checks and initialize counter
+          # Maximal 30 Checks, alle 30 Sekunden, also 15 Minuten maximal
           MAX_CHECKS=30  # Number of checks before timeout, for 15 minutes total.
-          COUNTER=0
-          FOUND_RUN_ID=""
+          counter=0
           INITIAL_SLEEP=60
           RETRY_SLEEP=30
           
           echo "Starting the Check Deployment Workflow Status..."
-          sleep 60  # Sleep for 1 minute to allow workflow to register
+          sleep $INITIAL_SLEEP  # 1 Minute warten, damit der Workflow gestartet werden kann
 
-          # Fetch the workflow runs
+          # Workflow Läufe abrufen
           echo "Fetching workflow runs for workflow ID: ${{ steps.deployment.outputs.workflowId }}"
           WORKFLOW_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                           "https://api.github.com/repos/${{ github.repository }}/actions/workflows/${{ steps.deployment.outputs.workflowId }}/runs")
           
-          # Extract the ID and name of the latest run
+          # Letzten Workflow Run ermitteln
           LATEST_RUN=$(echo "$WORKFLOW_RUNS" | jq '.workflow_runs[0]')  # Assuming the first run is the latest
           RUN_ID=$(echo "$LATEST_RUN" | jq -r '.id')
           RUN_NAME=$(echo "$LATEST_RUN" | jq -r '.name')
           
           echo "Checking run with ID: $RUN_ID and name: $RUN_NAME"
           
-          # Loop to check the status of the identified run
+          # Status des letzten Workflow Runs prüfen
           while true; do
-            # Increase counter
-            COUNTER=$(( COUNTER + 1 ))
-            REMAINING_CHECKS=$(( MAX_CHECKS - COUNTER ))
-            REMAINING_TIME=$(( REMAINING_CHECKS * RETRY_SLEEP / 60 ))  # Convert to minutes
+            # Zähler erhöhen
+            counter=$(( counter + 1 ))
+            remainingChecks=$(( MAX_CHECKS - counter ))
+            remainingTime=$(( remainingChecks * RETRY_SLEEP / 60 ))  # Convert to minutes
           
-            echo "Check attempt $COUNTER of $MAX_CHECKS. Remaining checks: $REMAINING_CHECKS. Time left before timeout: ~$REMAINING_TIME minutes."
+            echo "Check attempt $counter of $MAX_CHECKS. Remaining checks: $remainingChecks. Time left before timeout: ~$remainingTime minutes."
           
-            # Fetch the specific run details
+            # Details des Workflow Runs abrufen
             RUN_DETAILS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                                 "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID")
           
@@ -470,23 +467,23 @@ jobs:
           
             echo "Run Status: $RUN_STATUS, Conclusion: $CONCLUSION"
           
-            # Check if the workflow is either queued or still running
+            # Prüfe ob der Workflow noch läuft
             if [[ "$RUN_STATUS" == "queued" || "$RUN_STATUS" == "in_progress" || "$RUN_STATUS" == "null" ]]; then
               echo "Deployment Workflow is $RUN_STATUS..."
           
-              if [[ "$COUNTER" -ge "$MAX_CHECKS" ]]; then
+              if [[ "$counter" -ge "$MAX_CHECKS" ]]; then
                 echo "Timeout waiting for the Deployment Workflow."
                 exit 1
               fi
           
               sleep $RETRY_SLEEP  # Wait for a specified duration before checking again
             else
-              # If not queued or in progress, break the loop
+              # Wenn nicht "in_progress" oder "queued", dann ist der Workflow abgeschlossen
               break
             fi
           done
           
-          # Check the conclusion of the run
+          # Prüfe ob der Workflow erfolgreich war
           if [[ "$CONCLUSION" == "null" || "$CONCLUSION" != "success" ]]; then
             echo "Deployment Workflow did not complete successfully. Conclusion: $CONCLUSION"
             exit 1
@@ -521,10 +518,10 @@ jobs:
           echo "BAMBI_ARGS=$(echo "$BAMBI_ARGS" | sed 's/"/\\"/g')" >> $GITHUB_ENV
 
       - name: postBuild Workflow starten
-        if: hashFiles('.github/**/cicd_postBuild.yml') != ''
+        if: hashFiles('.github/**/postBuild.yml') != ''
         uses: benc-uk/workflow-dispatch@v1.2.2
         with:
-          workflow: CICD PostBuild
+          workflow: PostBuild
           token: ${{ env.TOKEN }}
           inputs: >
             {

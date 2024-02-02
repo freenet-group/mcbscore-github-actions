@@ -1,5 +1,4 @@
-name: CICD Build
-
+name: Build
 on:
   pull_request:
     types: [ opened, reopened, synchronize ]
@@ -10,16 +9,15 @@ on:
       gradleOptions:
         description: Zusätzliche optionale Gradle Parameter
         required: false
-      epic:
-        description: EPIC als eventuelle Release-Klammer (META-170 = keine / unbestimmt)
-        required: false
-        default: META-170
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
 
-concurrency: conc-pr-${{ github.repository }}
+# Concurrency beendet alle anderen Jobs mit der gleichen Gruppe, wenn ein neuer Job startet
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -28,12 +26,12 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
     steps:
-      - name: Checkout Repository
+      - name: Repository auschecken
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: AWS Secrets auslesen
+      - name: AWS Parameter als Umgebungsvariablen setzen
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -43,12 +41,12 @@ jobs:
             /github/secrets/mcbs_user = USER, 
             /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
 
-      - name: Read workflow.properties
+      - name: workflow.properties als Umgebungsvariablen setzen
         shell: bash
         run: |
           cat ./.github/workflow.properties >> $GITHUB_ENV
 
-      - name: Checkout mcbscore-github-actions
+      - name: mcbscore-github-actions auschecken
         uses: actions/checkout@v4
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
@@ -56,23 +54,24 @@ jobs:
           path: ${{ env.ACTIONS_PATH }}
           ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
-      - name: Initialize Workflow
+      - name: Workflow initialisieren
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
           installGithubCli: true
           installJq: true
 
-      - name: Gradle Build
+      - name: Microservice per Gradle bauen
         uses: ./mcbscore/github/actions/gradle-build
         with:
           artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
+          # SBOM per cyclonedxBom erstellen
           gradleOptions: cyclonedxBom ${{ github.event.inputs.gradleOptions }}
 
-      - name: Publish Unit Test Results
+      - name: Unit Test Ergebnisse hochladen
         uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
