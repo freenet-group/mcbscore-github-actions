@@ -179,7 +179,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-admin-dashboard, branch: develop, group: ms, workflows: "../check, build, deployment, ../encoding, postBuild,setPRIssueDone" }
+          - { name: ms-admin-dashboard, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, old/deployment, deployment_dev, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-alteration, branch: develop, group: ms, workflows: "../check, build, old/deployment, deployment_dev, deployment_git, deployment_prod, ../encoding, postBuild,setPRIssueDone" }
           - { name: ms-appcheck, branch: develop, group: ms, workflows: "../check, build, old/deployment, deployment_dev, deployment_git, deployment_prod, ../developer-portal-old/developerPortal, ../encoding, postBuild,setPRIssueDone" }
