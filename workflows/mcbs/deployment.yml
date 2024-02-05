@@ -286,7 +286,7 @@ jobs:
 
       # JAVA installieren; TODO: kann Installation über init-workflow ersetzt werden, wenn MCBS auf JAVA 17 ist
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 17

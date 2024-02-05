@@ -1,5 +1,4 @@
 name: Deployment
-
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
 run-name: Deployment ${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }} auf ${{ github.event.inputs.environment }}
 
@@ -67,6 +66,7 @@ on:
         default: main
         type: string
 
+
 env:
   ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
   ACTIONS_PATH: mcbscore/github
@@ -76,20 +76,19 @@ env:
 jobs:
   create-deployment:
     runs-on: ubuntu-latest
-    outputs:
-      deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
+
     steps:
-      - name: Aufrufparameter des Workflows ausgeben
+      - name: Show Params
         env:
           INPUTS_JSON: ${{ toJSON(inputs) }}
         run: printf '%s\n' "$INPUTS_JSON"
 
-      - name: Repository auschecken
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: AWS Parameter als Umgebungsvariablen setzen
+      - name: Read and set AWS credentials
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -97,25 +96,27 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
-      - name: Referenz fürs Deployment setzen
-        id: deployment_ref
+      - name: Determine deployment ref
         shell: bash
         run: |
           if  [[ ${{ github.event.inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
           then
-            echo "DEPLOYMENT_REF=develop" >> $GITHUB_OUTPUT
+            echo "DEPLOYMENT_REF=develop" >> $GITHUB_ENV
           else
-            echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_OUTPUT
+            echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
           fi
 
-      - name: GitHub Deployment erstellen
+      - name: Create GitHub deployment
         uses: chrnorm/deployment-action@v2
         id: create-deployment
         with:
           token: ${{ env.TOKEN }}
-          environment: ${{ github.event.inputs.environment }}
-          description: "Deployment auf ${{ github.event.inputs.platforms }}"
-          ref: ${{ steps.deployment_ref.outputs.DEPLOYMENT_REF }}
+          environment: ${{ inputs.environment }}
+          description: "Deployment auf ${{ inputs.platforms }}"
+          ref: ${{ env.DEPLOYMENT_REF }}
+
+    outputs:
+      deployment_id: ${{ steps.create-deployment.outputs.deployment_id }}
 
   deploy:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
@@ -123,21 +124,24 @@ jobs:
     needs: create-deployment
     # if: platforms enthält "vm" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
     if: contains(format(', {0}, ', inputs.platforms), ', vm, ') || contains(format(',{0},', inputs.platforms), ',vm,')
-    outputs:
-      componentName: ${{ env.JIRA_COMPONENT }}
     steps:
-      - name: Runner vorbereiten
+      - name: Change Owner to Runner User
         if: ${{ always() }}
         run: |
           docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GH_R_PACKAGES }}
           docker run --rm -v `pwd`:/target -w /target -t ghcr.io/freenet-group/container-base-images/ubuntu_2004_lts:latest sh -c "chown $(id -u):$(id -g) -R /target"
 
-      - name: Repository auschecken
+      - name: Ensure clean workspace
+        run: |
+          echo "Cleaning up previous run"
+          rm -rf *
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: AWS Parameter als Umgebungsvariablen setzen
+      - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -149,7 +153,7 @@ jobs:
             /github/secrets/checkmk_user = CHECKMK_USER,
             /github/secrets/checkmk_password = CHECKMK_PW
 
-      - name: mcbscore-github-actions auschecken
+      - name: checkout mcbscore-github-actions
         uses: actions/checkout@v4
         with:
           repository: ${{ env.ACTIONS_REPOSITORY }}
@@ -157,7 +161,7 @@ jobs:
           path: ${{ env.ACTIONS_PATH }}
           ref: ${{ inputs.actionsRepositoryBranch }}
 
-      - name: ms-deployment auschecken
+      - name: Checkout Deployment Data / Scripts
         uses: actions/checkout@v4
         with:
           repository: freenet-group/ms-deployment
@@ -165,7 +169,7 @@ jobs:
           path: ${{ env.DEPLOYMENT_PATH }}
           ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
 
-      - name: Workflow initialisieren
+      - name: Initialize Workflow
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJavaWithNashornEngine: true
@@ -177,11 +181,11 @@ jobs:
         uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ github.event.inputs.componentVersion }}
-          assetPattern: '${{ github.event.inputs.component }}-${{ github.event.inputs.componentVersion }}.jar'
+          assetPattern: '-${{ github.event.inputs.componentVersion }}.jar'
           targetPath: './${{ env.DEPLOYMENT_PATH }}/release'
           token: ${{ env.TOKEN }}
 
-      - name: Deployment wenn Komponente unter gleichem Namen deployed werden soll
+      - name: Standard Deployment
         id: deployRelease
         if: ${{ github.event.inputs.additionalDeploymentComponent == '' }}
         uses: ./mcbscore/github/actions/deploy-microservice
@@ -196,7 +200,7 @@ jobs:
           sshKey: ${{ env.SSH_KEY }}
           dockerRegistryToken: ${{ env.TOKEN }}
 
-      - name: Deployment wenn Komponente unter anderem Namen deployed werden soll
+      - name: Custom Deployment
         id: additionalDeployment
         if: ${{ github.event.inputs.additionalDeploymentComponent != '' }}
         uses: ./mcbscore/github/actions/deploy-microservice
@@ -209,6 +213,9 @@ jobs:
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
           sshKey: ${{ env.SSH_KEY }}
 
+    outputs:
+      componentName: ${{ env.JIRA_COMPONENT }}
+
   deploy_k8s:
     needs: [create-deployment]
     # if: platforms enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
@@ -220,81 +227,17 @@ jobs:
       environment: ${{ github.event.inputs.environment }}
       component: ${{ github.event.inputs.component }}
 
-  upload_sbom:
-    runs-on: [ self-hosted, k8s ]
-    needs: [deploy, deploy_k8s]
-    steps:
-      - name: Repository auschecken
-        uses: actions/checkout@v4
-
-      - name: AWS Parameter als Umgebungsvariablen setzen
-        uses: ./.github/actions/read-aws-secrets
-        with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          awsParameterPairs: |
-            /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
-            /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
-            /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
-            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
-
-      - name: workflow.properties als Umgebungsvariablen setzen
-        shell: bash
-        run: |
-          cat ./.github/workflow.properties >> $GITHUB_ENV
-
-      - name: mcbscore-github-actions auschecken
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.ACTIONS_REPOSITORY }}
-          token: ${{ env.TOKEN }}
-          path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ inputs.actionsRepositoryBranch }}
-
-      - name: SBOM Asset vom Release herunterladen 
-        id: downloadRelease
-        uses: ./mcbscore/github/actions/download-release-assets
-        with:
-          version: ${{ github.event.inputs.componentVersion }}
-          assetPattern: ${{ env.DEPENDENCYTRACK_BOM_NAME }}
-          targetPath: ${{ env.DEPENDENCYTRACK_BOM_PATH }}
-          token: ${{ env.TOKEN }}
-
-      - name: SBOM an DependencyTrack übergeben
-        uses: freenet-group/gh-upload-sbom-with-tagging@0.1.0
-        with:
-          component: ${{ env.JIRA_COMPONENT }}
-          component_version: ${{ github.event.inputs.componentVersion }}
-          stage_tag: ${{ github.event.inputs.environment }}
-          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
-          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
-          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
-          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
-          bomfilename: ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
-      
-      - name: Alte SBOMs löschen
-        uses: freenet-group/sbom-cleanup@1.1.0
-        with:
-          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
-          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
-          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
-          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
-          project_prefix: ${{ env.JIRA_COMPONENT }}
-          days_to_keep: '90'
-          dry_run: 'false'
-
   deployment_status:
     needs: [create-deployment, deploy, deploy_k8s]
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Repository auschecken
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: AWS Parameter als Umgebungsvariablen setzen
+      - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -302,7 +245,7 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
-      - name: Deployment Status im Fehlerfall auf "failure" setzen
+      - name: Update deployment status (failure)
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
         uses: chrnorm/deployment-status@v2
         with:
@@ -310,7 +253,7 @@ jobs:
           state: "failure"
           deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
-      - name: Deployment Status im Erfolgsfall auf "success" setzen
+      - name: Update deployment status (success)
         if: ${{ !(contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
         uses: chrnorm/deployment-status@v2
         with:
@@ -323,12 +266,12 @@ jobs:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     steps:
-      - name: Repository auschecken
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: AWS Parameter als Umgebungsvariablen setzen
+      - name: Read and set AWS credentials
         uses: ./.github/actions/read-aws-secrets
         with:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -336,7 +279,7 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
-      - name: mcbscore-github-actions auschecken
+      - name: checkout mcbscore-github-actions
         uses: actions/checkout@v4
         with:
           repository: '${{ env.ACTIONS_REPOSITORY }}'
@@ -344,7 +287,7 @@ jobs:
           path: '${{ env.ACTIONS_PATH }}'
           ref: '${{ inputs.actionsRepositoryBranch }}'
 
-      - name: Workflow initialisieren
+      - name: Initialize Workflow
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
@@ -359,50 +302,18 @@ jobs:
           environment: '${{ inputs.environment }}'
           awsAccessKeyId: '${{ secrets.AWS_ACCESS_KEY_ID }}'
           awsSecretAccessKey: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
-          karateVersion: '${{ env.KARATE_VERSION }}'
+          karateVersion: '${{ env.KARATE_VERSION }}'	#aus workflow.properties per init-workflow
           testDir: './sanityTests'
           testFiles: 'SanityTest.feature'
 
-  upload_developerportal:
-    needs: [sanity_test]
-    # Im Developer Portal gibt es keine Umgebung "b2b"
-    if: $(github.event.inputs.environment != 'b2b'}}
+  bambi-notification:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
-    steps:
-      - name: Developer Portal Upload starten
-        id: developerPortalUpload
-        if: hashFiles('.github/**/developerPortal.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.2
-        with:
-          workflow: DeveloperPortal Upload
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "environment": ${{ github.event.inputs.environment }},
-              "component": "${{ github.event.inputs.component }}",
-              "componentVersion": "${{ github.event.inputs.componentVersion }}"
-            }
-
-  bambi-notification:
-    runs-on: [self-hosted, k8s]
     needs: [deploy, deploy_k8s]
-    if: ${{ always() && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
+    # Der Check success() ist nicht true bei übersprungenen workflows. !failure() dahingegen sieht übersprungenen nicht als failure und nur rote Steps
+    if: ${{ always() && !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
-      - name: Feststellen ob Deployment erfolgreich war
-        id: get_success_state
-        if: ${{ !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-        shell: bash
-        run: echo "DEPLOY_STATE=successful" >> $GITHUB_ENV
-
-      - name: Feststellen ob Deployment fehlgeschlagen ist
-        id: get_error_state
-        if: ${{ failure() || contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
-        shell: bash
-        run: echo "DEPLOY_STATE=failed" >> $GITHUB_ENV
-
-      - name: Bambi Meldung
-        id: deploy_state
+      - name: Report deployment status
         shell: bash
         run: |
           curlResult=$(curl -sw %{http_code} --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v2/bambi/deployment/environmentversion' \
@@ -415,10 +326,10 @@ jobs:
             "environment": "${{ github.event.inputs.environment }}",
             "extern": false,
             "workflowRunId": ${{ github.run_id }},
-            "deployState": "${{ env.DEPLOY_STATE }}",
+            "deployState": "successfull",
             "deployUser": "${{ github.actor }}"
           }')
-          
+          echo "Result: $curlResult"
           statusCode="${curlResult:${#curlResult}-3}"
           echo "statusCode: $statusCode"
 
