@@ -238,6 +238,21 @@ jobs:
               "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
             }
 
+      # Starte Deployment auf DEV (neuer Weg)
+      - name: Invoke deployment workflow
+        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_dev.yml') == ''
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Deployment
+          token: ${{ env.TOKEN }}
+          inputs: >
+            {
+              "component": "${{ env.COMPONENT }}",
+              "componentVersion": "${{ env.COMPONENT_VERSION }}", 
+              "environment": "dev",
+              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
+            }
+
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow (ADDITIONAL_DEPLOYMENT_COMPONENT)
         if: ${{ env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_dev.yml') != '' && env.ADDITIONAL_DEPLOYMENT_COMPONENT != '' }}
@@ -249,6 +264,22 @@ jobs:
             {
               "additionalDeploymentComponent": "${{ env.ADDITIONAL_DEPLOYMENT_COMPONENT }}",
               "componentVersion": "${{ env.COMPONENT_VERSION }}",
+              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
+            }
+
+      # Starte Deployment auf DEV (neuer Weg)
+      - name: Invoke deployment workflow (ADDITIONAL_DEPLOYMENT_COMPONENT)
+        if: ${{ env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_dev.yml') == '' && env.ADDITIONAL_DEPLOYMENT_COMPONENT != '' }}
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Deployment
+          token: ${{ env.TOKEN }}
+          inputs: >
+            {
+              "component": "${{ env.COMPONENT }}",
+              "componentVersion": "${{ env.COMPONENT_VERSION }}", 
+              "environment": "dev",
+              "additionalDeploymentComponent": "${{ env.ADDITIONAL_DEPLOYMENT_COMPONENT }}",
               "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
             }
 
