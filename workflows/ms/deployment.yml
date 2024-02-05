@@ -307,7 +307,7 @@ jobs:
           testFiles: 'SanityTest.feature'
 
   developer-portal-upload:
-    uses: ./.github/workflows/developer-portal.yml
+    uses: ./.github/workflows/developerPortal.yml
     secrets: inherit
     with:
       component: "${{ inputs.component }}"
