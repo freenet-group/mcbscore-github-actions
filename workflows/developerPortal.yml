@@ -79,12 +79,12 @@ jobs:
       - name: Setup jq
         uses: freenet-actions/setup-jq@v3
 
-      - name: developerPortal.json einlesen und Umgebung prüfen
+      - name: developer-portal.json einlesen und Umgebung prüfen
         id: get-json-content
         run: |
-          if [ -f ./.github/${{ inputs.component }}_developerPortal.json ]; 
+          if [ -f ./.github/${{ inputs.component }}-developer-portal.json ]; 
           then
-            FILE_CONTENT=$(cat ./.github/${{ inputs.component }}_developerPortal.json)
+            FILE_CONTENT=$(cat ./.github/${{ inputs.component }}-developer-portal.json)
             ENVIRONMENTS=$(echo $FILE_CONTENT | jq -r '.environments | join(", ")')
           
             # Prüft, ob für ${{ inputs.environment }} ein Upload erfolgen soll
