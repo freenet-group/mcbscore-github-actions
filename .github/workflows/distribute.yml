@@ -148,24 +148,28 @@ jobs:
   ms-cicd:
     if: ${{ github.event.inputs.group == 'ms-cicd' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
+    env:
+      DEFAULT_WORKFLOWS: "../encoding, ../developer-portal-old/developerPortal, build, check_code, check_pull_request, postBuild, release, deployment"
     strategy:
       matrix:
+        # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
         repository:
-          - { name: ms-cicd, branch: main, group: ms-cicd, workflows: "../check, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, setPRIssueDone" }
-          - { name: ms-commondata, branch: develop, group: ms-cicd, workflows: "../check, ../developer-portal-old/developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, setPRIssueDone" }
-          - { name: ms-contentprovider, branch: develop, group: ms-cicd, workflows: "../check, ../developer-portal-old//developerPortal, ../encoding, cicd_build, cicd_check_code, cicd_check_pull_request, cicd_postBuild, cicd_release, deployment, setPRIssueDone" }
+          - { name: ms-cicd, branch: main, group: ms-cicd }
+          - { name: ms-commondata, branch: develop, group: ms-cicd }
+          - { name: ms-contentprovider, branch: develop, group: ms-cicd }
     steps:
-      - uses: actions/checkout@v4
+      - name: Repository auschecken
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Distribute Workflows
+      - name: Workflows verteilen
         uses: ./.github/actions/distribute-workflows
         with:
           repositoryName: ${{ matrix.repository.name }}
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
-          workflows: ${{ matrix.repository.workflows }}
+          workflows: ${{ matrix.repository.workflows || env.DEFAULT_WORKFLOWS  }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 

@@ -253,7 +253,7 @@ runs:
       # Muss nicht zur Java-Version passen, in der der Microservice laufen soll.
       # jrunscript wird in ms_properties_to_json.sh aufgerufen.
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 11

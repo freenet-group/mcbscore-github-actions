@@ -21,7 +21,12 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
-
+      manualVersion:
+        description: Eine manuell zu vergebende Versionskennung (xx.yy.zz / ohne prefix) (Überschreibt ausschließlich die Version , keine Issues)
+        required: false
+      manualIssues:
+        description: Eine blank-separierte Liste von Issues für das Patch-Release (Überschreibt ausschließlich die Issues , keine Version)
+        required: false
 jobs:
   build:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
@@ -111,6 +116,22 @@ jobs:
         with:
           component: ${{ env.JIRA_COMPONENT }}
           includedComponents: ${{ env.INCLUDED_COMPONENTS }}
+
+      # component_Version ggf. manuell übersteuern, sofern eine Eingabe vorliegt
+      - name: manualVersion
+        if: ${{ github.event.inputs.manualVersion != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
+        shell: bash
+        run: |
+          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}"
+          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}" >> $GITHUB_ENV
+
+      # issueList ggf. manuell übersteuern, sofern eine Eingabe vorliegt
+      - name: manualIssues
+        if: ${{ github.event.inputs.manualIssues != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
+        shell: bash
+        run: |
+          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}"
+          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}" >> $GITHUB_ENV 
 
       # ##################################################################################
       # Release bauen

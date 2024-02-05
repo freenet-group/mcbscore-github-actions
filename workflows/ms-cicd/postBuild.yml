@@ -1,4 +1,4 @@
-name: CICD PostBuild
+name: PostBuild
 
 on:
   workflow_dispatch:
@@ -32,30 +32,13 @@ jobs:
       MAIL_TEMPLATE: B_MS.ftl
       TEAMS_MAIL: b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms
       BAMBI_API_URL: 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild'
-      # expected aws properties
-      TOKEN: ''
-      MCBSTEST_CREDENTIALS: ''
-      JIRA_API_URL: ''
-      JIRA_CLOUD_WEB_URL: ''
-      SONAR_API_URL: ''
-      JIRA_URL2: ''
-      MCBSTEST_JIRACLOUD_CREDENTIALS: ''
-      JIRA_CLOUD_URL: ''
-
-    outputs:
-      coverage: ${{ steps.fetch-coverage.outputs.coverage }}
-      sql: ${{ steps.fetch-additional-information.outputs.sql }}
-      config: ${{ steps.fetch-additional-information.outputs.config }}
-      dependency: ${{ steps.fetch-additional-information.outputs.dependency }}
-      going_live_date: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
-
     steps:
-      - name: Checkout Repository
+      - name: Repository auschecken
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: AWS Secrets auslesen
+      - name: AWS Parameter in Umgebungsvariablen schreiben
         id: read-aws-secrets
         uses: ./.github/actions/read-aws-secrets
         with:
@@ -71,15 +54,15 @@ jobs:
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
-      - name: Checkout mcbscore-github-actions
+      - name: mcbscore-github-actions Repository auschecken
         uses: actions/checkout@v4
         with:
-          repository: ${{ env.ACTIONS_REPOSITORY }}
+          repository: freenet-group/mcbscore-github-actions
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
           ref: ${{ github.event.inputs.actionsRepositoryBranch }}
 
-      - name: Initialize Workflow
+      - name: Workflow initialisieren
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
@@ -175,16 +158,6 @@ jobs:
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
-      - name: Jira Status auf geschlossen setzen
-        uses: ./mcbscore/github/actions/set-issue-list-closed
-        with:
-          jiraURL: ${{ env.JIRA_CLOUD_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
-          atlassianDeveloperTools: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          loglevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}
-
-      # @todo Prüfen ob dies nicht mehr in den Pre-Merge Checks Sinn macht
       - name: Sonar-Coverage einholen
         id: fetch-coverage
         if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
