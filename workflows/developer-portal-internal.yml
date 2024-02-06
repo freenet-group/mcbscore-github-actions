@@ -171,7 +171,7 @@ jobs:
           : ${GENERIC_DEPLOYMENT_FILE:=./$COMPONENT_CONFIG_PATH/properties/$COMPONENT/deployment.properties}
           : ${DEPLOYMENT_FILE:=./$COMPONENT_CONFIG_PATH/properties/$COMPONENT/deployment-$environment.properties}
           readPropertiesIntoMap DEPLOYMENT_PROPS "$GENERIC_DEPLOYMENT_FILE" "$DEPLOYMENT_FILE"
-          if [[ "$SUBCOMPONENT" != "" ]] && [[ "$SUBCOMPONENT" != "nothing" ]];  then
+          if [[ "$SUBCOMPONENT" != "" ]] && [[ "$SUBCOMPONENT" != "$COMPONENT" ]];  then
              # ${deployment.api.name}
             apiName=$(evalValue "${SUBCOMPONENT}")
             echo "apiName: $apiName"
