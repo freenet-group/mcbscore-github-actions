@@ -60,10 +60,11 @@ jobs:
       # JUnit Ergebnisse publizieren
       - name: Upload Unit Test Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results (${{ matrix.product.name }})
           path: '**/test-results/**/*.xml'
+          overwrite: true
 
   publish-test-results:
     name: Publish Unit Tests Results
