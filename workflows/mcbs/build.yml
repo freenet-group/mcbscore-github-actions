@@ -232,7 +232,7 @@ jobs:
       # JUnit Ergebnisse publizieren
       - name: Upload Unit Test Results
         if: ${{ always() && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Unit Test Results (${{ matrix.product.name }})
           path: '**/test-results/**/*.xml'
