@@ -42,7 +42,7 @@ Node muß installiert sein
 
     # node installieren
     - name: Setup Node JS
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
         node-version: '20'
     - run: npm install
