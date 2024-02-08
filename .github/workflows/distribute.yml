@@ -205,7 +205,7 @@ jobs:
           - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
-          - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, old/deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../developer-portal-old/developerPortal, ../encoding, postBuild, setPRIssueDone" }
+          - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, old/deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../developer-portal-old/developerPortal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s_only, ../encoding, postBuild, setPRIssueDone" }
 
