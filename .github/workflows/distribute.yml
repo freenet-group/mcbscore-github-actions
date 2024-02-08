@@ -202,7 +202,7 @@ jobs:
           - { name: ms-mandel, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-mark, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-note-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
-          - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, dbChanges, old/deployment, deployment_dev, deployment_git, ../developer-portal-old/developerPortal, postBuild, setPRIssueDone" }
+          - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, old/deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod, ../developer-portal-old/developerPortal, ../encoding, postBuild, setPRIssueDone" }
