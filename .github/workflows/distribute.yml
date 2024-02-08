@@ -194,7 +194,7 @@ jobs:
           - { name: ms-discovery, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
-          - { name: ms-find, branch: develop, group: ms, workflows: "../check, build, old/deployment, deployment_dev, deployment_git, deployment_prod, ../developer-portal-old/developerPortal, ../encoding, postBuild, setPRIssueDone" }
+          - { name: ms-find, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-gateway, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-homer, branch: develop, group: ms, workflows: "../check, build, old/deployment, deployment_b2b, deployment_dev, deployment_git, deployment_prod,  ../developer-portal-old/developerPortal, ../encoding, postBuild, setPRIssueDone" }
