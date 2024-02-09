@@ -105,7 +105,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../developer-portal-old/developerPortal, ../encoding, postBuild_MCBS, postBuild_MS, sonarqube, MCBS-Freigabe, refcalls_deployment, setPRIssueDone" }
+          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild_MCBS, postBuild_MS, sonarqube, MCBS-Freigabe, refcalls_deployment, setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
