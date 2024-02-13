@@ -1,0 +1,17 @@
+version: 2
+
+registries:
+  maven-github:
+    type: maven-repository
+    url: https://maven.pkg.github.com/freenet-group/mcbscore-packages.
+    username: x-access-token
+    password: ${{ secrets.GH_R_PACKAGES }}
+
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    registries:
+      - maven-github
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 1
