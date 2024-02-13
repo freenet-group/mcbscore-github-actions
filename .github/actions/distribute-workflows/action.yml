@@ -170,7 +170,7 @@ runs:
       shell: bash
       run: |
         # Cleanup
-        rm ${{ inputs.repositoryName }}/.github/dependabot.yml
+        rm -f ${{ inputs.repositoryName }}/.github/dependabot.yml
         
         # Copy new dependabot
         cp ./dependabot/dependabot.yml ${{ inputs.repositoryName }}/.github/dependabot.yml
