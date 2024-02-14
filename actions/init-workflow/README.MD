@@ -25,6 +25,10 @@ Github-Action zum Initialisieren von Workflows. Dazu gehören:
     description: Github CLI installieren?
     type: boolean
     default: false
+### installGradleSetup
+    description: Soll gradle eingerichtet werden?
+    type: boolean
+    default: false
 ### configurationPrefix:
     description: Prefix für workflow.properties Dateien. Beispiel: customer-workflow.properties
     type: string
