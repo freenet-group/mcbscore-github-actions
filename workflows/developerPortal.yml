@@ -25,11 +25,6 @@ on:
         type: string
         required: false
         default: main
-      deploymentRepositoryBranch:
-        description: Welcher Branch von Repository ms-deployment benutzt werden soll
-        type: string
-        required: false
-        default: main
   workflow_dispatch:
     inputs:
       component:
@@ -46,10 +41,6 @@ on:
         required: true
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
-        required: false
-        default: main
-      deploymentRepositoryBranch:
-        description: Welcher Branch von Repository ms-deployment benutzt werden soll
         required: false
         default: main
 
@@ -122,3 +113,4 @@ jobs:
       componentVersion: "${{ inputs.componentVersion }}"
       actionsRepositoryBranch: "${{ inputs.actionsRepositoryBranch }}"
       api: "${{ toJSON(matrix.api.matrix) }}"
+      apiIds: "${{ toJSON(matrix.api.ids) }}"
