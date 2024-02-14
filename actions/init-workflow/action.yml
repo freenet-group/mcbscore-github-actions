@@ -82,6 +82,6 @@ runs:
     # gradle: Dependency-Graph Snapshot erstellen und übermitteln,
     # um Dependabot Security-Allerts für anfällige dependencies zu generieren
     - name: Setup Gradle
-      uses: gradle/gradle-build-action@v2
+      uses: gradle/gradle/actions/setup-gradle@v3
       with:
         dependency-graph: generate-and-submit
