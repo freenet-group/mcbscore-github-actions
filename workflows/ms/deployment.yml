@@ -316,12 +316,40 @@ jobs:
       actionsRepositoryBranch: "${{ inputs.actionsRepositoryBranch }}"
 
   bambi-notification:
-    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     needs: [deploy, deploy_k8s, developer-portal-upload]
-    # Der Check success() ist nicht true bei übersprungenen workflows. !failure() dahingegen sieht übersprungenen nicht als failure und nur rote Steps
-    if: ${{ always() && !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
+    if: ${{ always() && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
+      - name: Ermitteln des Gesamtstatus
+        run: |
+          failedJobs=""
+          delimiter=""
+          
+          # prüfe, ob deploy failed oder cancelled ist
+          if [[ "${{ needs.deploy.result }}" == "failure" ]] || [[ "${{ needs.deploy.result }}" == "cancelled" ]]; then
+            failedJobs=${failedJobs}${delimiter}deploy
+            delimiter=,
+          fi
+
+          # prüfe, ob deploy_k8s failed oder cancelled ist
+          if [[ "${{ needs.deploy_k8s.result }}" == "failure" ]] || [[ "${{ needs.deploy_k8s.result }}" == "cancelled" ]]; then
+            failedJobs=${failedJobs}${delimiter}deploy_k8s
+            delimiter=,
+          fi
+
+          # prüfe, ob developer-portal-upload failed oder cancelled ist
+          if [[ "${{ needs.developer-portal-upload.result }}" == "failure" ]] || [[ "${{ needs.developer-portal-upload.result }}" == "cancelled" ]]; then
+            failedJobs=${failedJobs}${delimiter}developer-portal-upload
+            delimiter=,
+          fi
+          
+          if [ -z "$failedJobs" ];
+          then
+            echo "DEPLOY_STATE=successful" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_STATE=failure:${failedJobs}" >> $GITHUB_ENV
+          fi
+
       - name: Report deployment status
         shell: bash
         run: |
@@ -335,10 +363,9 @@ jobs:
             "environment": "${{ github.event.inputs.environment }}",
             "extern": false,
             "workflowRunId": ${{ github.run_id }},
-            "deployState": "successfull",
+            "deployState": "${{ env.DEPLOY_STATE }}",
             "deployUser": "${{ github.actor }}"
           }')
-          echo "Result: $curlResult"
           statusCode="${curlResult:${#curlResult}-3}"
           echo "statusCode: $statusCode"
 
