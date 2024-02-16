@@ -83,12 +83,21 @@ jobs:
           installJq: true
           installNodeJs: true
 
-      # Open API Yaml Dateien aus Release extrahieren
-      - name: Download API documentation
+      - name: Download Public API
+        if: ${{ matrix.type == 'open-api' }}
         uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
-          assetPattern: '.yaml'
+          assetPattern: '${{ matrix.component }}_client_${{ matrix.version }}_${{ inputs.environment }}.yaml'
+          targetPath: './apiDoc'
+          token: ${{ env.TOKEN }}
+
+      - name: Download System API
+        if: ${{ matrix.type == 'system-api' }}
+        uses: ./mcbscore/github/actions/download-release-assets
+        with:
+          version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
+          assetPattern: '${{ matrix.component }}_system_${{ matrix.version }}_${{ inputs.environment }}.yaml'
           targetPath: './apiDoc'
           token: ${{ env.TOKEN }}
 
