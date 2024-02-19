@@ -1,0 +1,36 @@
+name: 'Publish API Specification'
+description: 'Publishes an API Specification to the md developer portal.'
+inputs:
+  portalUrl:
+    description: 'The portal upload url. There is no need to change this except for testing purposes.'
+    required: true
+    default: 'https://developer-portal-api.prod.developers.md.de/v2/specifications'
+  documentPath:
+    description: 'The path to the specification document on the local filesystem.'
+    required: true
+  stage:
+    description: 'The environment the API is being deployed to. Must be one of `DEV`, `GIT`, `PET`, `PROD`'
+    required: true
+
+  maturityLevel:
+    description: 'Must be one of: `open-api` for public APIs, `system-api` for internal APIs, `draft-api` for development and design previews.'
+    required: true
+    default: 'system-api'
+  version:
+    description: 'The version of the current deployment.'
+    required: true
+  apiId:
+    description: 'The unique ID of this API. This is used to correlate different Deployments of the same API.'
+    required: true
+  clientId:
+    description: OIDC client_id it which needs to be allowed to perform client_credential flow.
+    required: true
+  clientSecret:
+    description: OIDC client_secret which must be valid for the given client_id
+    required: true
+outputs:
+  messageId: # id of output
+    description: 'The time we greeted you'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
