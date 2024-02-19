@@ -127,7 +127,7 @@ jobs:
       # API ins Portal hochladen
       - name: Publish API Spec
         if: env.API_PATH != ''
-        uses: ./.github/actions/developer-portal-actions/publish-api-spec
+        uses: ./mcbscore/github/actions/publish-api-spec
         with:
           portalUrl: ${{ env.PORTAL_URL }}
           documentPath:  ${{ env.API_PATH }}
