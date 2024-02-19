@@ -114,20 +114,10 @@ jobs:
 
           echo "API_PATH=$apiPath" >> "$GITHUB_ENV"
 
-      - name: Checkout Portal Action
-        uses: actions/checkout@v4
-        with:
-          # For accessing to this Action a service account with a personal access token in this repo is necessary.
-          token: ${{ env.TOKEN }}
-          repository: freenet-group/developer-portal-actions
-          ref: refs/heads/main
-          persist-credentials: false
-          path: ./.github/actions/developer-portal-actions
-
       # API ins Portal hochladen
       - name: Publish API Spec
         if: env.API_PATH != ''
-        uses: ./.github/actions/developer-portal-actions/publish-api-spec
+        uses: ./mcbscore/github/actions/publish-api-spec
         with:
           portalUrl: ${{ env.PORTAL_URL }}
           documentPath:  ${{ env.API_PATH }}
