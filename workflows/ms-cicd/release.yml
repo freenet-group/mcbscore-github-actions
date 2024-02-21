@@ -8,6 +8,9 @@ on:
       branch:
         description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
         required: false
+      ticket: 
+        description: 'Welches Ticket (MCBS-1234 / ABRMS-1234) soll für das Release verwendet werden?'
+        required: true
       version:
         description: 'Welche Version für das neue Release z.B. "8.32.1"?'
         required: false
@@ -189,6 +192,15 @@ jobs:
           # Alle Issues auslesen
           uniqueIssueList=$(echo "${{ steps.jira_keys.outputs.issue-keys }}" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
           uniqueIssueList=${uniqueIssueList#"[]"}
+
+          # Prüfen ob der Input "ticket" gesetzt wurde, wenn ja, dann hinzufügen
+          if [ -n "${{ github.event.inputs.ticket }}" ]; then
+            if [ -z "$uniqueIssueList" ]; then
+              uniqueIssueList="${{ github.event.inputs.ticket }}"
+            else
+              uniqueIssueList+=",${{ github.event.inputs.ticket }}"
+            fi
+          fi
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
           if [ "${{ github.event_name }}" == "pull_request" ]; then
@@ -518,7 +530,7 @@ jobs:
           echo "BAMBI_ARGS=$(echo "$BAMBI_ARGS" | sed 's/"/\\"/g')" >> $GITHUB_ENV
 
       - name: postBuild Workflow starten
-        if: hashFiles('.github/**/postBuild.yml') != ''
+        if: hashFiles('.github/**/postBuild.yml') != '' && ${{ github.event.inputs.pre-release == 'false' }}
         uses: benc-uk/workflow-dispatch@v1.2.2
         with:
           workflow: PostBuild
