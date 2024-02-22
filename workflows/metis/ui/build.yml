@@ -129,13 +129,11 @@ jobs:
       # Release ZIP hinzufügen
       - name: Upload Release ZIP
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ env.TOKEN }}
+        uses: ./mcbscore/github/actions/upload-release-asset
         with:
-          upload_url: ${{ steps.create-release.outputs.upload_url }}
-          asset_path: ./metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
+          release_id: ${{ steps.create-release.outputs.id }}
           asset_name: metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
+          asset_path: ./metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
           asset_content_type: application/gzip
 
       # Docker Image erzeugen
