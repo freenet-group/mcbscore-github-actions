@@ -25,6 +25,5 @@ runs:
             echo "draft release id = $releaseId gelöscht" >> $GITHUB_OUTPUT
           fi        
         done
-        
       env:
         GITHUB_TOKEN: ${{ env.TOKEN }}
