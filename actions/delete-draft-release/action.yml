@@ -13,7 +13,7 @@ runs:
            /repos/${{ github.repository }}/releases`
         
         # Draft Release Ids in ein Array überführen
-        IFS=',' read -ra draftReleaseIdArray < <(jq -c -r '.[] | select(.draft == true) | .id' <<< "$resultJson")
+        IFS=',' read -ra draftReleaseIdArray < <(jq -r '.[] | select(.draft == true) | .id' <<< "$resultJson")
         
         for releaseId in "${draftReleaseIdArray[@]}"; do
           if [ -n "$releaseId" ]; then
@@ -22,9 +22,7 @@ runs:
               -H "Accept: application/vnd.github+json" \
               /repos/${{ github.repository }}/releases/${releaseId}
         
-            echo "draft release id=$releaseId gelöscht" >> $GITHUB_OUTPUT
-          else
-            echo "kein draft release gelöscht"
+            echo "draft release id = $releaseId gelöscht" >> $GITHUB_OUTPUT
           fi        
         done
         
