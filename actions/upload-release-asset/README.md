@@ -6,13 +6,13 @@ Aktion zum Hochladen von GitHub-Release-Asset über den Endpunkt [Upload a relea
 ### releaseId:
     description: Die ID des Releases, zu dem die Asset hinzugefügt werden sollen.
     required: true
-### asset_name:
+### assetName:
     description: Der Name des Asset, das hochgeladen werden soll.
     required: true
-### asset_path:
+### assetPath:
     description: Der Pfad zum Asset, das hochgeladen werden soll.
     required: true
-### asset_content_type:
+### assetContentType:
     description: Der Inhaltstyp des Assets, das hochgeladen werden soll.
     required: false
     default: application/octet-stream
@@ -25,7 +25,7 @@ Erstellen von Releases
 
     # outputs
         id: Die ID des hochgeladenen Asset.
-        browser_download_url:Die URL zum Herunterladen des Asset.
+        browserDownloadUrl: Die URL zum Herunterladen des Asset.
 ---
 
 ## Voraussetzungen:
@@ -48,8 +48,8 @@ muß installiert sein
         id: upload-release-asset
         uses: ./mcbscore/github/actions/upload-release-asset
         with:
-          release_id: ${{ steps.create-release.outputs.id }}
-          asset_name: metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
-          asset_path: ./metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
-          asset_content_type: application/gzip          
+          releaseId: ${{ steps.create-release.outputs.id }}
+          assetName: metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
+          assetPath: ./metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
+          assetContentType: application/gzip          
 ```
