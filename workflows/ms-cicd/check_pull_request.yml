@@ -94,7 +94,7 @@ jobs:
       pull-requests: write
     steps:
       - name: DOGS Benachrichtigung
-        uses: freenet-group/notify-on-label@1.0.6
+        uses: freenet-group/notify-on-label@1.0.8
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           label_list: 'ms-configuration:yes, ms-deployment:yes'
