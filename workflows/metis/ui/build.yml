@@ -131,9 +131,8 @@ jobs:
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         uses: ./mcbscore/github/actions/upload-release-asset
         with:
-          releaseId: ${{ steps.create-release.outputs.id }}
+          uploadUrl: ${{ steps.create-release.outputs.upload_url }}
           assetName: metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
-          assetPath: ./metis-ui-${{ env.COMPONENT_VERSION }}.tar.gz
           assetContentType: application/gzip
 
       # Docker Image erzeugen

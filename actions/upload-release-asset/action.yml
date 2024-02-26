@@ -2,14 +2,11 @@ name: Upload Release Asset
 description: Aktion zum Hochladen von GitHub-Release-Asset
 
 inputs:
-  releaseId:
-    description: Die ID des Releases, zu dem die Asset hinzugefügt werden sollen.
+  uploadUrl:
+    description: Die URL zum Hochladen von Assets in die Version, die von GitHub Actions für zusätzliche Zwecke verwendet werden könnte.
     required: true
   assetName:
     description: Der Name des Asset, das hochgeladen werden soll.
-    required: true
-  assetPath:
-    description: Der Pfad zum Asset, das hochgeladen werden soll.
     required: true
   assetContentType:
     description: Der Inhaltstyp des Assets, das hochgeladen werden soll.
@@ -17,9 +14,6 @@ inputs:
     default: application/octet-stream
 
 outputs:
-  id:
-    description: Die ID des hochgeladenen Asset.
-    value: ${{ steps.upload-release-asset.outputs.id }}
   browserDownloadUrl:
     description:  Die URL zum Herunterladen des Asset.
     value: ${{ steps.upload-release-asset.outputs.browserDownloadUrl }}
@@ -30,23 +24,43 @@ runs:
     - id: upload-release-asset
       shell: bash
       run: |
-       IFS= read -rd assetContent < ${{ inputs.assetPath }} 
-       if [ -n "$assetContent" ]; then
-        resultJson=`
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Content-Type: ${{ inputs.assetContentType }}" \ 
-            /repos/${{ github.repository }}/releases/${{ inputs.releaseId }}/assets?name=${{ inputs.assetName }} \
-            -f '$assetContent'`
+        authHeader="Authorization: token ${{ env.TOKEN }}"
+
+        alias errcho='>&2 echo'
+
+        function gh_curl() {
+          curl -H "${authHeader}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            $@
+        }
+
+        uploadAsset() {
+
+          contentLengthHeader="Content-Length: $(stat -c%s "$1")";
+          contentTypeHeader="Content-Type: ${{ inputs.assetContentType }}";
+          assetName=${1##*/}
+          uploadUrl=${2/\"/}
+          uploadUrl=${uploadUrl/\{?name,label\}/?name=$assetName}
+
+          # Upload the file
+          curl \
+          -f \
+          -sSL \
+          -XPOST \
+          -H "${authHeader}" \
+          -H "${contentLengthHeader}" \
+          -H "${contentTypeHeader}" \
+          --upload-file "$1" \
+          "${uploadUrl}";
+        }
         
-          outVarId=`jq -r .id <<< "$resultJson"`
-          echo "id=$outVarId" >> $GITHUB_OUTPUT
-          
+        asset =`find . -type f -wholename "${{ inputs.assetName }}"`
+        if [ -n "$asset" ]; then
+        
+          resultJson = `uploadAsset $asset ${{ inputs.uploadUrl }}`
+
           outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
           echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
         else
-          echo "Asset ${{ inputs.assetPath }} nicht gefunden" >> $GITHUB_OUTPUT
+          echo "Asset ${{ inputs.assetName }} nicht gefunden" >> $GITHUB_OUTPUT
         fi
-      env:
-        GITHUB_TOKEN: ${{ env.TOKEN }}
