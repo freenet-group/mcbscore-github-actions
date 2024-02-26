@@ -1,0 +1,29 @@
+name: Delete Draft Release
+description: Aktion zum Löschen von Draft Releases über die GitHub-Release-API
+
+runs:
+  using: "composite"
+  steps:
+    - id: delete-draft-release
+      shell: bash
+      run: |
+        resultJson=`
+         gh api \
+           -H "Accept: application/vnd.github+json" \
+           /repos/${{ github.repository }}/releases`
+        
+        # Draft Release Ids in ein Array überführen
+        IFS=',' read -ra draftReleaseIdArray < <(jq -r '.[] | select(.draft == true) | .id' <<< "$resultJson")
+        
+        for releaseId in "${draftReleaseIdArray[@]}"; do
+          if [ -n "$releaseId" ]; then
+            gh api \
+              --method DELETE \
+              -H "Accept: application/vnd.github+json" \
+              /repos/${{ github.repository }}/releases/${releaseId}
+        
+            echo "draft release id = $releaseId gelöscht" >> $GITHUB_OUTPUT
+          fi        
+        done
+      env:
+        GITHUB_TOKEN: ${{ env.TOKEN }}
