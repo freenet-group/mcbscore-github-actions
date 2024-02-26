@@ -30,17 +30,23 @@ runs:
     - id: upload-release-asset
       shell: bash
       run: |
-       resultJson=`
-        gh api \
-          --method POST \
-          -H "Accept: application/vnd.github+json" \
-          -H "Content-Type: ${{ inputs.assetContentType }}" \ 
-          /repos/${{ github.repository }}/releases/${{ inputs.releaseId }}/assets?name=${{ inputs.assetName }} \
-          -f '${{ inputs.assetPath }}'`
+       assetContentVar < ${{ inputs.assetPath }} 
+       if [ -n "$assetContentVar" ]; then
+        resultJson=`
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: ${{ inputs.assetContentType }}" \ 
+            /repos/${{ github.repository }}/releases/${{ inputs.releaseId }}/assets?name=${{ inputs.assetName }} \
+            -f '$assetContentVar'`
         
-        outVarId=`jq -r .id <<< "$resultJson"`
-        echo "id=$outVarId" >> $GITHUB_OUTPUT
-        outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
-        echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
+          outVarId=`jq -r .id <<< "$resultJson"`
+          echo "id=$outVarId" >> $GITHUB_OUTPUT
+          
+          outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
+          echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
+        else
+          echo "Asset ${{ inputs.assetPath }} nicht gefunden" >> $GITHUB_OUTPUT
+        fi
       env:
         GITHUB_TOKEN: ${{ env.TOKEN }}
