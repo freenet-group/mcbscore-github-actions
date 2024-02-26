@@ -22,7 +22,7 @@ outputs:
     value: ${{ steps.upload-release-asset.outputs.id }}
   browser_download_url:
     description:  Die URL zum Herunterladen des Asset.
-    value: ${{ steps..upload-release-asset.outputs.browser_download_url }}
+    value: ${{ steps.upload-release-asset.outputs.browser_download_url }}
 
 runs:
   using: "composite"
