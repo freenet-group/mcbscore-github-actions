@@ -51,7 +51,7 @@ runs:
           
           # Upload the file
           curl \
-          -v
+          -v \
           -f \
           -sSL \
           -XPOST \
