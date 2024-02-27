@@ -36,8 +36,6 @@ runs:
 
           contentLengthHeader="Content-Length: $(stat -c%s "$1")";
           contentTypeHeader="Content-Type: ${{ inputs.assetContentType }}";
-          uploadUrl=${2/\"/}
-          uploadUrl=${uploadUrl/\{?name,label\}/?name=${{ inputs.assetName }}}
           
           # Upload the file
           curl \
@@ -49,21 +47,18 @@ runs:
           -H "${contentLengthHeader}" \
           -H "${contentTypeHeader}" \
           --upload-file "$1" \
-          "${uploadUrl}";
+          "$2";
         }
         
         uploadFile=$(find . -type f -name "${{ inputs.assetName }}")
         if [ -n "$uploadFile" ]; then
 
           uploadUrl=${{ inputs.uploadUrl }}
-          echo "${uploadUrl/\{?name,label\}/?name=${{ inputs.assetName }}}"
+          uploadUrl=${uploadUrl/\{?name,label\}/?name=${{ inputs.assetName }}}
+          echo "uploadUrl=$uploadUrl"
         
-          resultJson=$(uploadAsset $uploadFile ${{ inputs.uploadUrl }})
-          
-          echo "resultJson=$resultJson"
-
-          outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
-          echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
+          uploadAsset $uploadFile $uploadUrl
+        
         else
           echo "Asset ${{ inputs.assetName }} nicht gefunden"
         fi
