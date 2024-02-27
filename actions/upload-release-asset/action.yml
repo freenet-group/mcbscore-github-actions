@@ -54,7 +54,7 @@ runs:
           "${uploadUrl}";
         }
         
-        asset=$(find . -type f -wholename "${{ inputs.assetName }}")
+        asset=$(find . -type f -name "${{ inputs.assetName }}")
         if [ -n "$asset" ]; then
         
           resultJson=$(uploadAsset $asset ${{ inputs.uploadUrl }})
