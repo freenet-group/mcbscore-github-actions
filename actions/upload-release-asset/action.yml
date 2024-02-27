@@ -26,8 +26,6 @@ runs:
       run: |
         authHeader="Authorization: token ${{ env.TOKEN }}"
 
-        alias errcho='>&2 echo'
-
         function gh_curl() {
           curl -H "${authHeader}" \
             -H "Accept: application/vnd.github.v3.raw" \
@@ -38,9 +36,8 @@ runs:
 
           contentLengthHeader="Content-Length: $(stat -c%s "$1")";
           contentTypeHeader="Content-Type: ${{ inputs.assetContentType }}";
-          assetName=${3}
           uploadUrl=${2/\"/}
-          uploadUrl=${uploadUrl/\{?name,label\}/?name=$assetName}
+          uploadUrl=${uploadUrl/\{?name,label\}/?name=${{ inputs.assetName }}}
           
           # Upload the file
           curl \
@@ -57,8 +54,13 @@ runs:
         
         uploadFile=$(find . -type f -name "${{ inputs.assetName }}")
         if [ -n "$uploadFile" ]; then
+
+          uploadUrl=${{ inputs.uploadUrl }}
+          echo "${uploadUrl/\{?name,label\}/?name=${{ inputs.assetName }}}"
         
-          resultJson=$(uploadAsset $uploadFile ${{ inputs.uploadUrl }} ${{ inputs.assetName }})
+          resultJson=$(uploadAsset $uploadFile ${{ inputs.uploadUrl }})
+          
+          echo "resultJson=$resultJson"
 
           outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
           echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
