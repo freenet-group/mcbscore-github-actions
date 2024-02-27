@@ -39,7 +39,6 @@ runs:
           
           # Upload the file
           curl \
-          -v \
           -f \
           -sSL \
           -XPOST \
@@ -55,10 +54,11 @@ runs:
 
           uploadUrl=${{ inputs.uploadUrl }}
           uploadUrl=${uploadUrl/\{?name,label\}/?name=${{ inputs.assetName }}}
-          echo "uploadUrl=$uploadUrl"
         
-          uploadAsset $uploadFile $uploadUrl
+          resultJson=$(uploadAsset $uploadFile $uploadUrl)
         
+          outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
+          echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
         else
           echo "Asset ${{ inputs.assetName }} nicht gefunden"
         fi
