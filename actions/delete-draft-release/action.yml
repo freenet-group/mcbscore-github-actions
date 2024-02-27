@@ -17,12 +17,12 @@ runs:
         
         for releaseId in "${draftReleaseIdArray[@]}"; do
           if [ -n "$releaseId" ]; then
+            echo "Lösche draft release ..."
             gh api \
               --method DELETE \
               -H "Accept: application/vnd.github+json" \
               /repos/${{ github.repository }}/releases/${releaseId}
-        
-            echo "draft release=$releaseId gelöscht"
+            echo "$releaseId"
           fi        
         done
       env:
