@@ -22,7 +22,7 @@ runs:
               -H "Accept: application/vnd.github+json" \
               /repos/${{ github.repository }}/releases/${releaseId}
         
-            echo "draft release id = $releaseId gelöscht" >> $GITHUB_OUTPUT
+            echo "draft release=$releaseId gelöscht"
           fi        
         done
       env:
