@@ -54,10 +54,10 @@ runs:
           "${uploadUrl}";
         }
         
-        asset =`find . -type f -wholename "${{ inputs.assetName }}"`
+        asset=$(find . -type f -wholename "${{ inputs.assetName }}")
         if [ -n "$asset" ]; then
         
-          resultJson = `uploadAsset $asset ${{ inputs.uploadUrl }}`
+          resultJson=$(uploadAsset $asset ${{ inputs.uploadUrl }})
 
           outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
           echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
