@@ -58,7 +58,7 @@ runs:
         uploadFile=$(find . -type f -name "${{ inputs.assetName }}")
         if [ -n "$uploadFile" ]; then
         
-          resultJson=$(uploadAsset $uploadFile ${{ inputs.uploadUrl } ${{ inputs.assetName }}})
+          resultJson=$(uploadAsset $uploadFile ${{ inputs.uploadUrl }} ${{ inputs.assetName }})
 
           outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
           echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
