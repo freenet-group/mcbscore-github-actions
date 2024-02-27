@@ -41,9 +41,17 @@ runs:
           assetName=${1##*/}
           uploadUrl=${2/\"/}
           uploadUrl=${uploadUrl/\{?name,label\}/?name=$assetName}
-
+          
+          echo "uploadUrl=$uploadUrl"
+          echo "assetName=$assetName"
+          echo "contentLengthHeader=$contentLengthHeader"
+          echo "contentTypeHeader=$contentTypeHeader"
+          echo "authHeader=$authHeader"
+          echo "file=$1"
+          
           # Upload the file
           curl \
+          -v
           -f \
           -sSL \
           -XPOST \
