@@ -149,7 +149,7 @@ jobs:
     if: ${{ github.event.inputs.group == 'ms-cicd' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     env:
-      DEFAULT_WORKFLOWS: "../encoding, ../developer-portal-old/developerPortal, build, check_code, check_pull_request, postBuild, release, deployment"
+      DEFAULT_WORKFLOWS: "../encoding, ../developerPortal, ../developer-portal-internal, build, check_code, check_pull_request, postBuild, release, deployment"
     strategy:
       matrix:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
