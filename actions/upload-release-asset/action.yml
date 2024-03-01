@@ -54,8 +54,10 @@ runs:
 
           uploadUrl=${{ inputs.uploadUrl }}
           uploadUrl=${uploadUrl/\{?name,label\}/?name=${{ inputs.assetName }}}
-        
+          echo "uploadUrl=$uploadUrl"
+          
           resultJson=$(uploadAsset $uploadFile $uploadUrl)
+          echo "resultJson=$resultJson"
         
           outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
           echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
