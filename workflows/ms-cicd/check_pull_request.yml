@@ -6,7 +6,7 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  pull_request:
+  pull_request: [opened, labeled, unlabeled, synchronize, reopened]
 
 jobs:
   # Syncronisiert die GitHub PR Labels mit den Jira Components
