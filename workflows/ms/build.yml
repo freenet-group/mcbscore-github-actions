@@ -227,7 +227,7 @@ jobs:
 
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow
-        if: env.BUILD_TYPE == 'DEVELOP'
+        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment.yml') != ''
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: Deployment
@@ -242,7 +242,7 @@ jobs:
 
       # Starte Deployment auf DEV (neuer Weg)
       - name: Invoke deployment workflow (ADDITIONAL_DEPLOYMENT_COMPONENT)
-        if: ${{ env.BUILD_TYPE == 'DEVELOP' && env.ADDITIONAL_DEPLOYMENT_COMPONENT != '' }}
+        if: ${{ env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment.yml') != '' && env.ADDITIONAL_DEPLOYMENT_COMPONENT != '' }}
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: Deployment
