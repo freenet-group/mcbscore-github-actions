@@ -186,7 +186,7 @@ jobs:
       # Release JAR hinzufügen
       - name: Create and Upload Release JAR
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.COMPONENT_VERSION }}
           target_commitish: ${{ env.BRANCH_NAME }}

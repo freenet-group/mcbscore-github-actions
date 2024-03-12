@@ -160,7 +160,7 @@ jobs:
       - name: Upload Release ZIP
         id: upload-release-zip
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.COMPONENT_VERSION }}
           files: ${{ env.APPLICATION_ZIP_PATH }}${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
