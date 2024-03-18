@@ -1,0 +1,61 @@
+name: 'Deploy Lua-Script'
+description: 'Action zum Deployment von lua-Scripten'
+
+inputs:
+  scriptName:
+    description: 'Der Dateiname des Scripts'
+    required: true
+  host:
+    description: 'Der Zielhost'
+    required: true
+  deploymentUser:
+    description: 'Der Benutzer für das Deployment'
+    required: true
+  sshKey:
+    description: 'Der SSH Schlüssel'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+
+    # ssh Konfig
+    - name: Setup ssh
+      if: ${{ inputs.sshKey != '' }}
+      shell: bash
+      run: |
+        printf '' > id_rsa
+        chmod 600 id_rsa
+        printf %s "${{ inputs.sshKey }}" >> id_rsa
+
+    - name: Deploy Proxy
+      shell: bash
+      run: |
+
+       if [[ '${{ inputs.sshKey }}' != '' ]]; then
+          echo "key"
+          keyParameter='-o StrictHostKeyChecking=no -i id_rsa'
+        else
+          echo "no key"
+          keyParameter=''
+        fi
+        
+        scp $keyParameter \
+          -r ./release/${{ inputs.scriptName }} \
+          "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp"
+
+        ssh $keyParameter '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
+          cd '/etc/nginx/shared/teams/mcbs-core/'@
+          #TODO: tar oder script?
+          cp '/tmp/${{ inputs.proxyNamescriptName }}' '/etc/nginx/shared/teams/mcbs-core'
+          
+          sudo service nginx configtest
+          sudo service nginx reload
+          rm '/tmp/${{ inputs.proxyNamescriptName }}'
+        SSH
+
+    # ssh Konfig aufräumen
+    - name: Remove ssh key
+      if: ${{ always() && inputs.sshKey != '' }}
+      shell: bash
+      run: rm -v id_rsa
