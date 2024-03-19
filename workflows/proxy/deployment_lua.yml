@@ -234,7 +234,6 @@ jobs:
           "componentName": "${{ needs.deploy.outputs.componentName }}",
           "workflowName": "${{ github.workflow }}",
           "environment": "${{ inputs.stage }}",
-          "extern": ${{ inputs.externalProxy }},
           "workflowRunId": ${{ github.run_id }},
           "deployState": "successfull",
           "deployUser": "${{ github.actor }}"

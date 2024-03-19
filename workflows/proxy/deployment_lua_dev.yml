@@ -1,0 +1,23 @@
+name: DEV Deployment Lua
+#Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
+run-name: DEV Deployment Lua
+
+on:
+  workflow_dispatch:
+    inputs:
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        required: false
+        default: main
+
+jobs:
+  deployment:
+    strategy:
+        matrix:
+          target: [apigw-d1.mobilcom.de]
+    uses: ./.github/workflows/deployment.yml
+    secrets: inherit
+    with:
+      stage: dev
+      deploymentTarget: ${{ matrix.target }}
+      actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
