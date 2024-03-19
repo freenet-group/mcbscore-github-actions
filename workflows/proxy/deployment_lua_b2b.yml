@@ -1,6 +1,6 @@
-name: DEV Deployment Lua
+name: B2B Deployment Lua
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: DEV Deployment Lua
+run-name: B2B Deployment Lua
 
 on:
   workflow_dispatch:
@@ -15,6 +15,6 @@ jobs:
     uses: ./.github/workflows/deployment.yml
     secrets: inherit
     with:
-      stage: dev
-      deploymentTarget: apigw-d1.mobilcom.de
+      stage: b2b
+      deploymentTarget: apigw-t11.mobilcom.de
       actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
