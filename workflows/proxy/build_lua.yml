@@ -1,0 +1,144 @@
+name: Build
+
+on:
+  push:
+    branches-ignore:
+      - release
+  pull_request:
+    branches-ignore:
+      - release
+  workflow_dispatch:
+    inputs:
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        required: false
+        default: main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
+
+    steps:
+      # Repository auschecken unter $GITHUB_WORKSPACE
+      - id: checkout-repository
+        name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: read-aws-secrets
+        name: Read AWS Secrets
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER, 
+            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/jira/api_url = JIRA_API_URL,
+            /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
+
+      # Die internen Actions auschecken
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
+      # ##################################################################################
+      # Initialize Workflow
+      # ##################################################################################
+
+      - id: init-workflow
+        name: Initialize Workflow
+        uses: ./mcbscore/github/actions/init-workflow
+        with:
+          installJava: true
+          installGithubCli: true
+          installJq: true
+
+      # ##################################################################################
+      # Version ermitteln
+      # ##################################################################################
+
+      - id: determine-build-type-and-branch-name
+        name: Determine Build Type And Branch Name
+        uses: ./mcbscore/github/actions/build-type-and-branch-name
+
+      - id: determine-component-version
+        name: Determine Component Version
+        uses: ./mcbscore/github/actions/determine-component-version-jc
+        with:
+          component: ${{ env.COMPONENT }}
+          includedComponents: ${{ env.INCLUDED_COMPONENTS }}
+
+      # ##################################################################################
+      # Release bauen
+      # ##################################################################################
+
+      - name: Commit version
+        if: env.BUILD_TYPE == 'RELEASE'
+        shell: bash
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git commit -am "[tagging] ${{ env.COMPONENT_VERSION }}"
+          git push
+
+      # Existierende Draft Releases löschen
+      - name: Delete draft releases
+        if: env.BUILD_TYPE == 'DEVELOP'
+        uses: ./mcbscore/github/actions/delete-draft-release
+        env:
+          GITHUB_TOKEN: ${{ env.TOKEN }}
+
+      # Release erstellen und Release-Dateien hinzufügen
+      - name: Upload Scripts
+        id: upload-scripts
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          files: |
+            nginx/shared/*.lua
+          token: ${{ env.TOKEN }}
+          name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
+          draft: ${{ env.DRAFT }}
+          target_commitish: ${{ env.BRANCH_NAME }}
+
+      # ##################################################################################
+      # Re-Merge
+      # ##################################################################################
+      - name: Merge development -> staging
+        if: env.BUILD_TYPE == 'RELEASE'
+        uses: devmasx/merge-branch@master
+        with:
+          type: now
+          from_branch: release
+          target_branch: develop
+          github_token: ${{ env.TOKEN }}
+
+      # Starte Deployment auf DEV
+      - name: Invoke DEV deployment workflow
+        if: env.BUILD_TYPE == 'DEVELOP'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: DEV Deployment Lua
+          token: ${{ env.TOKEN }}
+          inputs: '{ "componentVersion": "${{ env.COMPONENT_VERSION }}" }'
+
+      # Starte postBuild auf RELEASE
+      - name: Invoke postBuild workflow
+        if: env.BUILD_TYPE == 'RELEASE'
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: PostBuild
+          token: ${{ env.TOKEN }}
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}" , "issueList": "${{ env.ISSUE_LIST }}" }'

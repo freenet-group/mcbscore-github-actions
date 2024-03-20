@@ -18,9 +18,10 @@ jobs:
     strategy:
         matrix:
           target: [apigw-p1.mobilcom.de, apigw-p2.mobilcom.de, apigw-p3.mobilcom.de]  
-    uses: ./.github/workflows/deployment.yml
+    uses: ./.github/workflows/deployment_lua.yml
     secrets: inherit
     with:
+      componentVersion: ${{ github.event.inputs.componentVersion }}
       stage: prod
       deploymentTarget: ${{ matrix.target }}
       bambiNotification: true

@@ -280,7 +280,7 @@ jobs:
           - { name: mcbscore-zap-network-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_md, deployment_prod, deployment_prod_km, deployment_prod_md, ../encoding, postBuild" }
           - { name: mcbscore-zap-party-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_md, deployment_prod, deployment_prod_km, deployment_prod_md, ../encoding, postBuild" }
           #TODO: mcbscore-lua
-          - { name: mcbscore-lua, branch: develop, group: proxy, workflows: "../check, deployment_lua, deployment_lua_b2b, deployment_lua_dev, deployment_lua_git, deployment_lua_prod, ../encoding" }
+          - { name: mcbscore-lua, branch: develop, group: proxy, workflows: "../check, build_lua, deployment_lua, deployment_lua_b2b, deployment_lua_dev, deployment_lua_git, deployment_lua_prod, ../encoding" }
     steps:
       - uses: actions/checkout@v4
         with:

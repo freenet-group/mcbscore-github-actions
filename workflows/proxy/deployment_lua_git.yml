@@ -5,6 +5,9 @@ run-name: GIT Deployment Lua
 on:
   workflow_dispatch:
     inputs:
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true     
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
@@ -15,10 +18,11 @@ jobs:
     strategy:
         matrix:
           target: [apigw-g1.mobilcom.de, apigw-g2.mobilcom.de]
-    uses: ./.github/workflows/deployment.yml
+    uses: ./.github/workflows/deployment_lua.yml
     secrets: inherit
     with:
+      componentVersion: ${{ github.event.inputs.componentVersion }}
       stage: git
-      deploymentTargets:  ${{ matrix.target }}
+      deploymentTarget:  ${{ matrix.target }}
       bambiNotification: true
       actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}

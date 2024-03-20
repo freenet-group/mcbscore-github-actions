@@ -3,6 +3,10 @@ name: Workflow zum Deployment von lua-Scripten auf nginx
 on:
   workflow_call:
     inputs:
+      componentVersion:
+        description: 'Die Version der Komponente'
+        required: true
+        type: string
       stage:
         description: Die Zielumgebung
         type: string
@@ -55,23 +59,12 @@ jobs:
           echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
         fi
 
-    - name: Determine environment suffix
-      id: determine-suffix
-      shell: bash
-      run: |
-        if  [[ ${{ inputs.externalProxy }} == 'true' ]] ;
-        then
-          echo "suffix=-extern" >> $GITHUB_OUTPUT
-        else
-          echo "suffix=" >> $GITHUB_OUTPUT
-        fi
-
     - name: Create GitHub deployment
       uses: chrnorm/deployment-action@v2
       id: create-deployment
       with:
         token: ${{ env.TOKEN }}
-        environment: ${{ inputs.stage }}-${{ inputs.company }}${{ steps.determine-suffix.outputs.suffix }}
+        environment: ${{ inputs.stage }}
         ref: ${{ env.DEPLOYMENT_REF }}
 
     outputs:
@@ -139,61 +132,22 @@ jobs:
         installJq: true
 
     - name: Download Release
-      if: ${{ inputs.deployForKubernetes == 'false' }}
       uses: ./mcbscore/github/actions/download-release-assets
       with:
         version: ${{ inputs.componentVersion }}
-        assetPattern: '${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz'
+        assetPattern: *.lua
         targetPath: './release'
         token: ${{ env.TOKEN }}
-
-    - name: Download Secret Mappings
-      uses: ./mcbscore/github/actions/download-release-assets
-      with:
-        version: ${{ inputs.componentVersion }}
-        assetPattern: 'secretMappings.txt'
-        targetPath: './release'
-        token: ${{ env.TOKEN }}
-
-    - name: Decompress Release Archive
-      if: hashFiles('./release/secretMappings.txt') != ''
-      shell: bash
-      run: |
-        mkdir ./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}
-        tar xfzv ./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz -C ./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}
-
-    - name: Setup AWS CLI
-      if: hashFiles('./release/secretMappings.txt') != ''
-      uses: freenet-actions/setup-aws-cli@v3
-
-    - name: Place Secrets
-      if: hashFiles('./release/secretMappings.txt') != ''
-      uses: ./mcbscore/github/actions/replace-aws-parameters
-      with:
-        awsKey: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        awsSecret: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        directory: ./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}
-        parameterFile: ./release/secretMappings.txt
-
-    - name: Compress Release Archive
-      if: hashFiles('./release/secretMappings.txt') != ''
-      shell: bash
-      run: |
-        WORKING_DIRECTORY=$(pwd)
-        cd ./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}
-        tar cfzv ../${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz *
-        cd -- "$WORKING_DIRECTORY"
 
     - name: Deployment
-      # Deployment
+      # TODO: Deployment
       id: deploy-release-server-1
       uses: ./mcbscore/github/actions/deploy-lua-action
       with:
-        scriptName: ${{ inputs.company }}-${{ env.PROXY_NAME }}
+        pathName: 'release'
         host: ${{ inputs.deploymentTarget }}
         deploymentUser: ${{ env.DEPLOYMENT_USER }}
         sshKey: ${{ env.SSH_KEY }}
-        additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
     # Deployment als erfolgreich markieren
     - name: Update deployment status (success)

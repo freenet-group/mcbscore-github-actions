@@ -2,8 +2,8 @@ name: 'Deploy Lua-Script'
 description: 'Action zum Deployment von lua-Scripten'
 
 inputs:
-  scriptName:
-    description: 'Der Dateiname des Scripts'
+  pathName:
+    description: 'Pfad mit den zu deployenden lua-Skripten'
     required: true
   host:
     description: 'Der Zielhost'
@@ -28,7 +28,7 @@ runs:
         chmod 600 id_rsa
         printf %s "${{ inputs.sshKey }}" >> id_rsa
 
-    - name: Deploy Proxy
+    - name: Deploy lua scripts
       shell: bash
       run: |
 
@@ -41,17 +41,17 @@ runs:
         fi
         
         scp $keyParameter \
-          -r ./release/${{ inputs.scriptName }} \
+          -r ./${{ inputs.pathName }} \
           "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp"
 
         ssh $keyParameter '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
           cd '/etc/nginx/shared/teams/mcbs-core/'@
           #TODO: tar oder script?
-          cp '/tmp/${{ inputs.proxyNamescriptName }}' '/etc/nginx/shared/teams/mcbs-core'
+          cp '/tmp/${{ inputs.pathName }}/*.lua' '.'
           
           sudo service nginx configtest
           sudo service nginx reload
-          rm '/tmp/${{ inputs.proxyNamescriptName }}'
+          rm -rf '/tmp/${{ inputs.pathName }}'
         SSH
 
     # ssh Konfig aufräumen
