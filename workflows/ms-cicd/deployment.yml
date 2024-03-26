@@ -109,7 +109,7 @@ jobs:
           fi
 
       - name: GitHub Deployment erstellen
-        uses: chrnorm/deployment-action@v2
+        uses: chrnorm/deployment-action@v2.0.7
         id: create-deployment
         with:
           token: ${{ env.TOKEN }}
@@ -304,7 +304,7 @@ jobs:
 
       - name: Deployment Status im Fehlerfall auf "failure" setzen
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
-        uses: chrnorm/deployment-status@v2
+        uses: chrnorm/deployment-status@v2.0.3
         with:
           token: ${{ env.TOKEN }}
           state: "failure"
@@ -312,7 +312,7 @@ jobs:
 
       - name: Deployment Status im Erfolgsfall auf "success" setzen
         if: ${{ !(contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')) }}
-        uses: chrnorm/deployment-status@v2
+        uses: chrnorm/deployment-status@v2.0.3
         with:
           token: ${{ env.TOKEN }}
           state: "success"

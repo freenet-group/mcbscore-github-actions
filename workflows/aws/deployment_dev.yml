@@ -16,7 +16,7 @@ jobs:
     steps:
       # Starte "Auf DEV Umgebung deployen"
       - name: Invoke deployment workflow for DEV
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}

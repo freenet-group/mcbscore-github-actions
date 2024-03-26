@@ -12,7 +12,7 @@ jobs:
     steps:
       # Starte "von DEV Umgebung entfernen"
       - name: Invoke remove workflow for DEV
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: Von Umgebung entfernen
           token: ${{ env.TOKEN }}

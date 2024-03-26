@@ -167,7 +167,7 @@ jobs:
       # Starte Deployment auf DEV
       - name: Invoke DEV deployment workflow
         if: env.BUILD_TYPE == 'DEVELOP'
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: DEV Deployment
           token: ${{ env.TOKEN }}
@@ -176,7 +176,7 @@ jobs:
       # Starte postBuild auf RELEASE
       - name: Invoke postBuild workflow
         if: env.BUILD_TYPE == 'RELEASE'
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: PostBuild
           token: ${{ env.TOKEN }}

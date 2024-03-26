@@ -38,7 +38,7 @@ jobs:
       # Starte MD Deployment auf GIT
       - name: Invoke deployment workflow GIT MD
         if: hashFiles('**/deployment_git_md.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: GIT MD Deployment
           token: ${{ env.TOKEN }}
@@ -47,7 +47,7 @@ jobs:
       # Starte MD Extern Deployment auf GIT
       - name: Invoke deployment workflow GIT MD Extern
         if: hashFiles('**/deployment_git_md_extern.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: GIT MD Deployment Extern
           token: ${{ env.TOKEN }}
@@ -56,7 +56,7 @@ jobs:
       # Starte KM Deployment auf GIT
       - name: Invoke deployment workflow GIT KM
         if: hashFiles('**/deployment_git_km.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: GIT KM Deployment
           token: ${{ env.TOKEN }}
@@ -65,7 +65,7 @@ jobs:
       # Starte KM Extern Deployment auf GIT
       - name: Invoke deployment workflow GIT KM Extern
         if: hashFiles('**/deployment_git_km_extern.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: GIT KM Deployment Extern
           token: ${{ env.TOKEN }}
@@ -74,7 +74,7 @@ jobs:
       # Starte FM Deployment auf GIT
       - name: Invoke deployment workflow GIT FM
         if: hashFiles('**/deployment_git_fm.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: GIT FM Deployment
           token: ${{ env.TOKEN }}
@@ -83,7 +83,7 @@ jobs:
       # Starte FM Extern Deployment auf GIT
       - name: Invoke deployment workflow GIT FM Extern
         if: hashFiles('**/deployment_git_fm_extern.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: GIT FM Deployment Extern
           token: ${{ env.TOKEN }}

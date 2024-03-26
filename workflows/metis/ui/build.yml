@@ -146,7 +146,7 @@ jobs:
       # Starte Deployment auf K8S
       - name: Invoke kubernetes workflow
         if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_k8s.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: K8s Deployment
           token: ${{ env.TOKEN }}

@@ -113,7 +113,7 @@ jobs:
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}

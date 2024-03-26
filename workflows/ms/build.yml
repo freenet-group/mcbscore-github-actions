@@ -228,7 +228,7 @@ jobs:
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow
         if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}
@@ -243,7 +243,7 @@ jobs:
       # Starte Deployment auf DEV (neuer Weg)
       - name: Invoke deployment workflow (ADDITIONAL_DEPLOYMENT_COMPONENT)
         if: ${{ env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment.yml') != '' && env.ADDITIONAL_DEPLOYMENT_COMPONENT != '' }}
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}
@@ -259,7 +259,7 @@ jobs:
       # Starte DB changes Workflow
       - name: Invoke db changes workflow
         if: env.BUILD_TYPE == 'RELEASE' && hashFiles('.github/**/dbChanges.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: DB Changes
           token: ${{ env.TOKEN }}
@@ -273,7 +273,7 @@ jobs:
       # Starte postBuild auf RELEASE
       - name: Invoke postBuild workflow
         if: env.BUILD_TYPE == 'RELEASE' && hashFiles('.github/**/postBuild.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: PostBuild
           token: ${{ env.TOKEN }}
