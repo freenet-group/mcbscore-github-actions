@@ -103,7 +103,7 @@ jobs:
 
       - name: Create GitHub deployment
         if: ${{ env.K8S_DEPLOYMENT_ENABLED == 'true' }}
-        uses: chrnorm/deployment-action@v2.0.7
+        uses: chrnorm/deployment-action@v2
         id: create-deployment
         with:
           token: ${{ env.GITHUB_TOKEN }}
@@ -140,7 +140,7 @@ jobs:
       # Deployment als erfolgreich markieren
       - name: Update deployment status (success)
         if: ${{ env.K8S_DEPLOYMENT_ENABLED == 'true' && success() }}
-        uses: chrnorm/deployment-status@v2.0.3
+        uses: chrnorm/deployment-status@v2
         with:
           token: ${{ env.GITHUB_TOKEN }}
           state: "success"
@@ -149,7 +149,7 @@ jobs:
       # Deployment als fehlerhaft markieren
       - name: Update deployment status (failure)
         if: ${{ env.K8S_DEPLOYMENT_ENABLED == 'true' && failure() }}
-        uses: chrnorm/deployment-status@v2.0.3
+        uses: chrnorm/deployment-status@v2
         with:
           token: ${{ env.GITHUB_TOKEN }}
           state: "failure"

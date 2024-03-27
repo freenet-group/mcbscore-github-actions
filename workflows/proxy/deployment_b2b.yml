@@ -38,7 +38,7 @@ jobs:
       # Starte MD Deployment auf B2B
       - name: Invoke deployment workflow B2B MD
         if: hashFiles('**/deployment_b2b_md.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: B2B MD Deployment
           token: ${{ env.TOKEN }}
@@ -47,7 +47,7 @@ jobs:
       # Starte KM Deployment auf B2B
       - name: Invoke deployment workflow B2B KM
         if: hashFiles('**/deployment_b2b_km.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: B2B KM Deployment
           token: ${{ env.TOKEN }}
@@ -56,7 +56,7 @@ jobs:
       # Starte FM Deployment auf B2B
       - name: Invoke deployment workflow B2B FM
         if: hashFiles('**/deployment_b2b_fm.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: B2B FM Deployment
           token: ${{ env.TOKEN }}

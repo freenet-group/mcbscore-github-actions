@@ -88,7 +88,7 @@ jobs:
         fi
 
     - name: Create GitHub deployment
-      uses: chrnorm/deployment-action@v2.0.7
+      uses: chrnorm/deployment-action@v2
       id: create-deployment
       with:
         token: ${{ env.TOKEN }}
@@ -266,7 +266,7 @@ jobs:
     # Deployment als erfolgreich markieren
     - name: Update deployment status (success)
       if: success()
-      uses: chrnorm/deployment-status@v2.0.3
+      uses: chrnorm/deployment-status@v2
       with:
         token: ${{ env.TOKEN }}
         state: "success"
@@ -275,7 +275,7 @@ jobs:
     # Deployment als fehlerhaft markieren
     - name: Update deployment status (failure)
       if: failure()
-      uses: chrnorm/deployment-status@v2.0.3
+      uses: chrnorm/deployment-status@v2
       with:
         token: ${{ env.TOKEN }}
         state: "failure"

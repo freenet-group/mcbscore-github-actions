@@ -257,7 +257,7 @@ jobs:
       # Starte Deployment auf K8s
       - name: Invoke kubernetes workflow
         if: env.BUILD_TYPE == 'DEVELOP'
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: deployment_k8s_only.yml
           token: ${{ env.TOKEN }}
@@ -272,7 +272,7 @@ jobs:
       # Starte DB changes Workflow
       - name: Invoke db changes workflow
         if: env.BUILD_TYPE == 'RELEASE' && hashFiles('.github/**/dbChanges.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: DB Changes
           token: ${{ env.TOKEN }}
@@ -286,7 +286,7 @@ jobs:
       # Starte postBuild auf RELEASE
       - name: Invoke postBuild workflow
         if: env.BUILD_TYPE == 'RELEASE' && hashFiles('.github/**/postBuild.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PostBuild
           token: ${{ env.TOKEN }}

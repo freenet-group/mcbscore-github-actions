@@ -303,7 +303,7 @@ jobs:
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow
         if: ${{ env.BUILD_TYPE == 'DEVELOP' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.group == 'ms' }}
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}
@@ -319,7 +319,7 @@ jobs:
       # Starte Deployment auf REF_CALLS
       - name: Invoke deployment workflow (ref_calls)
         if: ${{ env.BUILD_TYPE == 'RELEASE' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'mcbs' }}
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: RefCalls Deployment
           token: ${{ env.TOKEN }}
@@ -332,7 +332,7 @@ jobs:
       # Starte DB changes Workflow
       - name: Invoke db changes workflow
         if: ${{ env.BUILD_TYPE == 'RELEASE' && env.DB_CHANGES_DIRECTORY != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: DB Changes
           token: ${{ env.TOKEN }}
@@ -346,7 +346,7 @@ jobs:
       # Starte postBuild auf RELEASE (MS)
       - name: Invoke postBuild workflow ms
         if: ${{ env.BUILD_TYPE == 'RELEASE' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.group == 'ms' }}
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PostBuild MS
           token: ${{ env.TOKEN }}
@@ -362,7 +362,7 @@ jobs:
       # Starte postBuild auf RELEASE (MCBS)
       - name: Invoke postBuild workflow mcbs
         if: ${{ env.BUILD_TYPE == 'RELEASE' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'mcbs' }}
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PostBuild MCBS
           token: ${{ env.TOKEN }}

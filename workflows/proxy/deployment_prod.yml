@@ -38,7 +38,7 @@ jobs:
       # Starte MD Deployment auf PROD
       - name: Invoke deployment workflow PROD MD
         if: hashFiles('**/deployment_prod_md.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PROD MD Deployment
           token: ${{ env.TOKEN }}
@@ -47,7 +47,7 @@ jobs:
       # Starte MD Extern Deployment auf PROD
       - name: Invoke deployment workflow PROD MD Extern
         if: hashFiles('**/deployment_prod_md_extern.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PROD MD Deployment Extern
           token: ${{ env.TOKEN }}
@@ -56,7 +56,7 @@ jobs:
       # Starte KM Deployment auf PROD
       - name: Invoke deployment workflow PROD KM
         if: hashFiles('**/deployment_prod_km.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PROD KM Deployment
           token: ${{ env.TOKEN }}
@@ -65,7 +65,7 @@ jobs:
       # Starte KM Extern Deployment auf PROD
       - name: Invoke deployment workflow PROD KM Extern
         if: hashFiles('**/deployment_prod_km_extern.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PROD KM Deployment Extern
           token: ${{ env.TOKEN }}
@@ -74,7 +74,7 @@ jobs:
       # Starte FM Deployment auf PROD
       - name: Invoke deployment workflow PROD FM
         if: hashFiles('**/deployment_prod_fm.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PROD FM Deployment
           token: ${{ env.TOKEN }}
@@ -83,7 +83,7 @@ jobs:
       # Starte FM Extern Deployment auf PROD
       - name: Invoke deployment workflow PROD FM Extern
         if: hashFiles('**/deployment_prod_fm_extern.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: PROD FM Deployment Extern
           token: ${{ env.TOKEN }}

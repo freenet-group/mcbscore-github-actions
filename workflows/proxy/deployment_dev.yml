@@ -42,7 +42,7 @@ jobs:
       # Starte MD Deployment auf DEV
       - name: Invoke deployment workflow DEV MD
         if: hashFiles('**/deployment_dev_md.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: DEV MD Deployment
           token: ${{ env.TOKEN }}
@@ -51,7 +51,7 @@ jobs:
       # Starte KM Deployment auf DEV
       - name: Invoke deployment workflow DEV KM
         if: hashFiles('**/deployment_dev_km.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: DEV KM Deployment
           token: ${{ env.TOKEN }}
@@ -60,7 +60,7 @@ jobs:
       # Starte FM Deployment auf DEV
       - name: Invoke deployment workflow DEV FM
         if: hashFiles('**/deployment_dev_fm.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: DEV FM Deployment
           token: ${{ env.TOKEN }}

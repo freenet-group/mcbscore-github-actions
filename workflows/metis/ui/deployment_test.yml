@@ -31,7 +31,7 @@ jobs:
 
       # Starte Deployment auf TEST
       - name: Invoke deployment workflow
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}
