@@ -466,6 +466,7 @@ jobs:
     strategy:
       matrix:
         repository:
+          - { name: ms-find, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
     steps:
       - uses: actions/checkout@v4
