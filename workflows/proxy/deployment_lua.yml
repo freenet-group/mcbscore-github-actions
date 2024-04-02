@@ -135,7 +135,7 @@ jobs:
       uses: ./mcbscore/github/actions/download-release-assets
       with:
         version: ${{ inputs.componentVersion }}
-        assetPattern: *.lua
+        assetPattern: '*.lua'
         targetPath: './release'
         token: ${{ env.TOKEN }}
 

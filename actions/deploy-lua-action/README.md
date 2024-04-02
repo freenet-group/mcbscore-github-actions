@@ -3,27 +3,30 @@
 Github-Action zum Deployment eines lua-Scripts in den [geteilten Teamordner vom Team MCBS-Core](https://github.com/freenet-group/nginx-api/tree/main/shared/teams/mcbs-core) auf einem nginx-Server.
 
 ## Parameter:
-### scriptName
-    description: 'Der Dateiname des lua-Scripts'
+### pathName:
+    description: 'Pfad mit den zu deployenden lua-Skripten'
     required: true
-### host
+### host:
     description: 'Der Zielhost'
     required: true
-### deploymentUser
+### deploymentUser:
     description: 'Der Benutzer für das Deployment'
     required: true
+### sshKey:
+    description: 'Der SSH Schlüssel'
+    required: false
 
 ---
 
 ## Ergebnisse:
 
-Das Script wurde auf der Umgebung deployed
+Die Skripte wurden auf der Umgebung deployed und `nginx reload` durchgeführt
 
 ---
 
 ## Voraussetzungen:
 
-Das Release-Artefakt muß im Verzeichnis ./release liegen.
+Die zu deployenden Skripte müssen im Verzeichnis `pathName` (i.d.R. also `./release`) liegen.
 
 ---
 
@@ -34,6 +37,6 @@ Das Release-Artefakt muß im Verzeichnis ./release liegen.
         id: deployRelease
         uses: ./actions/deploy-lua-action
         with:
-          scriptName: "<Name des lua-Scripts>"
-          host: host.domain.de
-          deploymentUser: "deploymentUser"
+          pathName: 'release'
+          host: 'host.domain.de'
+          deploymentUser: 'deploymentUser'
