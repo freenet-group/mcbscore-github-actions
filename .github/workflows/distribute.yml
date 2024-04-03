@@ -466,7 +466,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
+          - { name: ms-user, branch: feature/test-github-workflow, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
