@@ -466,8 +466,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbs-master, branch: feature/test-github-workflow, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild_MCBS, postBuild_MS, sonarqube, MCBS-Freigabe, refcalls_deployment, setPRIssueDone" }
-          - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
+          - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
