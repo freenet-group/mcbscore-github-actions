@@ -154,11 +154,9 @@ jobs:
         do
           if [ -z "$domains" -a -e "$f" ]; then
             echo "Prüfe domains in $f"
-            domains=$(jq --compact-output --raw-output '
-                if .domains != null then (.domains | split("\\s+"; "")) else "" end
-                # ^ ohne Domains: Leerstring => jq --raw-output gibt nichts aus => if [ -z "$domains" ] bleibt true.
-                # mit Domains: jq split Ergebnis ist Array (z.B. ["km","mc"]); jq ignoriert --raw-output.
-              ' <"$f")
+            domains=$(jq --compact-output --raw-output '.domains // ""' <"$f")
+            # ^ ohne Domains: Leerstring => jq --raw-output gibt nichts aus => if [ -z "$domains" ] bleibt true.
+            # mit Domains: jq Ergebnis ist Array (z.B. ["km","mc"]); jq ignoriert --raw-output.
           fi
         done
         printf 'domains: %s\n' "$domains"
