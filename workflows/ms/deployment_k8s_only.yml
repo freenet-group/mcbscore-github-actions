@@ -93,7 +93,7 @@ jobs:
 
   deploy_k8s:
     needs: [create-deployment]
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@1.0.2
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@ae79c6c4c586ae3e1d31665df2cd3ab94d1ebf73
     secrets: inherit
     with:
       componentVersion: ${{ inputs.componentVersion }}
