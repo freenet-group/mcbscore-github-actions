@@ -28,6 +28,7 @@ runs:
         chmod 600 id_rsa
         printf %s "${{ inputs.sshKey }}" >> id_rsa
 
+    # Skripte kopieren
     - name: Deploy lua scripts
       shell: bash
       run: |
@@ -47,7 +48,7 @@ runs:
         ssh $keyParameter '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
           cd '/etc/nginx/shared/teams/mcbs-core/'@
           cp '/tmp/${{ inputs.pathName }}/*.lua' '.'
-          chmod 444 *.lua
+          chmod 644 *.lua
           
           sudo service nginx configtest
           sudo service nginx reload
