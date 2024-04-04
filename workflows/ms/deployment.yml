@@ -220,7 +220,7 @@ jobs:
     needs: [create-deployment]
     # if: platforms enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
     if: contains(format(', {0}, ', inputs.platforms), ', k8s, ') || contains(format(',{0},', inputs.platforms), ',k8s,')
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@679072df2572273267cd49b4377bcf908ce67ea7
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@2.0.0
     secrets: inherit
     with:
       componentVersion: ${{ github.event.inputs.componentVersion }}
