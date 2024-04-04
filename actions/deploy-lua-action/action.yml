@@ -1,0 +1,62 @@
+name: 'Deploy Lua-Script'
+description: 'Action zum Deployment von lua-Scripten'
+
+inputs:
+  pathName:
+    description: 'Pfad mit den zu deployenden lua-Skripten'
+    required: true
+  host:
+    description: 'Der Zielhost'
+    required: true
+  deploymentUser:
+    description: 'Der Benutzer für das Deployment'
+    required: true
+  sshKey:
+    description: 'Der SSH Schlüssel'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+
+    # ssh Konfig
+    - name: Setup ssh
+      if: ${{ inputs.sshKey != '' }}
+      shell: bash
+      run: |
+        printf '' > id_rsa
+        chmod 600 id_rsa
+        printf %s "${{ inputs.sshKey }}" >> id_rsa
+
+    # Skripte kopieren
+    - name: Deploy lua scripts
+      shell: bash
+      run: |
+
+       if [[ '${{ inputs.sshKey }}' != '' ]]; then
+          echo "key"
+          keyParameter='-o StrictHostKeyChecking=no -i id_rsa'
+        else
+          echo "no key"
+          keyParameter=''
+        fi
+        
+        scp $keyParameter \
+          -r ./${{ inputs.pathName }} \
+          "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp"
+
+        ssh $keyParameter '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
+          cd '/etc/nginx/shared/teams/mcbs-core/'@
+          cp '/tmp/${{ inputs.pathName }}/*.lua' '.'
+          chmod 644 *.lua
+          
+          sudo service nginx configtest
+          sudo service nginx reload
+          rm -rf '/tmp/${{ inputs.pathName }}'
+        SSH
+
+    # ssh Konfig aufräumen
+    - name: Remove ssh key
+      if: ${{ always() && inputs.sshKey != '' }}
+      shell: bash
+      run: rm -v id_rsa
