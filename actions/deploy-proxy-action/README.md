@@ -24,7 +24,20 @@ Github Action zum Deployment eines Releases eines Proxies.
 ### externalProxy
     description: Flag für externes Deployment
     type: boolean
-    required: true
+    required: false
+### testoldProxy
+    description: Flag für testalt Deployment
+    type: boolean
+    required: false
+### testnewProxy
+    description: Flag für testneu Deployment
+    type: boolean
+    required: false
+
+### testoldProxy
+    description: Flag für testalt Deployment
+    type: boolean
+    required: false
 
 ---
 
