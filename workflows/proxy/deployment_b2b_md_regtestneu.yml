@@ -26,7 +26,7 @@ jobs:
       componentVersion: ${{ github.event.inputs.componentVersion }}
       stage: b2b
       company: md
-      testnewProxy: true
+      regtestneuProxy: true
       deploymentTarget: apigw-t11.mobilcom.de
       actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
       deployForKubernetes: ${{ github.event.inputs.deployForKubernetes }}

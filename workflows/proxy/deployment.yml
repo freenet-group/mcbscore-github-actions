@@ -20,13 +20,13 @@ on:
         type: boolean
         required: false
         default: false
-      testoldProxy:
-        description: Flag für testalt-Umgebungen-Proxy
+      regtestaltProxy:
+        description: Flag für regtestalt Deployment
         type: boolean
         required: false
         default: false
-      testnewProxy:
-        description: Flag für testnew-Umgebungen-Proxy
+      regtestneuProxy:
+        description: Flag für regtestneu Deployment
         type: boolean
         required: false
         default: false
@@ -93,12 +93,12 @@ jobs:
         if  [[ ${{ inputs.externalProxy }} == 'true' ]] ;
         then
           echo "suffix=-extern" >> $GITHUB_OUTPUT
-        else if [[ ${{ inputs.testoldProxy }} == 'true' ]] ;
+        else if [[ ${{ inputs.regtestaltProxy }} == 'true' ]] ;
         then
-          echo "suffix=-testold" >> $GITHUB_OUTPUT
-        else if [[ ${{ inputs.testnewProxy }} == 'true' ]] ;
+          echo "suffix=-regtestalt" >> $GITHUB_OUTPUT
+        else if [[ ${{ inputs.regtestneuProxy }} == 'true' ]] ;
         then
-          echo "suffix=-testnew" >> $GITHUB_OUTPUT
+          echo "suffix=-regtestneu" >> $GITHUB_OUTPUT
         else
           echo "suffix=" >> $GITHUB_OUTPUT
         fi
@@ -240,7 +240,7 @@ jobs:
       # Spezialbehandlung für OIDC
       shell: bash
       run: |
-        if  [[ ${{ env.PROXY_NAME }} == oidc && (${{ inputs.externalProxy }} == 'true' || ${{ inputs.testoldProxy }} == 'true' || ${{ inputs.testnewProxy }} == 'true') ]] ;
+        if  [[ ${{ env.PROXY_NAME }} == oidc && (${{ inputs.externalProxy }} == 'true' || ${{ inputs.regtestaltProxy }} == 'true' || ${{ inputs.regtestneuProxy }} == 'true') ]] ;
         then
           echo "TAR_SUB_COMMAND=--exclude='http.conf'" >> $GITHUB_ENV
         else
@@ -261,8 +261,8 @@ jobs:
         deploymentUser: ${{ env.DEPLOYMENT_USER }}
         sshKey: ${{ env.SSH_KEY }}
         externalProxy: ${{ inputs.externalProxy }}
-        testoldProxy: ${{ inputs.testoldProxy }}
-        testnewProxy: ${{ inputs.testnewProxy }}
+        regtestaltProxy: ${{ inputs.regtestaltProxy }}
+        regtestneuProxy: ${{ inputs.regtestneuProxy }}
         additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
     # Deployment
@@ -279,8 +279,8 @@ jobs:
         deploymentUser: ${{ env.DEPLOYMENT_USER }}
         sshKey: ${{ env.SSH_KEY }}
         externalProxy: ${{ inputs.externalProxy }}
-        testoldProxy: ${{ inputs.testoldProxy }}
-        testnewProxy: ${{ inputs.testnewProxy }}
+        regtestaltProxy: ${{ inputs.regtestaltProxy }}
+        regtestneuProxy: ${{ inputs.regtestneuProxy }}
         additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
     # Deployment als erfolgreich markieren

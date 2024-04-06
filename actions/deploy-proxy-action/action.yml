@@ -26,11 +26,11 @@ inputs:
   externalProxy:
     description: 'Flag für externes Deployment'
     required: false
-  testoldProxy:
-    description: 'Flag für testalt Deployment'
+  regtestaltProxy:
+    description: 'Flag für regtestalt Deployment'
     required: false
-  testnewProxy:
-    description: 'Flag für testneu Deployment'
+  regtestneuProxy:
+    description: 'Flag für regtestneu Deployment'
     required: false
   additionalTarParams:
     description: 'Ermöglicht die Angabe zusätzlicher Parameter für den tar Befehl'
@@ -66,12 +66,12 @@ runs:
         if [[ '${{ inputs.externalProxy }}' == "true" ]]; then
           proxyPath=proxies-extern
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-extern/g' '{}' +"
-        else if [[ '${{ inputs.testoldProxy }}' == "true" ]]; then
-          proxyPath=proxies-testalt
-          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-testalt/g' '{}' +"
-        else if [[ '${{ inputs.testnewProxy }}' == "true" ]]; then
-          proxyPath=proxies-testneu
-          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-testneu/g' '{}' +"
+        else if [[ '${{ inputs.regtestaltProxy }}' == "true" ]]; then
+          proxyPath=proxies-regtestalt
+          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestalt/g' '{}' +"
+        else if [[ '${{ inputs.regtestneuProxy }}' == "true" ]]; then
+          proxyPath=proxies-regtestneu
+          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestneu/g' '{}' +"
         else
           proxyPath=proxies
           replaceCmd=''

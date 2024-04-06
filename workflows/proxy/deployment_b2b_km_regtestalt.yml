@@ -1,6 +1,6 @@
-name: B2B MD Deployment
+name: B2B KM Deployment
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: B2B MD Deployment ${{ github.event.inputs.componentVersion }}
+run-name: B2B KM Deployment ${{ github.event.inputs.componentVersion }}
 
 on:
   workflow_dispatch:
@@ -25,8 +25,8 @@ jobs:
     with:
       componentVersion: ${{ github.event.inputs.componentVersion }}
       stage: b2b
-      company: md
-      testoldProxy: true
+      company: km
+      regtestaltProxy: true
       deploymentTarget: apigw-t11.mobilcom.de
       actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
       deployForKubernetes: ${{ github.event.inputs.deployForKubernetes }}
