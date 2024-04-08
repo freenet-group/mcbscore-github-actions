@@ -24,9 +24,14 @@ inputs:
     description: 'Der SSH Schlüssel'
     required: false
   externalProxy:
-    description: Flag für externes Deployment
-    type: boolean
-    required: true
+    description: 'Flag für externes Deployment'
+    required: false
+  regtestaltProxy:
+    description: 'Flag für regtestalt Deployment'
+    required: false
+  regtestneuProxy:
+    description: 'Flag für regtestneu Deployment'
+    required: false
   additionalTarParams:
     description: 'Ermöglicht die Angabe zusätzlicher Parameter für den tar Befehl'
     required: false
@@ -61,6 +66,12 @@ runs:
         if [[ '${{ inputs.externalProxy }}' == "true" ]]; then
           proxyPath=proxies-extern
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-extern/g' '{}' +"
+        else if [[ '${{ inputs.regtestaltProxy }}' == "true" ]]; then
+          proxyPath=proxies-regtestalt
+          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestalt/g' '{}' +"
+        else if [[ '${{ inputs.regtestneuProxy }}' == "true" ]]; then
+          proxyPath=proxies-regtestneu
+          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestneu/g' '{}' +"
         else
           proxyPath=proxies
           replaceCmd=''

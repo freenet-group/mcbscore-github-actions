@@ -20,6 +20,16 @@ on:
         type: boolean
         required: false
         default: false
+      regtestaltProxy:
+        description: Flag für regtestalt Deployment
+        type: boolean
+        required: false
+        default: false
+      regtestneuProxy:
+        description: Flag für regtestneu Deployment
+        type: boolean
+        required: false
+        default: false
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         type: string
@@ -83,6 +93,12 @@ jobs:
         if  [[ ${{ inputs.externalProxy }} == 'true' ]] ;
         then
           echo "suffix=-extern" >> $GITHUB_OUTPUT
+        else if [[ ${{ inputs.regtestaltProxy }} == 'true' ]] ;
+        then
+          echo "suffix=-regtestalt" >> $GITHUB_OUTPUT
+        else if [[ ${{ inputs.regtestneuProxy }} == 'true' ]] ;
+        then
+          echo "suffix=-regtestneu" >> $GITHUB_OUTPUT
         else
           echo "suffix=" >> $GITHUB_OUTPUT
         fi
@@ -224,13 +240,13 @@ jobs:
       # Spezialbehandlung für OIDC
       shell: bash
       run: |
-        if  [[ ${{ env.PROXY_NAME }} == oidc && ${{ inputs.externalProxy }} == 'true' ]] ;
+        if  [[ ${{ env.PROXY_NAME }} == oidc && (${{ inputs.externalProxy }} == 'true' || ${{ inputs.regtestaltProxy }} == 'true' || ${{ inputs.regtestneuProxy }} == 'true') ]] ;
         then
           echo "TAR_SUB_COMMAND=--exclude='http.conf'" >> $GITHUB_ENV
         else
           # default ist leer
           echo "TAR_SUB_COMMAND=" >> $GITHUB_ENV
-        fi
+        fi  
 
     - name: Deployment
       # Deployment
@@ -245,6 +261,8 @@ jobs:
         deploymentUser: ${{ env.DEPLOYMENT_USER }}
         sshKey: ${{ env.SSH_KEY }}
         externalProxy: ${{ inputs.externalProxy }}
+        regtestaltProxy: ${{ inputs.regtestaltProxy }}
+        regtestneuProxy: ${{ inputs.regtestneuProxy }}
         additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
     # Deployment
@@ -261,6 +279,8 @@ jobs:
         deploymentUser: ${{ env.DEPLOYMENT_USER }}
         sshKey: ${{ env.SSH_KEY }}
         externalProxy: ${{ inputs.externalProxy }}
+        regtestaltProxy: ${{ inputs.regtestaltProxy }}
+        regtestneuProxy: ${{ inputs.regtestneuProxy }}
         additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
     # Deployment als erfolgreich markieren
