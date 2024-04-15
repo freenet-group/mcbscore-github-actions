@@ -493,6 +493,7 @@ jobs:
           - { name: lib-amount, branch: develop, group: standard }
           - { name: lib-annotation, branch: develop, group: standard }
           - { name: lib-common, branch: develop, group: standard }
+          - { name: lib-enterprise, branch: develop, group: standard }
           - { name: lib-io, branch: develop, group: standard }
           - { name: lib-persistence, branch: develop, group: standard }
           - { name: lib-process, branch: develop, group: standard }
