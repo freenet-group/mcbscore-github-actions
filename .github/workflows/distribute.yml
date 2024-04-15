@@ -510,7 +510,6 @@ jobs:
           - { name: mcbscore-framework, branch: develop, group: standard }
           - { name: mcbscore-fee-service, branch: develop, group: zap}
           - { name: mcbscore-invoice-service, branch: develop, group: zap}
-          - { name: mcbscore-mark-service, branch: develop, group: zap}
           - { name: mcbscore-network-service, branch: develop, group: zap}
           - { name: mcbscore-party-service, branch: develop, group: zap}
           - { name: mcbscore-yaml-transform-plugin, branch: develop, group: zap}
