@@ -497,7 +497,6 @@ jobs:
           - { name: lib-relation, branch: develop, group: standard }
           - { name: lib-security, branch: develop, group: standard }
           - { name: lib-service, branch: develop, group: standard }
-          - { name: mcbs-connector-api, branch: develop, group: standard }
           - { name: mcbs-master, branch: develop, group: mcbs }
           - { name: mcbs-logging, branch: develop, group: mcbs }
           - { name: mcbscore-mandel, branch: develop, group: mandel }
