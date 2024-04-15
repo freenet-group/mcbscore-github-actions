@@ -8,6 +8,7 @@ spotless {
             exclude 'mcbscore/github/*.*'
             exclude '**/spotless/**/*.*'
             exclude '**/ApiUtil.java'
+            exclude '**/build'
         }
         custom 'jalopy section comments', {
             str -> str.replaceAll('(?xsm)' +
