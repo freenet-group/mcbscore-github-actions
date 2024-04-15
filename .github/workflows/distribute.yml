@@ -485,7 +485,9 @@ jobs:
   spotless:
     if: ${{ github.event.inputs.group == 'spotless' }}
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         repository:
           - { name: lib-amount, branch: develop, group: standard }
