@@ -123,14 +123,6 @@ jobs:
         path: ${{ env.DEPLOYMENT_PATH }}
         ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
 
-    # Java installieren (für jrunscript in ms_properties_to_json.sh)
-    - name: Set up JDK
-      uses: actions/setup-java@v4
-      with:
-        distribution: zulu
-        # eine Version mit jrunscript
-        java-version: ${{ env.JAVA_VERSION }}
-
     # jq installieren
     - name: Setup jq
       uses: freenet-actions/setup-jq@v3
@@ -147,7 +139,7 @@ jobs:
         fi
 
     - name: Init Job Matrix
-      # Github Job-Matrix entsprechend domains aus kubernetes-deployment*.json oder deployment*.properties initialisieren
+      # Github Job-Matrix entsprechend domains aus kubernetes-deployment*.json initialisieren
       id: set-matrix
       shell: bash
       run: |
@@ -158,22 +150,13 @@ jobs:
         for f in \
             "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment-${environment}.json" \
             "./${DEPLOYMENT_PATH}/properties/${component}/kubernetes-deployment.json" \
-            "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.json" \
-            "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.properties" \
-            "./${DEPLOYMENT_PATH}/properties/${component}/deployment.properties"
+            "./${DEPLOYMENT_PATH}/properties/${component}/deployment-${environment}.json"
         do
           if [ -z "$domains" -a -e "$f" ]; then
             echo "Prüfe domains in $f"
-            domains=$(
-              if [[ "$f" == *.json ]]; then
-                cat -- "$f"
-              else
-                "./${DEPLOYMENT_PATH}/scripts/common/properties_to_json.sh" < "$f"
-              fi \
-              | jq -c -r 'if .domains != null then (.domains | split("\\s+"; "")) else "" end'
-              # ^ ohne Domains: Leerstring => jq -r gibt nichts aus => if [ -z "$domains" ] bleibt true.
-              # mit Domains: jq split Ergebnis ist Array (z.B. ["km","mc"]); jq ignoriert -r.
-            )
+            domains=$(jq --compact-output --raw-output '.domains // ""' <"$f")
+            # ^ ohne Domains: Leerstring => jq --raw-output gibt nichts aus => if [ -z "$domains" ] bleibt true.
+            # mit Domains: jq Ergebnis ist Array (z.B. ["km","mc"]); jq ignoriert --raw-output.
           fi
         done
         printf 'domains: %s\n' "$domains"
@@ -196,7 +179,7 @@ jobs:
           do
             printf '%s existiert' "$f" >&2
             if [ -e "$f" ]; then echo . >&2; cat -- "$f"; else echo ' nicht.' >&2; fi
-          done | jq -s -r 'add | .enabled'
+          done | jq -s --raw-output 'add | .enabled'
         )
 
         echo "deploymentEnabled=$enabled" >> $GITHUB_OUTPUT

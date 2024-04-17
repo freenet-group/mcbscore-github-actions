@@ -249,27 +249,6 @@ runs:
          k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
          k8s-token: ${{ env.K8S_TOKEN }}
 
-      # JDK installieren für jrunscript. Version 11, in der noch die Nashorn Engine vorhanden ist.
-      # Muss nicht zur Java-Version passen, in der der Microservice laufen soll.
-      # jrunscript wird in ms_properties_to_json.sh aufgerufen.
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: zulu
-          java-version: 11
-
-      # deployment.json aus deployment*.properties generieren
-      - name: Deployment Properties to JSON
-        env:
-          COMPONENT: ${{ inputs.component }}
-          ENVIRONMENT: ${{ inputs.environment }}
-          DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
-        shell: bash
-        run: |
-          { "./$DEPLOYMENT_PATH/scripts/microservice/ms_properties_to_json.sh" "$COMPONENT" "$ENVIRONMENT" \
-            || printf '%s\n' '{}'; } \
-          | tee deployment.generated.json
-
       - name: Helm Deployment
         env:
           COMPONENT: ${{ inputs.component }}
@@ -310,9 +289,8 @@ runs:
           chartDir="${DEPLOYMENT_PATH}/helm/${HELM_CHART}"
 
           # --values Helm Optionen
-          # Die letzte Datei gewinnt in helm --values.
+          # Bei gleichem Namen gewinnt die Property aus der Datei in der letzten --values Option.
           for f in \
-              deployment.generated.json \
               "$chartDir/stages/${ENVIRONMENT}.yaml" \
               kubernetes-deployment.generated.json \
               kubernetes-secrets.generated.json
@@ -328,7 +306,7 @@ runs:
           maxWait=${maxWait//h/hour}; maxWait=${maxWait//m/min}; maxWait=${maxWait//s/sec}
           maxWaitTimestamp=$(date -d "now +$maxWait" +%s)
           helmExit=0
-          if  helm list --namespace="$K8S_NAMESPACE" | cut -d ' ' -f 1 | grep -Fxq -- "$K8S_COMPONENT_NAME"; then
+          if helm list --namespace="$K8S_NAMESPACE" | cut -d ' ' -f 1 | grep -Fxq -- "$K8S_COMPONENT_NAME"; then
               while [ "$(date +%s)" -lt "$maxWaitTimestamp" ]; do
                   helmStatus=$(helm status --output=json --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" | jq -r .info.status)
                   if  [[ "${helmStatus#pending}" != "$helmStatus" ]]; then
