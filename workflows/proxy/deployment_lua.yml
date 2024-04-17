@@ -135,13 +135,12 @@ jobs:
       uses: ./mcbscore/github/actions/download-release-assets
       with:
         version: ${{ inputs.componentVersion }}
-        assetPattern: '*.lua'
+        assetPattern: '\w*.lua'
         targetPath: './release'
         token: ${{ env.TOKEN }}
 
     - name: Deployment
-      # TODO: Deployment
-      id: deploy-release-server-1
+      id: deploy Lua scripts
       uses: ./mcbscore/github/actions/deploy-lua-action
       with:
         pathName: 'release'

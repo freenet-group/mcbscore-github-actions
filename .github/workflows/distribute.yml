@@ -279,7 +279,7 @@ jobs:
           - { name: mcbscore-zap-mark-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_md, deployment_prod, deployment_prod_km, deployment_prod_md, ../encoding, postBuild" }
           - { name: mcbscore-zap-network-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_md, deployment_prod, deployment_prod_km, deployment_prod_md, ../encoding, postBuild" }
           - { name: mcbscore-zap-party-service-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_md, deployment_prod, deployment_prod_km, deployment_prod_md, ../encoding, postBuild" }
-          - { name: mcbscore-lua, branch: develop, group: proxy, workflows: "../check, build_lua, deployment_lua, deployment_lua_b2b, deployment_lua_dev, deployment_lua_git, deployment_lua_prod, ../encoding" }
+          - { name: mcbscore-lua, branch: develop, group: proxy, workflows: "../check, build_lua, deployment_lua, deployment_lua_b2b, deployment_lua_dev, deployment_lua_git, deployment_lua_prod, ../encoding, postBuild_lua" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -485,19 +485,21 @@ jobs:
   spotless:
     if: ${{ github.event.inputs.group == 'spotless' }}
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
+      fail-fast: false
       matrix:
         repository:
           - { name: lib-amount, branch: develop, group: standard }
           - { name: lib-annotation, branch: develop, group: standard }
           - { name: lib-common, branch: develop, group: standard }
+          - { name: lib-enterprise, branch: develop, group: standard }
           - { name: lib-io, branch: develop, group: standard }
           - { name: lib-persistence, branch: develop, group: standard }
           - { name: lib-process, branch: develop, group: standard }
           - { name: lib-relation, branch: develop, group: standard }
           - { name: lib-security, branch: develop, group: standard }
           - { name: lib-service, branch: develop, group: standard }
-          - { name: mcbs-connector-api, branch: develop, group: standard }
           - { name: mcbs-master, branch: develop, group: mcbs }
           - { name: mcbs-logging, branch: develop, group: mcbs }
           - { name: mcbscore-mandel, branch: develop, group: mandel }
@@ -511,7 +513,6 @@ jobs:
           - { name: mcbscore-framework, branch: develop, group: standard }
           - { name: mcbscore-fee-service, branch: develop, group: zap}
           - { name: mcbscore-invoice-service, branch: develop, group: zap}
-          - { name: mcbscore-mark-service, branch: develop, group: zap}
           - { name: mcbscore-network-service, branch: develop, group: zap}
           - { name: mcbscore-party-service, branch: develop, group: zap}
           - { name: mcbscore-yaml-transform-plugin, branch: develop, group: zap}
