@@ -90,7 +90,7 @@ jobs:
       id: determine-suffix
       shell: bash
       run: |
-        if  [[ '${{ inputs.externalProxy }}' == 'true' ]]; then
+        if [[ '${{ inputs.externalProxy }}' == 'true' ]]; then
           echo "suffix=-extern" >> $GITHUB_OUTPUT
         else if [[ '${{ inputs.regtestaltProxy }}' == 'true' ]];  then
           echo "suffix=-regtestalt" >> $GITHUB_OUTPUT
