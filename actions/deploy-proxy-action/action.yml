@@ -63,13 +63,16 @@ runs:
     - name: Deploy Proxy
       shell: bash
       run: |
-        if [[ '${{ inputs.externalProxy }}' == "true" ]]; then
+        if [[ '${{ inputs.externalProxy }}' == "true" ]] ; 
+        then
           proxyPath=proxies-extern
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-extern/g' '{}' +"
-        else if [[ '${{ inputs.regtestaltProxy }}' == "true" ]]; then
+        elif [[ '${{ inputs.regtestaltProxy }}' == "true" ]] ; 
+        then
           proxyPath=proxies-regtestalt
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestalt/g' '{}' +"
-        else if [[ '${{ inputs.regtestneuProxy }}' == "true" ]]; then
+        elif [[ '${{ inputs.regtestneuProxy }}' == "true" ]] ; 
+        then
           proxyPath=proxies-regtestneu
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestneu/g' '{}' +"
         else
