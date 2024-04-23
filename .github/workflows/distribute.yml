@@ -301,7 +301,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-rating, branch: develop, group: rating, workflows: "../check, build, dbChanges, ../encoding, postBuild" }
+          - { name: mcbscore-rating, branch: develop, group: rating, workflows: "../check, build, dbChanges, ../encoding, postBuild, Git-Deployment" }
     steps:
       - uses: actions/checkout@v4
         with:
