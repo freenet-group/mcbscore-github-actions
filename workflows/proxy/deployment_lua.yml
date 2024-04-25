@@ -140,7 +140,7 @@ jobs:
         token: ${{ env.TOKEN }}
 
     - name: Deployment
-      id: deploy Lua scripts
+      id: deploy-lua-scripts
       uses: ./mcbscore/github/actions/deploy-lua-action
       with:
         pathName: 'release'
