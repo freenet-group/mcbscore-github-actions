@@ -541,3 +541,12 @@ jobs:
               "issueList": "${{ steps.update_release_template.outputs.issue_list }}",
               "bambiArgs": "${{ env.BAMBI_ARGS }}"
             }
+            
+      - name: Tag löschen, wenn der Build fehlgeschlagen oder abgebrochen wurde
+        # Docker Container kann überschrieben werden
+        if: failure() || cancelled()
+        run: |
+          if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then 
+            git tag -d "${{ steps.version-calculation.outputs.new_version }}"
+            git push origin ":${{ steps.version-calculation.outputs.new_version }}"
+          fi
