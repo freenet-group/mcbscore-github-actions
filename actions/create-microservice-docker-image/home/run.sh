@@ -3,8 +3,8 @@ set -e
 set -o pipefail
 
 appInstance=$(hostname)
-heapDumpDir=dumps/${SERVICE_NAME}
-heapDumpFile=${appInstance}_${SERVICE_VERSION}_$(date +"%Y-%m-%dT%H%M%S").hprof
+heapDumpDir=${HEAPDUMP_DIR:-dumps/${SERVICE_NAME}}
+heapDumpFile=$(date +"%Y-%m-%dT%H%M%S")_${SERVICE_VERSION}_${appInstance}.hprof
 
 # (Per NFS gemountetes) Oberverzeichnis könnte readonly sein (=> mkdir scheitert)
 # oder Verzeichnis selbst schon existieren aber readonly (=> test -w scheitert).
