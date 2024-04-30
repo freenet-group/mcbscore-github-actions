@@ -26,7 +26,7 @@ on:
         required: false
         default: "false"
       assetPattern:
-        description: Name des zu depoyenden Scripts ("oidc_authorization_v2.lua" ist default)
+        description: Name des zu deployenden Scripts
         type: string
         required: false
         default: oidc_authorization_v2.lua
