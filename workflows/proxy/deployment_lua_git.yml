@@ -12,6 +12,11 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+      assetPattern:
+        description: Name des zu depoyenden Scripts ("oidc_authorization_v2.lua" ist default)
+        type: string
+        required: false
+        default: oidc_authorization_v2.lua
 
 jobs:
   deployment:
@@ -26,3 +31,4 @@ jobs:
       deploymentTarget:  ${{ matrix.target }}
       bambiNotification: true
       actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+      assetPattern: ${{ github.event.inputs.assetPattern }}
