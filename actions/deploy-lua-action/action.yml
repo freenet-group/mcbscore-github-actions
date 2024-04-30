@@ -46,7 +46,7 @@ runs:
           "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp"
 
         ssh $keyParameter '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
-          cd '/etc/nginx/shared/teams/mcbs-core/'@
+          cd '/etc/nginx/shared/teams/mcbs-core/'
           cp '/tmp/${{ inputs.pathName }}/*.lua' '.'
           chmod 644 *.lua
           
