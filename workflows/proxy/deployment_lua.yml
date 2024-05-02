@@ -25,6 +25,11 @@ on:
         type: string
         required: false
         default: "false"
+      assetPattern:
+        description: Name des zu deployenden Scripts
+        type: string
+        required: false
+        default: oidc_authorization_v2.lua
 
 
 jobs:
@@ -135,7 +140,7 @@ jobs:
       uses: ./mcbscore/github/actions/download-release-assets
       with:
         version: ${{ inputs.componentVersion }}
-        assetPattern: '\\\w*.lua'
+        assetPattern: ${{ inputs.assetPattern }}
         targetPath: './release'
         token: ${{ env.TOKEN }}
 

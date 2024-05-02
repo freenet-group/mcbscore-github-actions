@@ -12,6 +12,11 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+      assetPattern:
+        description: Name des zu deployenden Scripts
+        type: string
+        required: false
+        default: oidc_authorization_v2.lua        
 
 jobs:
   deployment:
@@ -22,3 +27,4 @@ jobs:
       stage: dev
       deploymentTarget: apigw-d1.mobilcom.de
       actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+      assetPattern: ${{ github.event.inputs.assetPattern }}
