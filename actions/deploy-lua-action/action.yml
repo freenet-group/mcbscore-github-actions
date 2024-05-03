@@ -47,9 +47,10 @@ runs:
 
         ssh $keyParameter '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
           cd '/etc/nginx/shared/teams/mcbs-core/'
-          cp '/tmp/${{ inputs.pathName }}/*.lua' '.'
+          ls -l
+          cp /tmp/${{ inputs.pathName }}/*.lua .
           chmod 644 *.lua
-          
+          ls -l
           sudo service nginx configtest
           sudo service nginx reload
           rm -rf '/tmp/${{ inputs.pathName }}'
