@@ -28,7 +28,6 @@ on:
           - restclient
           - simple
           - standard
-          - zap
           - test
           - spotless
 
@@ -431,34 +430,6 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  zap:
-    if: ${{ github.event.inputs.group == 'zap' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        repository:
-          - { name: mcbscore-business-transaction-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-contract-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-fee-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-invoice-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-mark-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-network-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: mcbscore-party-service, branch: develop, group: zap, workflows: "../check, build, ../encoding, postBuild" }
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Distribute Workflows
-        uses: ./.github/actions/distribute-workflows
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          workflows: ${{ matrix.repository.workflows }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
   test:
     # nur bei Input "test". Auch bei "ALL" wäre üblicherweise redundant, weil hier eine Teilmenge der obigen Repos konfiguriert wird.
     if: ${{ github.event.inputs.group == 'test' }}
@@ -504,18 +475,12 @@ jobs:
           - { name: mcbs-logging, branch: develop, group: mcbs }
           - { name: mcbscore-mandel, branch: develop, group: mandel }
           - { name: mcbscore-bot, branch: develop, group: standard }
-          - { name: mcbscore-business-transaction-service, branch: develop, group: zap }
           - { name: mcbscore-changelog-editor, branch: develop, group: standard }
-          - { name: mcbscore-contract-service, branch: develop, group: zap}
           - { name: mcbscore-customer-search-index, branch: develop, group: standard }
           - { name: mcbscore-db-replica, branch: develop, group: standard }
           - { name: mcbscore-es-plugin-collection, branch: develop }
           - { name: mcbscore-framework, branch: develop, group: standard }
-          - { name: mcbscore-fee-service, branch: develop, group: zap}
-          - { name: mcbscore-invoice-service, branch: develop, group: zap}
-          - { name: mcbscore-network-service, branch: develop, group: zap}
-          - { name: mcbscore-party-service, branch: develop, group: zap}
-          - { name: mcbscore-yaml-transform-plugin, branch: develop, group: zap}
+          - { name: mcbscore-yaml-transform-plugin, branch: develop, group: standard}
           - { name: metis, branch: develop, group: metis }
           - { name: ms-alteration, branch: develop, group: ms }
           - { name: ms-commondata, branch: develop, group: ms-cicd }
