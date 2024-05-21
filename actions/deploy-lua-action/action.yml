@@ -32,19 +32,18 @@ runs:
     - name: Deploy lua scripts
       shell: bash
       run: |
-
-       if [[ '${{ inputs.sshKey }}' != '' ]]; then
-          echo "key"
-          keyParameter='-o StrictHostKeyChecking=no -i id_rsa'
+        if [[ '${{ inputs.sshKey }}' != '' ]]; then
+           echo "key"
+           keyParameter='-o StrictHostKeyChecking=no -i id_rsa'
         else
           echo "no key"
           keyParameter=''
         fi
-        
+         
         scp $keyParameter \
           -r ./${{ inputs.pathName }} \
           "${{ inputs.deploymentUser }}@${{ inputs.host }}:/tmp"
-
+        
         ssh $keyParameter '${{ inputs.deploymentUser }}@${{ inputs.host }}' bash -e -s <<-SSH
           cd '/etc/nginx/shared/teams/mcbs-core/'
           ls -l
@@ -53,7 +52,7 @@ runs:
           ls -l
           sudo service nginx configtest
           sudo service nginx reload
-          rm -rf '/tmp/${{ inputs.pathName }}'
+          rm -rf '/tmp/${{ inputs.pathName }}/'
         SSH
 
     # ssh Konfig aufräumen
