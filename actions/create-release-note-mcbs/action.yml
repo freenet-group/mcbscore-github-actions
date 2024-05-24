@@ -80,9 +80,9 @@ runs:
         echo "## DB-Changes" >> $release.md
         if [ "$hasSql" = "JA" ]; then 
           echo "- [x] DB-Changes  " >>  $release.md
-          echo "     gitHub :  " >> $release.md
+          echo "     GIT :  " >> $release.md
           echo "    " >> $release.md
-          echo "     Artifactory :  " >> $release.md  
+          echo "     Produktion :  " >> $release.md  
           echo "    " >> $release.md
         
           echo "## DB-Schema-Anpassungen" >> $release.md
