@@ -69,7 +69,7 @@ Vor dem Aufruf der Action müssen folgende Rahmenbedingungen geschaffen werden:
       
       # Java / JDK 11 initialisieren
       - name: Setup Java JDK
-        uses: actions/setup-java@v1.4.3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ env.JAVA_VERSION }}
       

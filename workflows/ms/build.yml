@@ -179,14 +179,14 @@ jobs:
       # Existierende Draft Releases löschen
       - name: Delete draft releases
         if: env.BUILD_TYPE == 'DEVELOP'
-        uses: hugo19941994/delete-draft-releases@v1.0.1
+        uses: ./mcbscore/github/actions/delete-draft-release
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
       # Release JAR hinzufügen
       - name: Create and Upload Release JAR
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.COMPONENT_VERSION }}
           target_commitish: ${{ env.BRANCH_NAME }}
@@ -227,20 +227,7 @@ jobs:
 
       # Starte Deployment auf DEV
       - name: Invoke deployment workflow
-        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_dev.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: DEV Deployment
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "componentVersion": "${{ env.COMPONENT_VERSION }}", 
-              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
-            }
-
-      # Starte Deployment auf DEV (neuer Weg)
-      - name: Invoke deployment workflow
-        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_dev.yml') == ''
+        if: env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment.yml') != ''
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: Deployment
@@ -253,23 +240,9 @@ jobs:
               "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
             }
 
-      # Starte Deployment auf DEV
-      - name: Invoke deployment workflow (ADDITIONAL_DEPLOYMENT_COMPONENT)
-        if: ${{ env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_dev.yml') != '' && env.ADDITIONAL_DEPLOYMENT_COMPONENT != '' }}
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: DEV Deployment
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "additionalDeploymentComponent": "${{ env.ADDITIONAL_DEPLOYMENT_COMPONENT }}",
-              "componentVersion": "${{ env.COMPONENT_VERSION }}",
-              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
-            }
-
       # Starte Deployment auf DEV (neuer Weg)
       - name: Invoke deployment workflow (ADDITIONAL_DEPLOYMENT_COMPONENT)
-        if: ${{ env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment_dev.yml') == '' && env.ADDITIONAL_DEPLOYMENT_COMPONENT != '' }}
+        if: ${{ env.BUILD_TYPE == 'DEVELOP' && hashFiles('.github/**/deployment.yml') != '' && env.ADDITIONAL_DEPLOYMENT_COMPONENT != '' }}
         uses: benc-uk/workflow-dispatch@v1
         with:
           workflow: Deployment

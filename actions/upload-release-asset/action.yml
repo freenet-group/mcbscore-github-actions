@@ -1,0 +1,66 @@
+name: Upload Release Asset
+description: Aktion zum Hochladen von GitHub-Release-Asset
+
+inputs:
+  uploadUrl:
+    description: Die URL zum Hochladen von Assets in die Version, die von GitHub Actions für zusätzliche Zwecke verwendet werden könnte.
+    required: true
+  assetName:
+    description: Der Name des Asset, das hochgeladen werden soll.
+    required: true
+  assetContentType:
+    description: Der Inhaltstyp des Assets, das hochgeladen werden soll.
+    required: false
+    default: application/octet-stream
+
+outputs:
+  browserDownloadUrl:
+    description:  Die URL zum Herunterladen des Asset.
+    value: ${{ steps.upload-release-asset.outputs.browserDownloadUrl }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: upload-release-asset
+      shell: bash
+      run: |
+        authHeader="Authorization: token ${{ env.TOKEN }}"
+
+        function gh_curl() {
+          curl -H "${authHeader}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            $@
+        }
+
+        uploadAsset() {
+
+          contentLengthHeader="Content-Length: $(stat -c%s "$1")";
+          contentTypeHeader="Content-Type: ${{ inputs.assetContentType }}";
+          
+          # Upload the file
+          curl \
+          -f \
+          -sSL \
+          -XPOST \
+          -H "${authHeader}" \
+          -H "${contentLengthHeader}" \
+          -H "${contentTypeHeader}" \
+          --upload-file "$1" \
+          "$2";
+        }
+        
+        uploadFile=$(find . -type f -name "${{ inputs.assetName }}")
+        if [ -n "$uploadFile" ]; then
+
+          uploadUrl=${{ inputs.uploadUrl }}
+          uploadUrl=${uploadUrl/\{?name,label\}/?name=${{ inputs.assetName }}}
+          echo "uploadUrl=$uploadUrl"
+          
+          resultJson=$(uploadAsset $uploadFile $uploadUrl)
+          echo "resultJson=$resultJson"
+        
+          outVarBrowserDownloadUrl=`jq -r .browser_download_url <<< "$resultJson"`
+          echo "browserDownloadUrl=$outVarBrowserDownloadUrl" >> $GITHUB_OUTPUT
+        else
+          echo "Asset ${{ inputs.assetName }} nicht gefunden"
+        fi

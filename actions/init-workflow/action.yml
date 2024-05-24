@@ -7,7 +7,7 @@ inputs:
     type: boolean
     default: false
   installJavaWithNashornEngine:
-    description: JDK mit Nashorn Engine installieren
+    description: JDK mit Nashorn Engine installieren?
     type: boolean
     default: false
   installNodeJs:
@@ -20,6 +20,10 @@ inputs:
     default: false
   installGithubCli:
     description: Github CLI installieren?
+    type: boolean
+    default: false
+  installGradleSetup:
+    description: gradle Setup benutzen?
     type: boolean
     default: false
   configurationPrefix:
@@ -78,3 +82,11 @@ runs:
     - name: Setup Github CLI
       if: ${{ inputs.installGithubCli == 'true' }}
       uses: freenet-actions/setup-github-cli@v3
+
+    # gradle: Dependency-Graph Snapshot erstellen und übermitteln,
+    # um Dependabot Security-Allerts für anfällige dependencies zu generieren
+    - name: Setup Gradle
+      if: ${{ inputs.installGradleSetup == 'true' }}
+      uses: gradle/actions/setup-gradle@v3
+      with:
+        dependency-graph: generate-and-submit

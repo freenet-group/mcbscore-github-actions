@@ -1,4 +1,6 @@
 name: PostBuild
+#Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
+run-name: PostBuild ${{ github.event.inputs.releaseVersion }}
 
 on:
   workflow_dispatch:
@@ -12,7 +14,7 @@ on:
       epic:
         description: Das EPIC (JIRA) als Releaseklammer (META-170 = "unbestimmt")
         required: false
-        default: META-170
+        default: META-170  
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
@@ -26,8 +28,7 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       MAIL_TEMPLATE: B_MS.ftl
-      TEAMS_MAIL: 3e0e2102.freenetgroup.onmicrosoft.com@emea.teams.ms
-      JIRA_PROJECT: MCBS
+      TEAMS_MAIL: d802e989.freenetgroup.onmicrosoft.com@emea.teams.ms
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -58,12 +59,12 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
-            /github/common/jira/api_url = JIRA_API_URL, 
-            /github/common/sonar/api_url = SONAR_API_URL, 
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
+            /github/common/jira/api_url = JIRA_API_URL, 
+            /github/common/jira/jira_cloud_web_url = JIRA_CLOUD_WEB_URL,
+            /github/common/JIRA_URL2 = JIRA_URL2,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL ,
-            /github/common/jira/jira_cloud_web_url = JIRA_CLOUD_WEB_URL
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL 
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -86,15 +87,29 @@ jobs:
       # ##################################################################################
       # Erzeugen von Version / ComponentVersion in JIRA
       # ##################################################################################
+      # TODO: Frage an Bernd: Müssen die getrennt ausgeführt werden? Oder könnte man das so umbauen und nur einmal starten? jiraProject: ABRMS,MCBS
       - name: jiraConfig-MCBS
         uses: ./mcbscore/github/actions/jira-configuration-jc
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          # jiraUrl2: ${{ env.JIRA_URL2 }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          jiraProject: ${{ env.JIRA_PROJECT }}
+          jiraProject: MCBS
           component: ${{ env.COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           componentList: ${{ env.COMPONENT }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+
+      - name: jiraConfig-ABRMS
+        uses: ./mcbscore/github/actions/jira-configuration-jc
+        with:
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          # jiraUrl2: ${{ env.JIRA_URL2 }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          jiraProject: ABRMS
+          component: ${{ env.COMPONENT }}
+          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentList: "${{ env.COMPONENT }},ABRMS (unspez.)"
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -108,6 +123,27 @@ jobs:
           issueList: ${{ github.event.inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
+      # ##################################################################################
+      # Erzeugen der BAMBI-Einträge
+      # ##################################################################################
+      - name: convert issueList
+        run: |
+          OUTPUT=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
+          echo "IL=$(echo $OUTPUT)" >> $GITHUB_ENV
+               
+      
+      - name: write bambi-entry
+        run: |
+           echo "Create BAMBI-Entry : "
+           echo "${{ env.IL }}"
+           http_response=$(curl -w "%{http_code}\n" --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild' --header 'Content-Type: application/json' --data-raw '{    "componentName": "${{ env.DACOMPONENT }}",    "versionNo": "${{ github.event.inputs.releaseVersion }}",    "buildUser": "mcbstest",    "issueList": "${{ env.IL }}"  }' )
+           echo "Response : ${http_response} \n"
+           http_code=$(echo $http_response |  cut -d '}' -f 2)
+           if [ $http_code != 200 ] ; then
+             echo "ErrorCode : $http_code"
+             exit 1
+           fi
+           
       # ##################################################################################
       # Eintrag der fixVersion
       # ##################################################################################
@@ -123,15 +159,16 @@ jobs:
           included_components: ${{ env.INCLUDED_COMPONENTS }}
 
       # ##################################################################################
-      # set Issues "done"
+      # set Issues "closed"
       # ##################################################################################
-      - name: setIssueListDone
-        uses: ./mcbscore/github/actions/set-issue-list-done
+      - name: setIssueListClosed
+        uses: ./mcbscore/github/actions/set-issue-list-closed
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           issueList: ${{ github.event.inputs.issueList }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          atlassianDeveloperTools: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          loglevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}    
 
       # ##################################################################################
       # Setzen eines Build-Kommentars an den Issues
@@ -143,33 +180,6 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
           issueList: ${{ github.event.inputs.issueList }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-
-      # ###################################################################################
-      # Auswertung der Coverage
-      # ##################################################################################
-      - name: Fetch Sonar-Coverage
-        id: fetch-coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
-        uses: ./mcbscore/github/actions/sonar-check
-        with:
-          sonarUrl: ${{ env.SONAR_API_URL }}
-          sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          projectKeyPath: ${{ env.COVERAGE_PATH }}
-          projectKeyName: ${{ env.COVERAGE_APP }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-
-      - name: Evaluate Sonar-Coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') && (steps.fetch-coverage.outputs.coverage < env.COVERAGE_LIMIT) && (env.COVERAGE_FAIL == 'TRUE') }}
-        uses: ./mcbscore/github/actions/create-sonar-issue
-        with:
-          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          jiraProject: ${{ env.JIRA_PROJECT }}
-          component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
-          coverageLimit: ${{ env.COVERAGE_LIMIT }}
-          coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -202,7 +212,7 @@ jobs:
           jiraWebUrl: ${{ env.JIRA_CLOUD_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
-          hasDeployment: "NEIN"
+          hasDeployment: ${{ env.DEPLOYMENT }}
           hasDependencies: "NEIN"
           dependentIssues: "keine"
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
@@ -224,6 +234,7 @@ jobs:
           epic: ${{ github.event.inputs.epic }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
+      
       # ###################################################################################
       # Teams-Notification
       # ###################################################################################
@@ -241,20 +252,8 @@ jobs:
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
           mailAddress: ${{ env.TEAMS_MAIL }}
-          purpose: MCBSBuild
+          purpose: MSBuild
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          repositoryName: ${{ github.REPOSITORY }}
+          repositoryName: ${{ github.REPOSITORY }}    
+      
 
-      # ##################################################################################
-      # Issue zur BE-Integration
-      # ##################################################################################
-      - name: Create BE-Issue
-        uses: ./mcbscore/github/actions/create-backend-issue
-        with:
-          jiraUrl: ${{ secrets.JIRA_API_V2 }}
-          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
-          epic: ${{ github.event.inputs.epic }}
-          hasDbChanges: ${{ steps.fetch-additional-information.outputs.sql }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}

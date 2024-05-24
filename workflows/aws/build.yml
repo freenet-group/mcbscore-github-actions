@@ -87,7 +87,7 @@ jobs:
       # Existierende Draft Releases löschen
       - name: Delete draft releases
         if: env.BUILD_TYPE == 'DEVELOP'
-        uses: hugo19941994/delete-draft-releases@v1.0.1
+        uses: ./mcbscore/github/actions/delete-draft-release
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
@@ -101,7 +101,7 @@ jobs:
 
       # MD Release ZIP hinzufügen
       - name: Upload Archive
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         with:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}

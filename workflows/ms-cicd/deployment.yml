@@ -213,7 +213,7 @@ jobs:
     needs: [create-deployment]
     # if: platforms enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
     if: contains(format(', {0}, ', inputs.platforms), ', k8s, ') || contains(format(',{0},', inputs.platforms), ',k8s,')
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@1.0.1
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@2.0.0
     secrets: inherit
     with:
       componentVersion: ${{ github.event.inputs.componentVersion }}
@@ -363,43 +363,49 @@ jobs:
           testDir: './sanityTests'
           testFiles: 'SanityTest.feature'
 
-  upload_developerportal:
-    needs: [sanity_test]
-    # Im Developer Portal gibt es keine Umgebung "b2b"
-    if: $(github.event.inputs.environment != 'b2b'}}
-    # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
-    runs-on: [self-hosted, k8s]
-    steps:
-      - name: Developer Portal Upload starten
-        id: developerPortalUpload
-        if: hashFiles('.github/**/developerPortal.yml') != ''
-        uses: benc-uk/workflow-dispatch@v1.2.2
-        with:
-          workflow: DeveloperPortal Upload
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "environment": ${{ github.event.inputs.environment }},
-              "component": "${{ github.event.inputs.component }}",
-              "componentVersion": "${{ github.event.inputs.componentVersion }}"
-            }
+  developer-portal-upload:
+    uses: ./.github/workflows/developerPortal.yml
+    secrets: inherit
+    with:
+      component: "${{ inputs.component }}"
+      environment: "${{ inputs.environment }}"
+      componentVersion: "${{ inputs.componentVersion }}"
+      actionsRepositoryBranch: "${{ inputs.actionsRepositoryBranch }}"
 
   bambi-notification:
     runs-on: [self-hosted, k8s]
-    needs: [deploy, deploy_k8s]
+    needs: [deploy, deploy_k8s, developer-portal-upload]
     if: ${{ always() && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
     steps:
-      - name: Feststellen ob Deployment erfolgreich war
-        id: get_success_state
-        if: ${{ !failure() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') }}
-        shell: bash
-        run: echo "DEPLOY_STATE=successful" >> $GITHUB_ENV
+      - name: Ermitteln des Gesamtstatus
+        run: |
+          failedJobs=""
+          delimiter=""
+          
+          # prüfe, ob deploy failed oder cancelled ist
+          if [[ "${{ needs.deploy.result }}" == "failure" ]] || [[ "${{ needs.deploy.result }}" == "cancelled" ]]; then
+            failedJobs=${failedJobs}${delimiter}deploy
+            delimiter=,
+          fi
 
-      - name: Feststellen ob Deployment fehlgeschlagen ist
-        id: get_error_state
-        if: ${{ failure() || contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
-        shell: bash
-        run: echo "DEPLOY_STATE=failed" >> $GITHUB_ENV
+          # prüfe, ob deploy_k8s failed oder cancelled ist
+          if [[ "${{ needs.deploy_k8s.result }}" == "failure" ]] || [[ "${{ needs.deploy_k8s.result }}" == "cancelled" ]]; then
+            failedJobs=${failedJobs}${delimiter}deploy_k8s
+            delimiter=,
+          fi
+
+          # prüfe, ob developer-portal-upload failed oder cancelled ist
+          if [[ "${{ needs.developer-portal-upload.result }}" == "failure" ]] || [[ "${{ needs.developer-portal-upload.result }}" == "cancelled" ]]; then
+            failedJobs=${failedJobs}${delimiter}developer-portal-upload
+            delimiter=,
+          fi
+          
+          if [ -z "$failedJobs" ];
+          then
+            echo "DEPLOY_STATE=successful" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_STATE=failure:${failedJobs}" >> $GITHUB_ENV
+          fi
 
       - name: Bambi Meldung
         id: deploy_state
@@ -418,7 +424,7 @@ jobs:
             "deployState": "${{ env.DEPLOY_STATE }}",
             "deployUser": "${{ github.actor }}"
           }')
-          
+
           statusCode="${curlResult:${#curlResult}-3}"
           echo "statusCode: $statusCode"
 

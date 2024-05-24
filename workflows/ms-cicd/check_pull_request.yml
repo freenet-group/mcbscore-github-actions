@@ -6,7 +6,8 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  pull_request:
+  pull_request: 
+    types: [opened, labeled, unlabeled, synchronize, reopened]
 
 jobs:
   # Syncronisiert die GitHub PR Labels mit den Jira Components
@@ -94,7 +95,7 @@ jobs:
       pull-requests: write
     steps:
       - name: DOGS Benachrichtigung
-        uses: freenet-group/notify-on-label@1.0.6
+        uses: freenet-group/notify-on-label@1.0.10
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           label_list: 'ms-configuration:yes, ms-deployment:yes'

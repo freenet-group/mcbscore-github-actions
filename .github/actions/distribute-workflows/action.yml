@@ -165,6 +165,20 @@ runs:
         cd ${{ inputs.repositoryName }}
         git add -A .github/templates/
 
+    # Clean up existing dependabot and Copy new dependabot
+    - name: Manage dependabot
+      shell: bash
+      run: |
+        # Cleanup
+        rm -f ${{ inputs.repositoryName }}/.github/dependabot.yml
+        
+        # Copy new dependabot
+        cp ./dependabot/dependabot.yml ${{ inputs.repositoryName }}/.github/dependabot.yml
+        
+        # Stage changes
+        cd ${{ inputs.repositoryName }}
+        git add -A .github/dependabot.yml
+
     # Commit and Push changes
     - name: Commit and Push
       shell: bash

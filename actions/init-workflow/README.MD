@@ -9,6 +9,10 @@ Github-Action zum Initialisieren von Workflows. Dazu gehören:
     description: JDK installieren?
     type: boolean
     default: false
+### installJavaWithNashornEngine
+    description: JDK mit Nashorn Engine installieren?
+    type: boolean
+    default: false
 ### installNodeJs
     description: Node.js installieren?
     type: boolean
@@ -17,6 +21,24 @@ Github-Action zum Initialisieren von Workflows. Dazu gehören:
     description: jq installieren?
     type: boolean
     default: false
+### installGithubCli
+    description: Github CLI installieren?
+    type: boolean
+    default: false
+### installGradleSetup
+    description: Soll gradle eingerichtet werden?
+    type: boolean
+    default: false
+### configurationPrefix:
+    description: Prefix für workflow.properties Dateien. Beispiel: customer-workflow.properties
+    type: string
+    required: false
+    default:
+### lookupBasePath:
+    description: Basispfad für den Lookup der Properties Dateien
+    type: string
+    required: false
+    default: .
 
 ---
 
@@ -41,3 +63,7 @@ Folgende Properties müssen in der Datei workflow.properties enthalten sein:
         uses: ./mcbscore/github/actions/init-workflow
         with:
           installJava: true
+          installGithubCli: true
+          installJq: true
+          configurationPrefix: ${{ matrix.product.name }}
+          lookupBasePath: ${{ github.workspace }}
