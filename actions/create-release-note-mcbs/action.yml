@@ -62,7 +62,7 @@ runs:
         echo "| Komponente | geplant | freigegeben |" >> $release.md
         echo "| ---------- | ------- | ----------- |" >> $release.md
         echo "| MCBS (allg.) | X | |"  >> $release.md
-        echo "| MCBSServices | X | |"  >> $release.md
+        # echo "| MCBSServices | X | |"  >> $release.md
         
         #Java-Version
         echo "## Java" >> $release.md
@@ -72,7 +72,7 @@ runs:
         
         #Sonstiges
         echo "## Ergänzungen" >> $release.md
-        echo "| BE-Version |  |" >> $release.md
+        # echo "| BE-Version |  |" >> $release.md
         echo "| ----- | - " >> $release.md
         echo "| Bemerkungen |  |" >> $release.md
         
@@ -109,8 +109,8 @@ runs:
         echo "## Downloads" >> $release.md
         echo "gitHub :  " >> $release.md
         echo " ${{ inputs.releaseUrl }}  " >> $release.md
-        echo "Artifactory : " >> $release.md
-        echo "https://artifactory.mobilcom.de/artifactory/simple/md-release/de/md/mcbs/${{ inputs.componentVersion }}/"  >> $release.md
+        # echo "Artifactory : " >> $release.md
+        # echo "https://artifactory.mobilcom.de/artifactory/simple/md-release/de/md/mcbs/${{ inputs.componentVersion }}/"  >> $release.md
         echo "##  " >> $release.md
         echo "ImplementedIssues: $issueList" >> $release.md
         
