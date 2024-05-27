@@ -91,17 +91,17 @@ runs:
         then
           proxyPath=proxies-b2balt
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-b2balt/g' '{}' +"
-          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/proxy_path (http:\/\/|https:\/\/|)(.[^\/]*)(.+)/proxy_path \1\2.B2BALT\3/g' '{}' +"
+          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/proxy_pass (http:\/\/|https:\/\/|)(.[^\/]*)(.+)/proxy_pass \1\2.B2BALT\3/g' '{}' +"
         elif [[ '${{ inputs.b2bneuProxy }}' == "true" ]] ; 
         then
           proxyPath=proxies-b2bneu
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regb2bneu/g' '{}' +"
-          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/proxy_path (http:\/\/|https:\/\/|)(.[^\/]*)(.+)/proxy_path \1\2.B2BNEU\3/g' '{}' +"
+          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/proxy_pass (http:\/\/|https:\/\/|)(.[^\/]*)(.+)/proxy_pass \1\2.B2BNEU\3/g' '{}' +"
         elif [[ '${{ inputs.ngbillingProxy }}' == "true" ]] ; 
         then
           proxyPath=proxies-ngbilling
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-ngbilling/g' '{}' +"
-          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/proxy_path (http:\/\/|https:\/\/|)(.[^\/]*)(.+)/proxy_path \1\2.NGBILLING\3/g' '{}' +"
+          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/proxy_pass (http:\/\/|https:\/\/|)(.[^\/]*)(.+)/proxy_pass \1\2.NGBILLING\3/g' '{}' +"
         else
           proxyPath=proxies
           replaceCmd=''
