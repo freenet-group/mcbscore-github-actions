@@ -32,6 +32,15 @@ inputs:
   regtestneuProxy:
     description: 'Flag für regtestneu Deployment'
     required: false
+  b2baltProxy:
+    description: 'Flag für b2balt Deployment'
+    required: false
+  b2bneuProxy:
+    description: 'Flag für b2bneu Deployment'
+    required: false
+  ngbillingProxy:
+    description: 'Flag für ngbilling Deployment'
+    required: false
   additionalTarParams:
     description: 'Ermöglicht die Angabe zusätzlicher Parameter für den tar Befehl'
     required: false
@@ -67,17 +76,36 @@ runs:
         then
           proxyPath=proxies-extern
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-extern/g' '{}' +"
+          replaceUpstreamCmd=''
         elif [[ '${{ inputs.regtestaltProxy }}' == "true" ]] ; 
         then
           proxyPath=proxies-regtestalt
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestalt/g' '{}' +"
+          replaceUpstreamCmd=''
         elif [[ '${{ inputs.regtestneuProxy }}' == "true" ]] ; 
         then
           proxyPath=proxies-regtestneu
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestneu/g' '{}' +"
+          replaceUpstreamCmd=''
+        elif [[ '${{ inputs.b2baltProxy }}' == "true" ]] ; 
+        then
+          proxyPath=proxies-b2balt
+          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-b2balt/g' '{}' +"
+          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/(mcbs\.|MCBS\.)(.[^\/;\)\x27]*)/&.B2BALT/g' '{}' +"
+        elif [[ '${{ inputs.b2bneuProxy }}' == "true" ]] ; 
+        then
+          proxyPath=proxies-b2bneu
+          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regb2bneu/g' '{}' +"
+          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/(mcbs\.|MCBS\.)(.[^\/;\)\x27]*)/&.B2BNEU/g' '{}' +"
+        elif [[ '${{ inputs.ngbillingProxy }}' == "true" ]] ; 
+        then
+          proxyPath=proxies-ngbilling
+          replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-ngbilling/g' '{}' +"
+          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/(mcbs\.|MCBS\.)(.[^\/;\)\x27]*)/&.NGBILLING/g' '{}' +"
         else
           proxyPath=proxies
           replaceCmd=''
+          replaceUpstreamCmd=''
         fi
         
         if [[ '${{ inputs.sshKey }}' != '' ]]; then
@@ -98,6 +126,7 @@ runs:
           sudo mkdir '/var/log/proxies/${{ inputs.proxyName }}' || echo "Logverzeichnis existiert"
           tar xfvz '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz' '${{ inputs.additionalTarParams }}' --no-same-owner
           $replaceCmd
+          $replaceUpstreamCmd
           sudo service nginx configtest
           sudo service nginx reload
           rm '/tmp/${{ inputs.component }}-${{ inputs.company }}-${{ inputs.componentVersion }}-$proxyPath.tar.gz'
