@@ -30,6 +30,18 @@ on:
         type: boolean
         required: false
         default: false
+      b2baltProxy:
+        description: Flag für b2balt Deployment
+        type: boolean
+        required: false
+      b2bneuProxy:
+        description: Flag für b2bneu Deployment
+        type: boolean
+        required: false
+      ngbillingProxy:
+        description: Flag für ngbilling Deployment
+        type: boolean
+        required: false
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         type: string
@@ -99,6 +111,15 @@ jobs:
         elif [[ '${{ inputs.regtestneuProxy }}' == 'true' ]] ;  
         then
           echo "suffix=-regtestneu" >> $GITHUB_OUTPUT
+        elif [[ '${{ inputs.b2baltProxy }}' == 'true' ]] ;  
+        then
+          echo "suffix=-b2balt" >> $GITHUB_OUTPUT
+        elif [[ '${{ inputs.b2bneuProxy }}' == 'true' ]] ;  
+        then
+          echo "suffix=-b2bneu" >> $GITHUB_OUTPUT
+        elif [[ '${{ inputs.ngbillingProxy }}' == 'true' ]] ;  
+        then
+          echo "suffix=-ngbilling" >> $GITHUB_OUTPUT
         else
           echo "suffix=" >> $GITHUB_OUTPUT
         fi
@@ -240,7 +261,7 @@ jobs:
       # Spezialbehandlung für OIDC
       shell: bash
       run: |
-        if  [[ ${{ env.PROXY_NAME }} == oidc && (${{ inputs.externalProxy }} == 'true' || ${{ inputs.regtestaltProxy }} == 'true' || ${{ inputs.regtestneuProxy }} == 'true') ]] ;
+        if  [[ ${{ env.PROXY_NAME }} == oidc && (${{ inputs.externalProxy }} == 'true' || ${{ inputs.regtestaltProxy }} == 'true' || ${{ inputs.regtestneuProxy }} == 'true' || ${{ inputs.b2baltProxy }} == 'true' || ${{ inputs.b2bneuProxy }} == 'true' || ${{ inputs.ngbillingProxy }} == 'true') ]] ;
         then
           echo "TAR_SUB_COMMAND=--exclude='http.conf'" >> $GITHUB_ENV
         else
@@ -263,6 +284,9 @@ jobs:
         externalProxy: ${{ inputs.externalProxy }}
         regtestaltProxy: ${{ inputs.regtestaltProxy }}
         regtestneuProxy: ${{ inputs.regtestneuProxy }}
+        b2baltProxy: ${{ inputs.b2baltProxy }}
+        b2bneuProxy: ${{ inputs.b2bneuProxy }}
+        ngbillingProxy: ${{ inputs.ngbillingProxy }}
         additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
     # Deployment
@@ -281,6 +305,9 @@ jobs:
         externalProxy: ${{ inputs.externalProxy }}
         regtestaltProxy: ${{ inputs.regtestaltProxy }}
         regtestneuProxy: ${{ inputs.regtestneuProxy }}
+        b2baltProxy: ${{ inputs.b2baltProxy }}
+        b2bneuProxy: ${{ inputs.b2bneuProxy }}
+        ngbillingProxy: ${{ inputs.ngbillingProxy }}
         additionalTarParams: ${{ env.TAR_SUB_COMMAND }}
 
     # Deployment als erfolgreich markieren

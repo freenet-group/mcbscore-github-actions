@@ -33,6 +33,18 @@ Github Action zum Deployment eines Releases eines Proxies.
     description: Flag für regtestneu Deployment
     type: boolean
     required: false
+### b2baltProxy
+    description: Flag für b2balt Deployment
+    type: boolean
+    required: false
+### b2bneuProxy
+    description: Flag für b2bneu Deployment
+    type: boolean
+    required: false
+### ngbillingProxy
+    description: Flag für ngbilling Deployment
+    type: boolean
+    required: false
 
 ---
 
