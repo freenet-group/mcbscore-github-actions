@@ -78,12 +78,22 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+
+    - name: Select Github Secrets for AWS
+      uses: ./.github/actions/select-aws-github-secrets
+      with:
+        environment: ${{ inputs.stage }}
+        awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+        awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
     # Secrets aus AWS auslesen
     - name: Read and set AWS credentials
       uses:  ./.github/actions/read-aws-secrets
       with:
-        awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+        awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
         awsParameterPairs: |
           /github/secrets/mcbs_token = TOKEN
 
@@ -165,12 +175,21 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Select Github Secrets for AWS
+      uses: ./.github/actions/select-aws-github-secrets
+      with:
+        environment: ${{ inputs.stage }}
+        awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+        awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
     - id: read-aws-secrets
       name: Read AWS Secrets
       uses: ./.github/actions/read-aws-secrets
       with:
-        awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+        awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
         awsParameterPairs: |
           /github/secrets/mcbs_token = TOKEN,
           /github/secrets/deployment_user = DEPLOYMENT_USER,
@@ -243,8 +262,8 @@ jobs:
       if: hashFiles('./release/secretMappings.txt') != ''
       uses: ./mcbscore/github/actions/replace-aws-parameters
       with:
-        awsKey: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        awsSecret: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        awsKey: ${{ env.AWS_ACCESS_KEY_ID }}
+        awsSecret: ${{ env.AWS_SECRET_ACCESS_KEY }}
         directory: ./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}
         parameterFile: ./release/secretMappings.txt
 

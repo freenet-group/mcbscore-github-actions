@@ -40,7 +40,7 @@ runs:
           /config/ms/application_${{ inputs.environment }}/sts.md.client.mcbs-test-client.clientId = SANITY_CLIENT_ID,
           /config/ms/application_${{ inputs.environment }}/sts.md.client.mcbs-test-client.clientSecret = SANITY_CLIENT_SECRET,
           /config/ms/application_${{ inputs.environment }}/sts.md.base.url = SANITY_STS_URL,
-          /config/ms/application_${{ inputs.environment }}/api.gateway.md.${{ inputs.environment }}.base.url = SANITY_API_GATEWAY,
+          /config/ms/application_${{ inputs.environment }}/api.gateway.md.base.url = SANITY_API_GATEWAY,
           /config/ms/application/test.sanity.config = SANITY_GLOBAL_CONFIG,
           /config/ms/application_${{ inputs.environment }}/test.sanity.config = SANITY_ENV_CONFIG,
           /config/ms/${{ inputs.component }}/test.sanity.config = SANITY_COMPONENT_CONFIG,

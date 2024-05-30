@@ -61,11 +61,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: Read and set AWS credentials
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
@@ -114,11 +123,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: Read AWS Secrets
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
@@ -138,7 +156,6 @@ jobs:
           state: "failure"
           deployment-id: ${{ needs.create-deployment.outputs.deployment_id }}
 
-
   sanity_test:
     needs: [deploy_k8s]
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
@@ -149,11 +166,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: Read and set AWS credentials
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
@@ -178,8 +204,8 @@ jobs:
         with:
           component: '${{ inputs.component }}'
           environment: '${{ inputs.environment }}'
-          awsAccessKeyId: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          awsSecretAccessKey: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          awsAccessKeyId: '${{ env.AWS_ACCESS_KEY_ID }}'
+          awsSecretAccessKey: '${{ env.AWS_SECRET_ACCESS_KEY }}'
           karateVersion: '${{ env.KARATE_VERSION }}'	#aus workflow.properties per init-workflow
           testDir: './sanityTests'
           testFiles: 'SanityTest.feature'
