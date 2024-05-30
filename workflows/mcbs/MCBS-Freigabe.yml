@@ -111,6 +111,8 @@ jobs:
             "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" \
             "${{ github.event.inputs.iterations }}"
           cat issueList.txt
+          issues=$(cat issues.txt)
+          echo "issues=$issues" >> $GITHUB_ENV          
           cat releaseIssues.csv
       # ##################################################################################
       # Ermitteln der ZusatzInfos zum Release
@@ -121,7 +123,8 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          # issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ env.issues }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ###################################################################################
