@@ -130,7 +130,7 @@ jobs:
         path: ${{ env.REPOSITORY_PATH }}
 
     - name: Select Github Secrets for AWS
-      uses: ./.github/actions/select-aws-github-secrets
+      uses: ./repository/.github/actions/select-aws-github-secrets
       with:
         environment: ${{ inputs.environment }}
         awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
