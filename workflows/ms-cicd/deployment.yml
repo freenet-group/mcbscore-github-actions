@@ -89,11 +89,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: AWS Parameter als Umgebungsvariablen setzen
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
@@ -137,11 +146,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: AWS Parameter als Umgebungsvariablen setzen
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/deployment_user = DEPLOYMENT_USER,
@@ -227,11 +245,20 @@ jobs:
       - name: Repository auschecken
         uses: actions/checkout@v4
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: AWS Parameter als Umgebungsvariablen setzen
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
@@ -294,11 +321,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: AWS Parameter als Umgebungsvariablen setzen
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
@@ -328,11 +364,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Select Github Secrets for AWS
+        uses: ./.github/actions/select-aws-github-secrets
+        with:
+          environment: ${{ inputs.environment }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsAccessKeyIdProd: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsSecretAccessKeyProd: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+
       - name: AWS Parameter als Umgebungsvariablen setzen
         uses: ./.github/actions/read-aws-secrets
         with:
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsAccessKeyId: ${{ env.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ env.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN
 
@@ -357,8 +402,8 @@ jobs:
         with:
           component: '${{ inputs.component }}'
           environment: '${{ inputs.environment }}'
-          awsAccessKeyId: '${{ secrets.AWS_ACCESS_KEY_ID }}'
-          awsSecretAccessKey: '${{ secrets.AWS_SECRET_ACCESS_KEY }}'
+          awsAccessKeyId: '${{ env.AWS_ACCESS_KEY_ID }}'
+          awsSecretAccessKey: '${{ env.AWS_SECRET_ACCESS_KEY }}'
           karateVersion: '${{ env.KARATE_VERSION }}'
           testDir: './sanityTests'
           testFiles: 'SanityTest.feature'
