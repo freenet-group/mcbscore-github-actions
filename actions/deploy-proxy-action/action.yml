@@ -81,12 +81,12 @@ runs:
         then
           proxyPath=proxies-regtestalt
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestalt/g' '{}' +"
-          replaceUpstreamCmd=''
+          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/(mcbs\.|MCBS\.)(.[^\/;\)\x27]*)/&.REGTESTALT/g' '{}' +"
         elif [[ '${{ inputs.regtestneuProxy }}' == "true" ]] ; 
         then
           proxyPath=proxies-regtestneu
           replaceCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i 's/nginx\/proxies/nginx\/proxies-regtestneu/g' '{}' +"
-          replaceUpstreamCmd=''
+          replaceUpstreamCmd="find ./${{ inputs.proxyName }} -type f -exec sed -i -r 's/(mcbs\.|MCBS\.)(.[^\/;\)\x27]*)/&.REGTESTNEU/g' '{}' +"
         elif [[ '${{ inputs.b2baltProxy }}' == "true" ]] ; 
         then
           proxyPath=proxies-b2balt
