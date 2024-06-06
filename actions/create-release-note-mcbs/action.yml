@@ -73,8 +73,8 @@ runs:
         #Sonstiges
         echo "## Ergänzungen" >> $release.md
         # echo "| BE-Version |  |" >> $release.md
-        echo "| ----- | - " >> $release.md
         echo "| Bemerkungen |  |" >> $release.md
+        echo "| ----- | - " >> $release.md
         
         
         echo "## DB-Changes" >> $release.md
