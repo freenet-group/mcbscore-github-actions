@@ -265,6 +265,9 @@ runs:
         with:
          k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
          k8s-token: ${{ env.K8S_TOKEN }}
+         # Teamskanal Container & Cloud / 1st Level Support 2024-05-21:
+         # "Bitte nutze mal Helm 3.9. Lt. Doku ist K8s 1.21 mit neueren Helm Versionen nicht mehr supported."
+         helm-version: "3.9.4"
 
       - name: Helm Deployment
         env:
