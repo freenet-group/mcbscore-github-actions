@@ -43,23 +43,40 @@ runs:
       - name: Read kubernetes-deployment.json
         env:
           COMPONENT: ${{ inputs.component }}
+          DOMAIN: ${{ inputs.domain }}
           ENVIRONMENT: ${{ inputs.environment }}
           DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
         shell: bash
         run: |
+          { # Start Pipe nach jq add
 
-          # Das letzte JSON-Objekt (Datei mit -${ENVIRONMENT}) gewinnt in jq add.
-          {
             # Default "secrets" hier beimischen ist bequemer als nachher immer auch den Fall ohne "secrets" zu berücksichtigen.
             printf '{ "secrets": [] }\n'
 
-            for f in \
-              "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json" \
-              "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
-            do
-              printf '%s existiert' "$f" >&2
-              if [ -e "$f" ]; then echo . >&2; cat -- "$f"; else echo ' nicht.' >&2; fi
-            done \
+            # Array von möglichen JSON-Dateien initialisieren; sortiert von niedriger zu hoher Prio.
+            # (Das letzte JSON-Objekt gewinnt in jq add.)
+            if [ "$DOMAIN" = '-' ]; then
+              files=(
+                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json"
+                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
+              )
+            else
+              files=(
+                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json"
+                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${DOMAIN}.json"
+                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
+                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${DOMAIN}-${ENVIRONMENT}.json"
+              )
+            fi
+
+            for f in "${files[@]}"; do
+              if [ -e "$f" ]; then
+                printf '%s existiert.\n' "$f" >&2
+                cat -- "$f"
+              else
+                printf '%s existiert nicht.\n' "$f" >&2
+              fi
+            done
           } | jq -s add | tee kubernetes-deployment.generated.json
 
       # kubernetes-deployment JSON auswerten
@@ -248,6 +265,11 @@ runs:
         with:
          k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
          k8s-token: ${{ env.K8S_TOKEN }}
+         # Teamskanal Container & Cloud / 1st Level Support 2024-05-21:
+         # "Bitte nutze mal Helm 3.9. Lt. Doku ist K8s 1.21 mit neueren Helm Versionen nicht mehr supported."
+         # Aber 3.9.4 kennt --set-json nicht. Deshalb circa die Version 3.14.2 aus prepare-k8s-env@v1,
+         # die wir per Default benutzt hatten:
+         helm-version: "3.14.4"
 
       - name: Helm Deployment
         env:
