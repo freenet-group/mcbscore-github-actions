@@ -69,7 +69,7 @@ runs:
               )
             fi
 
-            for f in "${files[%]}"; do
+            for f in "${files[@]}"; do
               if [ -e "$f" ]; then
                 printf '%s existiert.\n' "$f" >&2
                 cat -- "$f"
