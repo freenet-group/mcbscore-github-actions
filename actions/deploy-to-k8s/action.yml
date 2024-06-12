@@ -267,7 +267,9 @@ runs:
          k8s-token: ${{ env.K8S_TOKEN }}
          # Teamskanal Container & Cloud / 1st Level Support 2024-05-21:
          # "Bitte nutze mal Helm 3.9. Lt. Doku ist K8s 1.21 mit neueren Helm Versionen nicht mehr supported."
-         helm-version: "3.9.4"
+         # Aber 3.9.4 kennt --set-json nicht. Deshalb circa die Version 3.14.2 aus prepare-k8s-env@v1,
+         # die wir per Default benutzt hatten:
+         helm-version: "3.14.4"
 
       - name: Helm Deployment
         env:
