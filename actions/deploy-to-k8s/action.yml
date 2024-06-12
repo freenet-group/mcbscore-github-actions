@@ -57,8 +57,12 @@ runs:
               "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json" \
               "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
             do
-              printf '%s existiert' "$f" >&2
-              if [ -e "$f" ]; then echo . >&2; cat -- "$f"; else echo ' nicht.' >&2; fi
+              if [ -e "$f" ]; then
+                printf '%s existiert.\n' "$f" >&2
+                cat -- "$f"
+              else
+                printf '%s existiert nicht.\n' "$f" >&2
+              fi
             done \
           } | jq -s add | tee kubernetes-deployment.generated.json
 
