@@ -65,7 +65,7 @@ runs:
                 "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json"
                 "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${DOMAIN}.json"
                 "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}-${DOMAIN}.json"
+                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${DOMAIN}-${ENVIRONMENT}.json"
               )
             fi
 
