@@ -62,7 +62,7 @@ runs:
         # lastTag=$(git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}")
         # lastTag=$(git tag --sort=-creatordate | awk '/'"${{ inputs.tagPattern }}"'/ {print; exit}')
         git tag --sort=-creatordate > tags.txt
-        grep -E "(mcbs\.)" tags.txt > greppedTags.txt
+        grep -E "${{ inputs.tagPattern }}" tags.txt > greppedTags.txt
         lastTag=$(head -n 1 greppedTags.txt)
         echo "Last Tag : ${lastTag}"
 
