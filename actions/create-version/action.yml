@@ -52,8 +52,8 @@ runs:
         echo "--------"
         git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}"
         echo "--------"
-        git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}"
-        echo "--------"
+        #git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}"
+        #echo "--------"
         
         # letztes Tag ermitteln
         # lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
