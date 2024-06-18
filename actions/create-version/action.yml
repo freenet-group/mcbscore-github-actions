@@ -56,7 +56,8 @@ runs:
         echo "--------"
         
         # letztes Tag ermitteln
-        lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
+        # lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
+        lastTag=$(git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}")
         echo "Last Tag : ${lastTag}"
 
         # hashcode fuer das vorherige release (i.e. lastTag)
