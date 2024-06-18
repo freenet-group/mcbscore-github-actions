@@ -49,8 +49,8 @@ runs:
         
         # echo "--------"
         # git tag --sort=-creatordate
-        echo "--------"
-        git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}"
+        #echo "--------"
+        #git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}"
         # echo "--------"
         # git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" 2>/dev/null | head -n 1
         echo "--------"
@@ -61,12 +61,12 @@ runs:
         # lastTag=$(git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" 2>/dev/null | head -n 1)
         # lastTag=$(git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}")
         # lastTag=$(git tag --sort=-creatordate | awk '/'"${{ inputs.tagPattern }}"'/ {print; exit}')
-        git tag --sort=-creatordate > tags.txt
-        grep -E "${{ inputs.tagPattern }}" tags.txt > greppedTags.txt
-        lastTag=$(head -n 1 greppedTags.txt)
-        # lastTag=$({ git tag --sort=-creatordate || true 'Fehler geschlossene Pipe ignorieren'; } | grep -E -m 1 '${{ inputs.tagPattern }}')
-        # echo "Last Tag : ${lastTag}"
-        # if [ -z "$lastTag" ]; then echo 'Kein Tag ${{ inputs.tagPattern }} gefunden.'; exit 1; fi
+        #git tag --sort=-creatordate > tags.txt
+        #grep -E "${{ inputs.tagPattern }}" tags.txt > greppedTags.txt
+        #lastTag=$(head -n 1 greppedTags.txt)
+        lastTag=$({ git tag --sort=-creatordate || true 'Fehler geschlossene Pipe ignorieren'; } | grep -E -m 1 '${{ inputs.tagPattern }}')
+        echo "Last Tag : ${lastTag}"
+        if [ -z "$lastTag" ]; then echo 'Kein Tag ${{ inputs.tagPattern }} gefunden.'; exit 1; fi
         # echo "Last Tag : ${lastTag}"
 
         # hashcode fuer das vorherige release (i.e. lastTag)
