@@ -47,23 +47,23 @@ runs:
         echo Checked out ...
         echo "${{ inputs.included_components }}"
         
-        echo "--------"
-        git tag --sort=-creatordate
+        # echo "--------"
+        # git tag --sort=-creatordate
         echo "--------"
         git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}"
+        # echo "--------"
+        # git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" 2>/dev/null | head -n 1
         echo "--------"
-        git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" 2>/dev/null | head -n 1
-        #echo "--------"
         
         # letztes Tag ermitteln
         # lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
         # lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" 2>/dev/null | head -n 1`
         # lastTag=$(git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" 2>/dev/null | head -n 1)
-        # lastTag=$(git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}")
+        lastTag=$(git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}")
         # lastTag=$(git tag --sort=-creatordate | awk '/'"${{ inputs.tagPattern }}"'/ {print; exit}')
-        git tag --sort=-creatordate > tags.txt
-        grep -E "${{ inputs.tagPattern }}" tags.txt > greppedTags.txt
-        lastTag=$(head -n 1 greppedTags.txt)
+        # git tag --sort=-creatordate > tags.txt
+        # grep -E "${{ inputs.tagPattern }}" tags.txt > greppedTags.txt
+        # lastTag=$(head -n 1 greppedTags.txt)
         echo "Last Tag : ${lastTag}"
 
         # hashcode fuer das vorherige release (i.e. lastTag)
