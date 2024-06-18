@@ -50,6 +50,8 @@ runs:
         echo "--------"
         git tag --sort=-creatordate
         echo "--------"
+        git tag --sort=-creatordate | grep -E -m 1 "${{ inputs.tagPattern }}"
+        echo "--------"
         git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}"
         echo "--------"
         
