@@ -48,8 +48,9 @@ runs:
         echo "${{ inputs.included_components }}"
 
         # letztes Tag ermitteln
-        lastTag=`git tag --sort=-creatordate | grep -E "${{ inputs.tagPattern }}" | head -n 1`
+        lastTag=$({ git tag --sort=-creatordate || true 'Fehler geschlossene Pipe ignorieren'; } | grep -E -m 1 '${{ inputs.tagPattern }}')
         echo "Last Tag : ${lastTag}"
+        if [ -z "$lastTag" ]; then echo 'Kein Tag ${{ inputs.tagPattern }} gefunden.'; exit 1; fi
 
         # hashcode fuer das vorherige release (i.e. lastTag)
         tag=`git rev-list -n 1 $lastTag`

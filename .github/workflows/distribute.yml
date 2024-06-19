@@ -437,7 +437,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-user, branch: feature/test-github-workflow, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
+          - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
     steps:
       - uses: actions/checkout@v4
         with:
