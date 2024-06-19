@@ -1,6 +1,6 @@
 name: PostBuild
 
-# Workflow-Steuerung
+# Workflow-Streuung
 on:
   workflow_dispatch:
     inputs:
