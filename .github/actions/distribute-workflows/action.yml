@@ -128,28 +128,6 @@ runs:
           done
         done
 
-        git config user.email "it.abr.abba.entw@md.de"
-        git config user.name "$USER"
-
-        # git status
-        changesDetected=$(git status --porcelain)
-
-        if [ -n "$changesDetected" ]; then
-          echo "git commit + push"
-          git commit -av -m "Github Workflows aktualisiert"
-          git push
-        else
-          echo "kein git commit"
-        fi
-
-    # Checkout the target repository
-    - uses: actions/checkout@v4
-      with:
-        repository: freenet-group/${{ inputs.repositoryName }}
-        token: ${{ env.TOKEN }}
-        path: ${{ inputs.repositoryName }}
-        ref: ${{ inputs.repositoryBranch }}
-
     # Clean up existing templates and Copy new templates
     - name: Manage templates
       shell: bash
@@ -184,11 +162,16 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.repositoryName }}
-        git config user.email "it.abr.abba.entw@md.de"
+
+        git config user.email "tp.sd.back.mcbs@freenet.ag"
         git config user.name "$USER"
+
+        # git status
         changesDetected=$(git status --porcelain)
+
         if [ -n "$changesDetected" ]; then
-          git commit -m "Update templates"
+          echo "git commit + push"
+          git commit -av -m "Github Workflows / Templates / Dependabot aktualisiert"
           git push
         else
           echo "No changes to commit"
