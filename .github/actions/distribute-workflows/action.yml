@@ -127,11 +127,15 @@ runs:
             git add -v -- "$target"
           done
         done
+        pwd
+        ls -lrt
 
     # Clean up existing templates and Copy new templates
     - name: Manage templates
       shell: bash
       run: |
+        pwd
+        ls -lrt
         # Cleanup
         rm -rf ${{ inputs.repositoryName }}/.github/templates
         
@@ -147,6 +151,8 @@ runs:
     - name: Manage dependabot
       shell: bash
       run: |
+        pwd
+        ls -lrt
         # Cleanup
         rm -f ${{ inputs.repositoryName }}/.github/dependabot.yml
         
@@ -161,6 +167,8 @@ runs:
     - name: Commit and Push
       shell: bash
       run: |
+        pwd
+        ls -lrt
         cd ${{ inputs.repositoryName }}
 
         git config user.email "tp.sd.back.mcbs@freenet.ag"
