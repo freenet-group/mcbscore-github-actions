@@ -45,8 +45,6 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-      NODEJS_VERSION: 20
-      PORTAL_URL: 'https://developer-portal-api.prod.developers.md.de/v2/specifications'
 
     steps:
       - name: Checkout Repository
@@ -61,9 +59,10 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN, 
-            /github/secrets/mcbs_app.client_id_sts = CLIENT_ID_STS,
-            /github/secrets/mcbs_app.client_secret_sts = CLIENT_SECRET_STS,
-            /github/secrets/authorization_uri = AUTHORIZATION_URI
+            /github/secrets/${{ inputs.environment }}/mcbs_app.client_id_sts = CLIENT_ID_STS,
+            /github/secrets/${{ inputs.environment }}/mcbs_app.client_secret_sts = CLIENT_SECRET_STS,
+            /github/secrets/prod/mcbs_app.client_id_sts = CLIENT_ID_PROD_STS,
+            /github/secrets/prod/mcbs_app.client_secret_sts = CLIENT_SECRET_PROD_STS
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -117,13 +116,14 @@ jobs:
       # API ins Portal hochladen
       - name: Publish API Spec
         if: env.API_PATH != ''
-        uses: ./mcbscore/github/actions/publish-api-spec
+        uses: freenet-group/developer-portal-actions/upload-api-spec@v2
         with:
-          portalUrl: ${{ env.PORTAL_URL }}
-          documentPath:  ${{ env.API_PATH }}
-          stage: ${{ github.event.inputs.environment }}
-          maturityLevel:  ${{ matrix.type }}
+          openAPIPath: ${{ env.API_PATH }}
           apiId: ${{ env.API_ID }}
-          version: ${{ github.event.inputs.componentVersion }}
+          tag: ${{ github.event.inputs.componentVersion }}
           clientId: ${{ env.CLIENT_ID_STS }}
           clientSecret: ${{ env.CLIENT_SECRET_STS }}
+          environment: ${{ github.event.inputs.environment }}
+          maturityLevel: ${{ matrix.type }}
+          prodClientId: ${{ env.CLIENT_ID_PROD_STS }}
+          prodClientSecret: ${{ env.CLIENT_SECRET_PROD_STS }}
