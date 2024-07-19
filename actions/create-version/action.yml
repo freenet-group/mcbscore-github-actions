@@ -88,7 +88,7 @@ runs:
         if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^ABRMS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
           echo "kein ABRMS-Commit"
         fi
-        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "^MCBS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 | cut -d '\'' -f 1 | sort | uniq  >> a.txt ; then
+        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "^MCBS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 | cut -d '/'' -f 1 | sort | uniq  >> a.txt ; then
           echo "kein MCBS-Commit"
         fi
         if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^HOMER*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
