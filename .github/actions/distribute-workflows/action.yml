@@ -42,14 +42,12 @@ runs:
         path: ${{ inputs.repositoryName }}
         ref: ${{ inputs.repositoryBranch }}
 
-    - name: Remove invalid workflows and actions
+    - name: Remove invalid workflows
       env:
         workflows: ${{ inputs.workflows }}
-        actions: ${{ inputs.actions }}
         repositoryName: ${{ inputs.repositoryName }}
       shell: bash
       run: |
-        # === Workflows ===
         # Workflows in grep-freundliche zeilenweise Liste überführen
         workflowList=$(tr , '\n' <<< "$workflows" | sed -e 's/^[[:space:]]*//g')
 
@@ -69,25 +67,9 @@ runs:
           done
         fi
 
-        # === Actions ===
-        # Actions in grep-freundliche zeilenweise Liste überführen
-        actionList=$(tr , '\n' <<< "$actions" | sed -e 's/^[[:space:]]*//g')
+        cd -- "$workingDirectory"
 
-        actionDirectory=${workflowDirectory}/../actions
-
-        if [ -d "$actionDirectory" ]; then
-          for filename in ./.github/actions/*.yml; do
-            # Pfad und Dateiendung entfernen
-            basename=$(basename -- "$filename" .yml)
-
-            if ! grep --fixed --line-regexp --quiet -- "$basename" <<< "$actionList"; then # $basename not contained in $actionList
-              echo "git rm $filename"
-              git rm -- "$filename"
-            fi
-          done
-        fi
-
-    - name: Add or replace workflows and actions
+    - name: Add or replace workflows
       env:
         thisRepository: ${{ github.repository }}
         thisWorkflow: ${{ github.workflow }}
@@ -97,7 +79,7 @@ runs:
         repositoryName: ${{ inputs.repositoryName }}
       shell: bash
       run: |
-        # === Workflows ===
+        # Workflows in ein Array überführen
         IFS=',' read -ra workflowsArray < <(sed -e 's/[[:space:]]*//g' <<< "$workflows")
 
         workingDirectory=$(pwd)
@@ -119,7 +101,7 @@ runs:
           git add -v -- "$target"
         done
 
-        # === Actions ===
+        # Actions in ein Array überführen
         IFS=',' read -ra actionsArray < <(sed -e 's/[[:space:]]*//g' <<< "$actions)
 
         for actionName in "${actionsArray[@]}"; do
@@ -158,10 +140,10 @@ runs:
       run: |
         # Cleanup
         rm -f ${{ inputs.repositoryName }}/.github/dependabot.yml
-
+        
         # Copy new dependabot
         cp ./dependabot/dependabot.yml ${{ inputs.repositoryName }}/.github/dependabot.yml
-
+        
         # Stage changes
         cd ${{ inputs.repositoryName }}
         git add -A .github/dependabot.yml
