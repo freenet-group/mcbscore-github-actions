@@ -99,14 +99,14 @@ runs:
         fi
         
         # sortieren und unique ausgeben in die Zieldatei
-        cat a.txt
+        # cat a.txt
         cat a.txt | sort | uniq >> branch_issues.txt
         rm -f a.txt
 
         # Kontrollausgabe
         cat branch_issues.txt | while read line
         do
-          printf $line" " 
+          # printf $line" " 
           printf $line" " >> issue_list.txt
         done
         
