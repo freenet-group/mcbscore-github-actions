@@ -81,7 +81,9 @@ Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
 * settings:
   * General
     * Default-Branch auf "main" setzen. Im neuen Ablauf wird nach jedem Merge eine neue Version gebaut, somit ist kein "develop"- oder "release"-Branch mehr notwendig
-    * Wikis kann deaktiviert werden. Release Notes erfolgen jetzt direkt im Release.
+      * 🛑 Main Branch prüfen ob dieser den Stand von Develop hat
+      * 🛑 DOGS muss Ihr Deployment Script für den Branch anpassen
+    * Wikis "kann" deaktiviert werden. Release Notes erfolgen jetzt direkt im Release.
   * Branches
     * "Branch Protection Rules" für "main" anlegen und folgende Einträge setzen:
       * Require pull request reviews before merging
@@ -91,6 +93,7 @@ Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
       * Require branches to be up to date before merging
       * Status checks that are required
         * build, checkLabels
+          * 🔴 Die Flows sind erst verfügbar, wenn das erste Release gebaut wurde
           * build -> Job in der build.yml
           * checkLabels -> Job in der check_pull_request.yml
   * Labels
