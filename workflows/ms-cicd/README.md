@@ -96,7 +96,7 @@ Alternativ:
 
 ### Anpassung eines CA-Projektes
 
-Hierzu sollte ein Branch mit PR für den SBOM gemacht werden. Dann wird auch gleich ein Release erstellt.
+Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
 Dieser Teil der Anleitung ist für unsere auf Clean Architecture basierenden Microservices. Für alle Anderen gibt es
 unten einen eigenen Abschnitt.
@@ -143,7 +143,7 @@ unten einen eigenen Abschnitt.
 
 ### Anpassung eines nicht-CA-projektes
 
-Hierzu sollte ein Branch mit PR für den SBOM gemacht werden. Dann wird auch gleich ein Release erstellt.
+Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
 Als Beispiel hierzu wurde ms-contentprovider umgebaut.
 
