@@ -143,6 +143,7 @@ unten einen eigenen Abschnitt.
 
 ### Anpassung eines nicht-CA-projektes
 
+https://github.com/freenet-group/ms-configserver/compare/feature/ABRMS-6051---MS-Configserver---Umbau-auf-neue-CICD-Strecke?expand=1
 Als Beispiel hierzu wurde ms-contentprovider umgebaut.
 
 * Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
@@ -159,13 +160,10 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
     ```groovy
     plugins {
         //...
-        id 'org.cyclonedx.bom' version '1.7.4'
+        id 'org.cyclonedx.bom' version '1.8.2'
     }
 
     //...
-
-    // ganz unten dann diesen Block hinzufügen
-    tasks.named("build") { finalizedBy("cyclonedxBom") }
 
     cyclonedxBom {
         // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
@@ -176,6 +174,8 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
         projectType = "application"
         // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
         schemaVersion = "1.4"
+        // The file name for the generated BOMs (before the file format suffix).
+        outputName = "bom"
         // The file format generated, can be xml, json or all for generating both
         outputFormat = "json"
         // Exclude BOM Serial Number
@@ -185,6 +185,9 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
     }
     ```
 
+* Ausser bei Libs/Apis kann der ganze Block "publishing" entfernt werden
+  * "id 'maven-publish'" entfernen
+
 * bootJar-block in der build.gradle hinzufügen
 
     ```groovy
@@ -193,12 +196,20 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
 
     bootJar {
         // Sets output jar name
-        archiveFileName = "${project.getParent().getName()}-${project.ARTIFACT_VERSION}.${archiveExtension.get()}"
+        archiveFileName = "${project.ARTIFACT_NAME}-${project.ARTIFACT_VERSION}.${archiveExtension.get()}"
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
     ```
 
+* "gradlew build" müsste ein sbom file nun erzeugen
+
 ### Anpassung des GitHub Repo mit offenem Pull-Request
+
+Im PR können nun die Platzhalter für die Labels eingerichtet werden:
+
+* ms-configuration:no
+* ms-deployment:no
+* aws-parameterstore:no
 
 Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
 
@@ -212,6 +223,8 @@ Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
       * Require branches to be up to date before merging
       * Status checks that are required
         * build, checkLabels
-          * 🔴 Die Flows sind erst verfügbar, wenn das erste Release gebaut wurde
           * build -> Job in der build.yml
           * checkLabels -> Job in der check_pull_request.yml
+            * Alle 4 checkLabels WF
+
+* PR mergen und Release Notes prüfen
