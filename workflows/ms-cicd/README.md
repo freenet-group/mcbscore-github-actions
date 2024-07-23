@@ -74,8 +74,6 @@ Sollten Probleme auftreten, dann bitte die alte distribute.yml wiederherstellen 
 * settings:
   * General
     * Default-Branch auf "main" setzen. Im neuen Ablauf wird nach jedem Merge eine neue Version gebaut, somit ist kein "develop"- oder "release"-Branch mehr notwendig
-      * 🛑 DOGS muss Ihr Deployment Script für den Branch anpassen
-    * Wikis "kann" deaktiviert werden. Release Notes erfolgen jetzt direkt im Release.
   * Labels
     * Labels sind ein wenig versteckt, können aber unter Issues->Labels gefunden werden
     * Folgende Labels anlegen oder Farben anpassen:
@@ -210,6 +208,11 @@ Im PR können nun die Platzhalter für die Labels eingerichtet werden:
 * ms-configuration:no
 * ms-deployment:no
 * aws-parameterstore:no
+* ms-configuration:yes
+* ms-deployment:yes
+* aws-parameterstore:yes
+
+Nach dem Anlegen, können dann die :yes Labels wieder entfernt werden.
 
 Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
 
@@ -236,3 +239,7 @@ In den Releases das letzte SNAPSHOT-Release löschen
 ### DOGS melden
 
 DOGS Bescheid geben, dass der Deployment Branch geändert wird.
+
+### Renovate Assignee Verteilung überarbeiten
+
+Im [Renovate Assignee Repo](https://github.com/freenet-group/mcbscore-renovate/blob/main/renovate-assignees.json) muss der Branch von 'develop' auf 'main' geändert werden.
