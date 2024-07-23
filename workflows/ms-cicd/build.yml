@@ -66,8 +66,7 @@ jobs:
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
-          # SBOM per cyclonedxBom erstellen
-          gradleOptions: cyclonedxBom ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ github.event.inputs.gradleOptions }}
 
       - name: Unit Test Ergebnisse hochladen
         uses: EnricoMi/publish-unit-test-result-action@v2

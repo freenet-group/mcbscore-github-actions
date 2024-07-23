@@ -186,7 +186,7 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
     ```
 
 * Ausser bei Libs/Apis kann der ganze Block "publishing" entfernt werden
-  * "id 'maven-publish'" entfernen
+  * "id 'maven-publish'" muss aber bleiben
 
 * bootJar-block in der build.gradle hinzufügen
 
@@ -227,4 +227,6 @@ Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
           * checkLabels -> Job in der check_pull_request.yml
             * Alle 4 checkLabels WF
 
-* PR mergen und Release Notes prüfen
+Der PR dürfte nun auf ein Approval und auf die erfolgreichen Checks bestehen
+
+PR mergen und Release Notes prüfen
