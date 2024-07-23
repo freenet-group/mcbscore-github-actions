@@ -247,7 +247,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: ${{ env.ACTIONS_REPOSITORY }}
-        token: ${{ env.TOKEN }}
+        token: ${{ env.GITHUB_TOKEN }}
         path: mcbscore-github-actions
         ref: ${{ inputs.actionsRepositoryBranch }}
 
