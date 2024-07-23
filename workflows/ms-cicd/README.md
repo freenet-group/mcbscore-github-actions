@@ -96,6 +96,8 @@ Alternativ:
 
 ### Anpassung eines CA-Projektes
 
+Hierzu sollte ein Branch mit PR für den SBOM gemacht werden. Dann wird auch gleich ein Release erstellt.
+
 Dieser Teil der Anleitung ist für unsere auf Clean Architecture basierenden Microservices. Für alle Anderen gibt es
 unten einen eigenen Abschnitt.
 
@@ -141,7 +143,8 @@ unten einen eigenen Abschnitt.
 
 ### Anpassung eines nicht-CA-projektes
 
-https://github.com/freenet-group/ms-configserver/compare/feature/ABRMS-6051---MS-Configserver---Umbau-auf-neue-CICD-Strecke?expand=1
+Hierzu sollte ein Branch mit PR für den SBOM gemacht werden. Dann wird auch gleich ein Release erstellt.
+
 Als Beispiel hierzu wurde ms-contentprovider umgebaut.
 
 * Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
