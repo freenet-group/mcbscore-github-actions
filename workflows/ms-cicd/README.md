@@ -230,3 +230,9 @@ Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
 Der PR dürfte nun auf ein Approval und auf die erfolgreichen Checks bestehen
 
 PR mergen und Release Notes prüfen
+
+In den Releases das letzte SNAPSHOT-Release löschen
+
+### DOGS melden
+
+DOGS Bescheid geben, dass der Deployment Branch geändert wird.
