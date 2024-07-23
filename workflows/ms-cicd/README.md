@@ -202,7 +202,7 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
     }
     ```
 
-* "gradlew build" müsste ein sbom file nun erzeugen
+* "gradlew clean build" müsste ein sbom file nun erzeugen
 
 ### Anpassung des GitHub Repo mit offenem Pull-Request
 
