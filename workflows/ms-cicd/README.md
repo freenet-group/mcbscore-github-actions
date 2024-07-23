@@ -148,12 +148,21 @@ Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird a
 Als Beispiel hierzu wurde ms-contentprovider umgebaut.
 
 * Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
-* workflow.properties erweitern
+* workflow.properties erweitern und checken, dass COMPONENT dem JAR ohne "ms" entspricht.
 
     ```properties
     #...
+    APPLICATION_JAR_NAME=ms-test
+    COMPONENT=test
     DEPENDENCYTRACK_BOM_PATH=./build/reports/
     DEPENDENCYTRACK_BOM_NAME=bom.json
+    ```
+
+  * gradle.properties prüfen, sodass ARTIFACT_NAME und APPLICATION_JAR_NAME identisch sind
+
+    ```properties
+    #...
+    ARTIFACT_NAME=ms-test
     ```
 
 * cyclonedx-gradle-plugin in der build.gradle hinzufügen
