@@ -61,6 +61,28 @@ graph TD;
 🛑 Es ist nicht möglich, einfach nur den Microservice in der distribute.yml umzuhängen.
 Sollten Probleme auftreten, dann bitte die alte distribute.yml wiederherstellen und Problem bei den GitHub / CICD Leuten melden.
 
+## Ablauf
+
+### Main Branch aktualisieren
+
+* Repo mit Main Branch ausschecken
+* Develop Branch reinziehen
+* Direkt ohne PR commiten
+
+### GitHub Repo Einstellungen
+
+* settings:
+  * General
+    * Default-Branch auf "main" setzen. Im neuen Ablauf wird nach jedem Merge eine neue Version gebaut, somit ist kein "develop"- oder "release"-Branch mehr notwendig
+      * 🛑 DOGS muss Ihr Deployment Script für den Branch anpassen
+    * Wikis "kann" deaktiviert werden. Release Notes erfolgen jetzt direkt im Release.
+  * Labels
+    * Labels sind ein wenig versteckt, können aber unter Issues->Labels gefunden werden
+    * Folgende Labels anlegen oder Farben anpassen:
+      * release:major mit Color #B60205 🔴
+      * release:minor mit Color #FBCA04 🟡
+      * release:patch mit Color #0E8A16 🟢
+
 ### Anpassung der distribute.yml
 
 Im Repo mcbscore-github-action muss der Workflow distribute.yml angepasst werden:
@@ -73,32 +95,6 @@ Alternativ:
 * Workflows aus workflows->ms-cicd in das Projekt kopieren
 * actions/templates in das Projekt unter .github/actions/templates kopieren
 * 🛑 Nach Umstellung die distribute.yml trotzdem anpassen, da ansonsten am nächsten Verteiltag die Workflows wieder überschrieben werden
-
-### Anpassung des GitHub Repo
-
-Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
-
-* settings:
-  * General
-    * Default-Branch auf "main" setzen. Im neuen Ablauf wird nach jedem Merge eine neue Version gebaut, somit ist kein "develop"- oder "release"-Branch mehr notwendig
-    * Wikis kann deaktiviert werden. Release Notes erfolgen jetzt direkt im Release.
-  * Branches
-    * "Branch Protection Rules" für "main" anlegen und folgende Einträge setzen:
-      * Require pull request reviews before merging
-      * Require approvals 1
-      * Dismiss stale pull request approvals when new commits are pushed
-      * Require status checks to pass before merging
-      * Require branches to be up to date before merging
-      * Status checks that are required
-        * build, checkLabels
-          * build -> Job in der build.yml
-          * checkLabels -> Job in der check_pull_request.yml
-  * Labels
-    * Labels sind ein wenig versteckt, können aber unter Issues->Labels gefunden werden
-    * Folgende Labels anlegen oder Farben anpassen:
-      * release:major mit Color #B60205 🔴
-      * release:minor mit Color #FBCA04 🟡
-      * release:patch mit Color #0E8A16 🟢
 
 ### Anpassung eines CA-Projektes
 
@@ -201,3 +197,21 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
     ```
+
+### Anpassung des GitHub Repo mit offenem Pull-Request
+
+Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
+
+* settings:
+  * Branches
+    * "Branch Protection Rules" für "main" anlegen und folgende Einträge setzen:
+      * Require pull request reviews before merging
+      * Require approvals 1
+      * Dismiss stale pull request approvals when new commits are pushed
+      * Require status checks to pass before merging
+      * Require branches to be up to date before merging
+      * Status checks that are required
+        * build, checkLabels
+          * 🔴 Die Flows sind erst verfügbar, wenn das erste Release gebaut wurde
+          * build -> Job in der build.yml
+          * checkLabels -> Job in der check_pull_request.yml
