@@ -80,19 +80,25 @@ Sollten Probleme auftreten, dann bitte die alte distribute.yml wiederherstellen 
       * release:major mit Color #B60205 🔴
       * release:minor mit Color #FBCA04 🟡
       * release:patch mit Color #0E8A16 🟢
+      * ms-configuration:no
+      * ms-deployment:no
+      * aws-parameterstore:no
+      * ms-configuration:yes
+      * ms-deployment:yes
+      * aws-parameterstore:yes
 
 ### Anpassung der distribute.yml
 
-Im Repo mcbscore-github-action muss der Workflow distribute.yml angepasst werden:
+Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigenen Branch angepasst werden:
 
 * Hierzu den jeweiligen Microservice aus der "ms" Gruppe in die "ms-cicd" Gruppe verschieben
-* Im Anschluss den Workflow unter github->actions->workflows->distribute.yml mit der Gruppe ms-cicd verteilen
+  * Die Gruppe unter "strategy.matrix.repository.group" muss von "ms" auf "ms-cicd" geändert werden
+  * Die Workflows müssen gegen den env.DEFAULT_WORKFLOWS geprüft werden und können danach ebenfalls entfernt werden
+* Im Anschluss den Workflow unter github->actions->workflows->distribute.yml mit dem Branch und der Gruppe ms-cicd verteilen
 
-Alternativ:
+* Unter der spotless Verteilung muss der Branch von "develop" auf "main" geändert werden.
 
-* Workflows aus workflows->ms-cicd in das Projekt kopieren
-* actions/templates in das Projekt unter .github/actions/templates kopieren
-* 🛑 Nach Umstellung die distribute.yml trotzdem anpassen, da ansonsten am nächsten Verteiltag die Workflows wieder überschrieben werden
+* Nach Abschluss des Umbau und Tests kann dieser PR ebenfalls gemerged werden.
 
 ### Anpassung eines CA-Projektes
 
@@ -145,10 +151,8 @@ unten einen eigenen Abschnitt.
 
 Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
-Als Beispiel hierzu wurde ms-contentprovider umgebaut.
-
 * Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
-* workflow.properties erweitern und checken, dass COMPONENT dem JAR ohne "ms" entspricht.
+* workflow.properties erweitern und sicherstellen, dass APPLICATION_JAR_NAME sich aus "ms-" und COMPONENT zusammensetzt
 
     ```properties
     #...
@@ -215,19 +219,6 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
 
 ### Anpassung des GitHub Repo mit offenem Pull-Request
 
-Im PR können nun die Platzhalter für die Labels eingerichtet werden:
-
-* ms-configuration:no
-* ms-deployment:no
-* aws-parameterstore:no
-* ms-configuration:yes
-* ms-deployment:yes
-* aws-parameterstore:yes
-
-Nach dem Anlegen, können dann die :yes Labels wieder entfernt werden.
-
-Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
-
 * settings:
   * Branches
     * "Branch Protection Rules" für "main" anlegen und folgende Einträge setzen:
@@ -244,9 +235,13 @@ Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
 
 Der PR dürfte nun auf ein Approval und auf die erfolgreichen Checks bestehen
 
+Im PR müssen nun die Labels "release:patch", "ms-configuration:no", "ms-deployment:no" und "aws-parameterstore:no" gesetzt werden.
+
 PR mergen und Release Notes prüfen
 
 In den Releases das letzte SNAPSHOT-Release löschen
+
+PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von Hand korrigieren. (Bei Umstellung von alten auf CICD Workflows mit Aktualisierung des main-Branches können vermeintlich betroffene Tickets ermitteln werden, die zu löschen sind.)  
 
 ### DOGS melden
 
