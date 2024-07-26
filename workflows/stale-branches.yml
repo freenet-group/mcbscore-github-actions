@@ -2,7 +2,7 @@ name: Identify and remove stale branches
 
 on:
   workflow_dispatch:
-  push:
+#  push:
 
 jobs:
   remove-stale-branches:
