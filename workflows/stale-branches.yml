@@ -1,0 +1,18 @@
+name: Identify and remove stale branches
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  remove-stale-branches:
+    name: Remove Stale Branches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fpicalausa/remove-stale-branches@v2.1.0
+        with:
+          dry-run: false
+          ignore-unknown-authors: true
+          default-recipient: zzzmcbscore
+          exempt-authors-regex: ^(dependabot|renovate\[bot\])$
+          days-before-branch-delete: 30
