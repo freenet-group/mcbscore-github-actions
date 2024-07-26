@@ -14,5 +14,7 @@ jobs:
           dry-run: false
           ignore-unknown-authors: true
           default-recipient: zzzmcbscore
-          exempt-authors-regex: ^(dependabot|renovate\[bot\])$
+          #exempt-authors-regex: ^(dependabot|renovate\[bot\])$
+          days-before-branch-stale: 90
           days-before-branch-delete: 30
+          ignore-branches-with-open-prs: true
