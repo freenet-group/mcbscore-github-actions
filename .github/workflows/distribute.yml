@@ -483,7 +483,7 @@ jobs:
           - { name: metis, branch: develop, group: metis }
           - { name: ms-alteration, branch: develop, group: ms }
           - { name: ms-commondata, branch: develop, group: ms-cicd }
-          - { name: ms-admin-dashboard, branch: develop, group: ms }
+          - { name: ms-admin-dashboard, branch: main, group: ms }
           - { name: ms-agreement, branch: develop, group: ms }
           - { name: ms-appcheck, branch: develop, group: ms }
           - { name: ms-authorities-information, branch: develop, group: ms }
