@@ -437,6 +437,7 @@ jobs:
       matrix:
         repository:
           - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
+          - { name: ms-homer, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
