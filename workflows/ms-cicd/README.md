@@ -237,7 +237,7 @@ Der PR dürfte nun auf ein Approval und auf die erfolgreichen Checks bestehen
 
 Im PR müssen nun die Labels "release:patch", "ms-configuration:no", "ms-deployment:no" und "aws-parameterstore:no" gesetzt werden.
 
-PR mergen und Release Notes prüfen
+PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von Hand korrigieren. (Bei Umstellung von alten auf CICD Workflows mit Aktualisierung des main-Branches können vermeintlich betroffene Tickets ermitteln werden, die zu löschen sind.)
 
 In den Releases das letzte SNAPSHOT-Release löschen
 
