@@ -5,6 +5,9 @@ on:
     types: [ closed ]
   workflow_dispatch:
     inputs:
+      gradleOptions:
+        description: Zusätzliche optionale Gradle Parameter
+        required: false
       branch:
         description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
         required: false
@@ -146,7 +149,7 @@ jobs:
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
           enableSonarCheckOnAllBranches: true
-          gradleOptions: cyclonedxBom
+          gradleOptions: ${{ github.event.inputs.gradleOptions }}
 
       - name: Sonar-Coverage abholen
         id: fetch-coverage

@@ -61,46 +61,49 @@ graph TD;
 🛑 Es ist nicht möglich, einfach nur den Microservice in der distribute.yml umzuhängen.
 Sollten Probleme auftreten, dann bitte die alte distribute.yml wiederherstellen und Problem bei den GitHub / CICD Leuten melden.
 
-### Anpassung der distribute.yml
+## Ablauf
 
-Im Repo mcbscore-github-action muss der Workflow distribute.yml angepasst werden:
+### Main Branch aktualisieren
 
-* Hierzu den jeweiligen Microservice aus der "ms" Gruppe in die "ms-cicd" Gruppe verschieben
-* Im Anschluss den Workflow unter github->actions->workflows->distribute.yml mit der Gruppe ms-cicd verteilen
+* Repo mit Main Branch ausschecken
+* Develop Branch reinziehen
+* Direkt ohne PR commiten
 
-Alternativ:
-
-* Workflows aus workflows->ms-cicd in das Projekt kopieren
-* actions/templates in das Projekt unter .github/actions/templates kopieren
-* 🛑 Nach Umstellung die distribute.yml trotzdem anpassen, da ansonsten am nächsten Verteiltag die Workflows wieder überschrieben werden
-
-### Anpassung des GitHub Repo
-
-Sofern Probot nicht genutzt wird, muss das GitHub Repo angepasst werden:
+### GitHub Repo Einstellungen
 
 * settings:
   * General
     * Default-Branch auf "main" setzen. Im neuen Ablauf wird nach jedem Merge eine neue Version gebaut, somit ist kein "develop"- oder "release"-Branch mehr notwendig
-    * Wikis kann deaktiviert werden. Release Notes erfolgen jetzt direkt im Release.
-  * Branches
-    * "Branch Protection Rules" für "main" anlegen und folgende Einträge setzen:
-      * Require pull request reviews before merging
-      * Require approvals 1
-      * Dismiss stale pull request approvals when new commits are pushed
-      * Require status checks to pass before merging
-      * Require branches to be up to date before merging
-      * Status checks that are required
-        * build, checkLabels
-          * build -> Job in der build.yml
-          * checkLabels -> Job in der check_pull_request.yml
   * Labels
     * Labels sind ein wenig versteckt, können aber unter Issues->Labels gefunden werden
     * Folgende Labels anlegen oder Farben anpassen:
       * release:major mit Color #B60205 🔴
       * release:minor mit Color #FBCA04 🟡
       * release:patch mit Color #0E8A16 🟢
+      * ms-configuration:no
+      * ms-deployment:no
+      * aws-parameterstore:no
+      * ms-configuration:yes
+      * ms-deployment:yes
+      * aws-parameterstore:yes
+
+### Anpassung der distribute.yml
+
+Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigenen Branch angepasst werden:
+
+* Hierzu den jeweiligen Microservice aus der "ms" Gruppe in die "ms-cicd" Gruppe verschieben
+  * Branch auf "main" setzen
+  * Die Gruppe unter "strategy.matrix.repository.group" muss von "ms" auf "ms-cicd" geändert werden
+  * Die Workflows müssen gegen den env.DEFAULT_WORKFLOWS geprüft werden und können danach ebenfalls entfernt werden
+* Im Anschluss den Workflow unter github->actions->workflows->distribute.yml mit dem Branch und der Gruppe ms-cicd verteilen
+
+* Unter der spotless Verteilung muss der Branch von "develop" auf "main" geändert werden.
+
+* Nach Abschluss des Umbau und Tests kann dieser PR ebenfalls gemerged werden.
 
 ### Anpassung eines CA-Projektes
+
+Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
 Dieser Teil der Anleitung ist für unsere auf Clean Architecture basierenden Microservices. Für alle Anderen gibt es
 unten einen eigenen Abschnitt.
@@ -147,15 +150,24 @@ unten einen eigenen Abschnitt.
 
 ### Anpassung eines nicht-CA-projektes
 
-Als Beispiel hierzu wurde ms-contentprovider umgebaut.
+Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
 * Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
-* workflow.properties erweitern
+* workflow.properties erweitern und sicherstellen, dass APPLICATION_JAR_NAME sich aus "ms-" und COMPONENT zusammensetzt
 
     ```properties
     #...
+    APPLICATION_JAR_NAME=ms-test
+    COMPONENT=test
     DEPENDENCYTRACK_BOM_PATH=./build/reports/
     DEPENDENCYTRACK_BOM_NAME=bom.json
+    ```
+
+  * gradle.properties prüfen, sodass ARTIFACT_NAME und APPLICATION_JAR_NAME identisch sind
+
+    ```properties
+    #...
+    ARTIFACT_NAME=ms-test
     ```
 
 * cyclonedx-gradle-plugin in der build.gradle hinzufügen
@@ -163,13 +175,10 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
     ```groovy
     plugins {
         //...
-        id 'org.cyclonedx.bom' version '1.7.4'
+        id 'org.cyclonedx.bom' version '1.8.2'
     }
 
     //...
-
-    // ganz unten dann diesen Block hinzufügen
-    tasks.named("build") { finalizedBy("cyclonedxBom") }
 
     cyclonedxBom {
         // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
@@ -180,6 +189,8 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
         projectType = "application"
         // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
         schemaVersion = "1.4"
+        // The file name for the generated BOMs (before the file format suffix).
+        outputName = "bom"
         // The file format generated, can be xml, json or all for generating both
         outputFormat = "json"
         // Exclude BOM Serial Number
@@ -189,6 +200,9 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
     }
     ```
 
+* Ausser bei Libs/Apis kann der ganze Block "publishing" entfernt werden
+  * "id 'maven-publish'" muss aber bleiben
+
 * bootJar-block in der build.gradle hinzufügen
 
     ```groovy
@@ -197,7 +211,43 @@ Als Beispiel hierzu wurde ms-contentprovider umgebaut.
 
     bootJar {
         // Sets output jar name
-        archiveFileName = "${project.getParent().getName()}-${project.ARTIFACT_VERSION}.${archiveExtension.get()}"
+        archiveFileName = "${project.ARTIFACT_NAME}-${project.ARTIFACT_VERSION}.${archiveExtension.get()}"
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
     ```
+
+* "gradlew clean build" müsste ein sbom file nun erzeugen
+
+### Anpassung des GitHub Repo mit offenem Pull-Request
+
+* settings:
+  * Branches
+    * "Branch Protection Rules" für "main" anlegen und folgende Einträge setzen:
+      * Require pull request reviews before merging
+      * Require approvals 1
+      * Dismiss stale pull request approvals when new commits are pushed
+      * Require status checks to pass before merging
+      * Require branches to be up to date before merging
+      * Status checks that are required
+        * build, checkLabels
+          * build -> Job in der build.yml
+          * checkLabels -> Job in der check_pull_request.yml
+            * Alle 4 checkLabels WF
+
+Der PR dürfte nun auf ein Approval und auf die erfolgreichen Checks bestehen
+
+Im PR müssen nun die Labels "release:patch", "ms-configuration:no", "ms-deployment:no" und "aws-parameterstore:no" gesetzt werden.
+
+PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von Hand korrigieren. (Bei Umstellung von alten auf CICD Workflows mit Aktualisierung des main-Branches können vermeintlich betroffene Tickets ermitteln werden, die zu löschen sind.)
+
+In den Releases das letzte SNAPSHOT-Release löschen
+
+PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von Hand korrigieren. (Bei Umstellung von alten auf CICD Workflows mit Aktualisierung des main-Branches können vermeintlich betroffene Tickets ermitteln werden, die zu löschen sind.)  
+
+### DOGS melden
+
+DOGS Bescheid geben, dass der Deployment Branch geändert wird.
+
+### Renovate Assignee Verteilung überarbeiten
+
+Im [Renovate Assignee Repo](https://github.com/freenet-group/mcbscore-renovate/blob/main/renovate-assignees.json) muss der Branch von 'develop' auf 'main' geändert werden.
