@@ -92,6 +92,7 @@ Sollten Probleme auftreten, dann bitte die alte distribute.yml wiederherstellen 
 Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigenen Branch angepasst werden:
 
 * Hierzu den jeweiligen Microservice aus der "ms" Gruppe in die "ms-cicd" Gruppe verschieben
+  * Branch auf "main" setzen
   * Die Gruppe unter "strategy.matrix.repository.group" muss von "ms" auf "ms-cicd" geändert werden
   * Die Workflows müssen gegen den env.DEFAULT_WORKFLOWS geprüft werden und können danach ebenfalls entfernt werden
 * Im Anschluss den Workflow unter github->actions->workflows->distribute.yml mit dem Branch und der Gruppe ms-cicd verteilen
