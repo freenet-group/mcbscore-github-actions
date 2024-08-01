@@ -59,6 +59,11 @@ jobs:
           installGithubCli: true
           installJq: true
 
+      - name: Component Version setzen (legacy - Für die Kompatibilität mit alten Actions)
+        shell: bash
+        run: |
+          echo "COMPONENT_VERSION=0.0.0" >> $GITHUB_ENV
+
       - name: Microservice per Gradle bauen
         uses: ./mcbscore/github/actions/gradle-build
         with:
