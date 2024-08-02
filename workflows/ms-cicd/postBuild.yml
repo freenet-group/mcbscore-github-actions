@@ -180,7 +180,7 @@ jobs:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Sonar-Coverage einholen
