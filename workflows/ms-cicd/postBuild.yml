@@ -28,6 +28,18 @@ on:
         description: War renovate die Ursache für dieses Releasebuild (true | false)
         required: false
         default: false
+      hasSQL:
+        description: Gibt an, ob SQL-Änderungen vorhanden sind
+        required: false
+        default: false
+      hasConfiguration:
+        description: Gibt an, ob Konfigurationsänderungen vorhanden sind
+        required: false
+        default: false
+      hasDependencies:
+        description: Gibt an, ob Abhängigkeiten vorhanden sind
+        required: false
+        default: false
 
 jobs:
   postBuild:
@@ -96,12 +108,18 @@ jobs:
           componentList: '${{ env.JIRA_COMPONENT }},Microservices'
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
+      - name: Issuelist von "," auf " " umwandeln
+        id: issueListNoComma
+        run: |
+          OUTPUT=$(echo "${{ github.event.inputs.issueList }}" | tr -s ',' ' ')
+          echo "issueListNoComma=$(echo $OUTPUT)" >> $GITHUB_OUTPUT
+
       - name: Weitere Infos zur IssueList holen
         uses: ./mcbscore/github/actions/fetch-issue-information
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Release bei Bambi melden
@@ -152,7 +170,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           included_components: ${{ env.INCLUDED_COMPONENTS }}
 
@@ -162,7 +180,7 @@ jobs:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Sonar-Coverage einholen
@@ -189,15 +207,6 @@ jobs:
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
-      - name: Zusatzinformationen zum Release holen
-        id: fetch-additional-information
-        uses: ./mcbscore/github/actions/fetch-additional-information
-        with:
-          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
-          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-
       - name: IBN Datum ermitteln
         id: determine-going-live-date
         uses: ./mcbscore/github/actions/determine-going-live-date
@@ -215,9 +224,9 @@ jobs:
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           issueList: issue_info.csv
-          hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
-          hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
-          hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
+          hasSql: ${{ github.event.inputs.hasSQL }}
+          hasConfiguration: ${{ github.event.inputs.hasConfiguration }}
+          hasDependencies: ${{ github.event.inputs.hasDependencies }}
           hasDeployment: ${{ env.DEPLOYMENT }}
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
