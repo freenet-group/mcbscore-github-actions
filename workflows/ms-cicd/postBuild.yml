@@ -108,12 +108,18 @@ jobs:
           componentList: '${{ env.JIRA_COMPONENT }},Microservices'
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
+      - name: Issuelist von " " auf "," umwandeln
+        id: issueListComma
+        run: |
+          OUTPUT=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
+          echo "IssueListComma=$(echo $OUTPUT)" >> $GITHUB_OUTPUT
+
       - name: Weitere Infos zur IssueList holen
         uses: ./mcbscore/github/actions/fetch-issue-information
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ steps.issueListComma.outputs.IssueListComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Release bei Bambi melden
@@ -164,7 +170,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.JIRA_COMPONENT }}
           componentVersion: ${{ github.event.inputs.releaseVersion }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ steps.issueListComma.outputs.IssueListComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           included_components: ${{ env.INCLUDED_COMPONENTS }}
 
