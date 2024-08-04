@@ -87,6 +87,6 @@ runs:
     # um Dependabot Security-Allerts für anfällige dependencies zu generieren
     - name: Setup Gradle
       if: ${{ inputs.installGradleSetup == 'true' }}
-      uses: gradle/actions/setup-gradle@v3
+      uses: gradle/actions/setup-gradle@v4
       with:
         dependency-graph: generate-and-submit
