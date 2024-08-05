@@ -147,13 +147,13 @@ unten einen eigenen Abschnitt.
     property "sonar.projectVersion", project.ARTIFACT_VERSION
     //...
     ```
-* Sicherstellen, daß in folgendem Block in /applications/app-service/build.gradle korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Da bei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt. REPO_NAME ist durch den Namen des Repositories zu ersetzen.
+* Sicherstellen, daß in folgendem Block in /applications/app-service/build.gradle korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Dabei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt. REPO_NAME ist durch den Namen des Repositories zu ersetzen. Das 2.Property sollte release_build heißen.
     ```groovy
     springBoot {
       buildInfo {
         properties {
           additional = [
-            'release notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
     ```
 
 ### Anpassung eines Projektes mit alter CA Struktur
@@ -226,13 +226,13 @@ unten einen eigenen Abschnitt.
     property "sonar.projectVersion", project.ARTIFACT_VERSION
     //...
     ```
-* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Da bei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt.  REPO_NAME ist durch den Namen des Repositories zu ersetzen.
+* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Dabei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt. REPO_NAME ist durch den Namen des Repositories zu ersetzen. Das 2.Property sollte release_build heißen.
     ```groovy
     springBoot {
       buildInfo {
         properties {
           additional = [
-            'release notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
     ```
 
 ### Anpassung eines nicht-CA-projektes
@@ -286,13 +286,13 @@ Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird a
         componentVersion = "local"
     }
     ```
-* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Da bei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt.  REPO_NAME ist durch den Namen des Repositories zu ersetzen.
+* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Dabei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt. REPO_NAME ist durch den Namen des Repositories zu ersetzen. Das 2.Property sollte release_build heißen.
     ```groovy
     springBoot {
       buildInfo {
         properties {
           additional = [
-            'release notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
     ```
 
 * Ausser bei Libs/Apis kann der ganze Block "publishing" entfernt werden
