@@ -549,6 +549,7 @@ jobs:
               "hasSQL": "${{ steps.update_release_template.outputs.db_changes }}",
               "hasConfiguration": "${{ steps.update_release_template.outputs.ms_configuration }}",
               "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}"
+              "hasDeployment": "${{ steps.update_release_template.outputs.ms_deployment }}"
             }
 
       - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
