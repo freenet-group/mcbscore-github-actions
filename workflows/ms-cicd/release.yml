@@ -543,7 +543,7 @@ jobs:
               "releaseVersion": "${{ steps.version-calculation.outputs.new_version }}",
               "issueList": "${{ steps.update_release_template.outputs.issue_list }}",
               "bambiArgs": "${{ env.BAMBI_ARGS }}",
-              "hasSql": "${{ steps.update_release_template.outputs.db_changes }}",
+              "hasSQL": "${{ steps.update_release_template.outputs.db_changes }}",
               "hasConfiguration": "${{ steps.update_release_template.outputs.ms_configuration }}",
               "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}"
             }
