@@ -130,7 +130,7 @@ unten einen eigenen Abschnitt.
     ```groovy
     plugins {
         //...
-        id 'org.cyclonedx.bom' version '1.7.4'
+        id 'org.cyclonedx.bom' version '1.8.2'
     }
 
     // Ganz im apply from: Block unten hinzufügen
