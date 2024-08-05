@@ -201,7 +201,10 @@ jobs:
             if [ -z "$uniqueIssueList" ]; then
               uniqueIssueList="${{ github.event.inputs.ticket }}"
             else
-              uniqueIssueList+=",${{ github.event.inputs.ticket }}"
+              # Prüfen ob das Ticket bereits in der uniqueIssueList enthalten ist
+              if [! echo "$uniqueIssueList" | grep -q "${{ github.event.inputs.ticket }}"]; then
+                uniqueIssueList+=",${{ github.event.inputs.ticket }}"
+              fi
             fi
           fi
 
