@@ -40,6 +40,10 @@ on:
         description: Gibt an, ob Abhängigkeiten vorhanden sind
         required: false
         default: false
+      hasDeployment:
+        description: Gibt an, ob Deployment-Änderungen vorhanden sind
+        required: false
+        default: false
 
 jobs:
   postBuild:
@@ -227,7 +231,7 @@ jobs:
           hasSql: ${{ github.event.inputs.hasSQL }}
           hasConfiguration: ${{ github.event.inputs.hasConfiguration }}
           hasDependencies: ${{ github.event.inputs.hasDependencies }}
-          hasDeployment: ${{ env.DEPLOYMENT }}
+          hasDeployment: ${{ github.event.inputs.hasDeployment }}
           additionalText: "extra"
           epic: ${{ github.event.inputs.epic }}
           mailAddress: ${{ env.TEAMS_MAIL }}

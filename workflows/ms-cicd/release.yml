@@ -201,7 +201,10 @@ jobs:
             if [ -z "$uniqueIssueList" ]; then
               uniqueIssueList="${{ github.event.inputs.ticket }}"
             else
-              uniqueIssueList+=",${{ github.event.inputs.ticket }}"
+              # Prüfen ob das Ticket bereits in der uniqueIssueList enthalten ist
+              if [! echo "$uniqueIssueList" | grep -q "${{ github.event.inputs.ticket }}"]; then
+                uniqueIssueList+=",${{ github.event.inputs.ticket }}"
+              fi
             fi
           fi
 
@@ -545,7 +548,8 @@ jobs:
               "bambiArgs": "${{ env.BAMBI_ARGS }}",
               "hasSQL": "${{ steps.update_release_template.outputs.db_changes }}",
               "hasConfiguration": "${{ steps.update_release_template.outputs.ms_configuration }}",
-              "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}"
+              "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}",
+              "hasDeployment": "${{ steps.update_release_template.outputs.ms_deployment }}"
             }
 
       - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
