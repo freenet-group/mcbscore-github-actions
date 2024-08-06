@@ -101,7 +101,7 @@ Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigene
 
 * Nach Abschluss des Umbau und Tests kann dieser PR ebenfalls gemerged werden.
 
-### Anpassung eines CA-Projektes
+### Anpassung eines CA-Projektes (zu erkennen an folgendem Plugin in der build.gradle: de.freenet.cleanArchitecture)
 
 Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
@@ -130,7 +130,7 @@ unten einen eigenen Abschnitt.
     ```groovy
     plugins {
         //...
-        id 'org.cyclonedx.bom' version '1.7.4'
+        id 'org.cyclonedx.bom' version '1.8.2'
     }
 
     // Ganz im apply from: Block unten hinzufügen
@@ -146,6 +146,95 @@ unten einen eigenen Abschnitt.
     property "sonar.sourceEncoding", project.FILE_ENCODING
     property "sonar.projectVersion", project.ARTIFACT_VERSION
     //...
+    ```
+* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Das Property ist in "release_notes" umzubenennen, falls es noch nicht so heißt. Das Property, welches auf den Workflow Run des Release Builds verweist, ist in release_build umzubenennen, falls es noch nicht so heißt. REPO_NAME ist bei beiden durch den Namen des Repositories zu ersetzen.
+    ```groovy
+    springBoot {
+      buildInfo {
+        properties {
+          additional = [
+            'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_build': 'https://github.com/freenet-group/REPO_NAME/actions/runs/' + (System.getenv("GITHUB_RUN_ID") != null? System.getenv("GITHUB_RUN_ID"): "unknown")
+    ```
+
+### Anpassung eines Projektes mit alter CA Struktur (zu erkennen am Fehlen des folgenden Plugins in der build.gradle: de.freenet.cleanArchitecture)
+
+Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
+
+Dieser Teil der Anleitung ist für unsere auf Clean Architecture basierenden Microservices. Für alle Anderen gibt es
+unten einen eigenen Abschnitt.
+
+* Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
+* gradle.properties mit .github/workflow.properties vergleichen
+  * ARTIFACT_GROUP_ID und COVERAGE_PATH müssen identisch sein
+  * ARTIFACT_NAME und COVERAGE_APP müssen identisch sein
+  * Wenn eines dieser beiden Konfigurationen nicht vorhanden ist, wird Sonar keine Coverage finden und somit 0%
+    melden. Dasselbe passiert, wenn die Sonar-URL unter den AWS-Parametern fehlt
+* workflow.properties erweitern (<b>zu BEACHTEN:</b> Das erste Unterverzeichnis im DEPENDENCYTRACK_BOM_PATH ist servicespezifisch und entsprechend anzupassen)
+
+  ```properties
+  # .. 
+  DEPENDENCYTRACK_BOM_PATH=./mark-application/application/spring-boot/build/reports/
+  DEPENDENCYTRACK_BOM_NAME=bom.json
+  ```
+
+* gradle/cyclonedx.gradle prüfen, ob vorhanden
+  * Wenn nicht vorhanden:
+    * config unter gradle/cyclonedx.gradle einfügen
+      ```groovy
+      apply plugin: 'org.cyclonedx.bom'
+      
+      cyclonedxBom {
+        // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
+        includeConfigs = ["runtimeClasspath"]
+        // skipConfigs is a list of configuration names to exclude when generating the BOM
+        skipConfigs = ["compileClasspath", "testCompileClasspath"]
+        // Specified the type of project being built. Defaults to 'library'
+        projectType = "application"
+        // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
+        schemaVersion = "1.4"
+        // The file name for the generated BOMs (before the file format suffix).
+        outputName = "bom"
+        // The file format generated, can be xml, json or all for generating both
+        outputFormat = "json"
+        // Exclude BOM Serial Number
+        includeBomSerialNumber = false
+        // Override component version
+        componentVersion = "local"
+      }
+      
+      tasks.processResources.dependsOn(cyclonedxBom)
+      ```
+    * cyclonedx-gradle-plugin in der build.gradle hinzufügen (ohne apply)
+      ```groovy
+      plugins {
+        //...
+        id 'org.cyclonedx.bom' version '1.8.2' apply false
+      }
+      ```
+    * im build.gradle der Applikation folgendes oben bei den apply Anweisungen ergänzen
+      ```groovy
+      apply from: "${rootDir}/gradle/cyclonedx.gradle"  
+      ```
+
+* gradle/sonar.gradle prüfen, ob folgende Werte gesetzt sind
+
+    ```groovy
+    //...
+    property "sonar.projectName", project.ARTIFACT_NAME
+    property "sonar.projectKey", "$project.ARTIFACT_GROUP_ID:$project.ARTIFACT_NAME"
+    property "sonar.sourceEncoding", project.FILE_ENCODING
+    property "sonar.projectVersion", project.ARTIFACT_VERSION
+    //...
+    ```
+* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Das Property ist in "release_notes" umzubenennen, falls es noch nicht so heißt. Das Property, welches auf den Workflow Run des Release Builds verweist, ist in release_build umzubenennen, falls es noch nicht so heißt. REPO_NAME ist bei beiden durch den Namen des Repositories zu ersetzen.
+    ```groovy
+    springBoot {
+      buildInfo {
+        properties {
+          additional = [
+            'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_build': 'https://github.com/freenet-group/REPO_NAME/actions/runs/' + (System.getenv("GITHUB_RUN_ID") != null? System.getenv("GITHUB_RUN_ID"): "unknown")
     ```
 
 ### Anpassung eines nicht-CA-projektes
@@ -163,12 +252,12 @@ Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird a
     DEPENDENCYTRACK_BOM_NAME=bom.json
     ```
 
-  * gradle.properties prüfen, sodass ARTIFACT_NAME und APPLICATION_JAR_NAME identisch sind
+* gradle.properties prüfen, sodass ARTIFACT_NAME und APPLICATION_JAR_NAME identisch sind
 
-    ```properties
-    #...
-    ARTIFACT_NAME=ms-test
-    ```
+  ```properties
+  #...
+  ARTIFACT_NAME=ms-test
+  ```
 
 * cyclonedx-gradle-plugin in der build.gradle hinzufügen
 
@@ -198,6 +287,15 @@ Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird a
         // Override component version
         componentVersion = "local"
     }
+    ```
+* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Das Property ist in "release_notes" umzubenennen, falls es noch nicht so heißt. Das Property, welches auf den Workflow Run des Release Builds verweist, ist in release_build umzubenennen, falls es noch nicht so heißt. REPO_NAME ist bei beiden durch den Namen des Repositories zu ersetzen.
+    ```groovy
+    springBoot {
+      buildInfo {
+        properties {
+          additional = [
+            'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_build': 'https://github.com/freenet-group/REPO_NAME/actions/runs/' + (System.getenv("GITHUB_RUN_ID") != null? System.getenv("GITHUB_RUN_ID"): "unknown")
     ```
 
 * Ausser bei Libs/Apis kann der ganze Block "publishing" entfernt werden
