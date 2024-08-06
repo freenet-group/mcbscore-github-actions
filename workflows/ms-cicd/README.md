@@ -101,7 +101,7 @@ Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigene
 
 * Nach Abschluss des Umbau und Tests kann dieser PR ebenfalls gemerged werden.
 
-### Anpassung eines CA-Projektes
+### Anpassung eines CA-Projektes (zu erkennen an folgendem Plugin in der build.gradle: de.freenet.cleanArchitecture)
 
 Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
@@ -147,16 +147,17 @@ unten einen eigenen Abschnitt.
     property "sonar.projectVersion", project.ARTIFACT_VERSION
     //...
     ```
-* Sicherstellen, daß in folgendem Block in /applications/app-service/build.gradle korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Dabei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt. REPO_NAME ist durch den Namen des Repositories zu ersetzen. Das 2.Property sollte release_build heißen.
+* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Das Property ist in "release_notes" umzubenennen, falls es noch nicht so heißt. Das Property, welches auf den Workflow Run des Release Builds verweist, ist in release_build umzubenennen, falls es noch nicht so heißt. REPO_NAME ist bei beiden durch den Namen des Repositories zu ersetzen.
     ```groovy
     springBoot {
       buildInfo {
         properties {
           additional = [
             'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_build': 'https://github.com/freenet-group/REPO_NAME/actions/runs/' + (System.getenv("GITHUB_RUN_ID") != null? System.getenv("GITHUB_RUN_ID"): "unknown")
     ```
 
-### Anpassung eines Projektes mit alter CA Struktur
+### Anpassung eines Projektes mit alter CA Struktur (zu erkennen am Fehlen des folgenden Plugins in der build.gradle: de.freenet.cleanArchitecture)
 
 Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
@@ -226,13 +227,14 @@ unten einen eigenen Abschnitt.
     property "sonar.projectVersion", project.ARTIFACT_VERSION
     //...
     ```
-* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Dabei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt. REPO_NAME ist durch den Namen des Repositories zu ersetzen. Das 2.Property sollte release_build heißen.
+* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Das Property ist in "release_notes" umzubenennen, falls es noch nicht so heißt. Das Property, welches auf den Workflow Run des Release Builds verweist, ist in release_build umzubenennen, falls es noch nicht so heißt. REPO_NAME ist bei beiden durch den Namen des Repositories zu ersetzen.
     ```groovy
     springBoot {
       buildInfo {
         properties {
           additional = [
             'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_build': 'https://github.com/freenet-group/REPO_NAME/actions/runs/' + (System.getenv("GITHUB_RUN_ID") != null? System.getenv("GITHUB_RUN_ID"): "unknown")
     ```
 
 ### Anpassung eines nicht-CA-projektes
@@ -286,13 +288,14 @@ Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird a
         componentVersion = "local"
     }
     ```
-* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Dabei ist zu beachten, daß das Property aktuell nicht immer "release notes" heißt. REPO_NAME ist durch den Namen des Repositories zu ersetzen. Das 2.Property sollte release_build heißen.
+* Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Das Property ist in "release_notes" umzubenennen, falls es noch nicht so heißt. Das Property, welches auf den Workflow Run des Release Builds verweist, ist in release_build umzubenennen, falls es noch nicht so heißt. REPO_NAME ist bei beiden durch den Namen des Repositories zu ersetzen.
     ```groovy
     springBoot {
       buildInfo {
         properties {
           additional = [
             'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
+            'release_build': 'https://github.com/freenet-group/REPO_NAME/actions/runs/' + (System.getenv("GITHUB_RUN_ID") != null? System.getenv("GITHUB_RUN_ID"): "unknown")
     ```
 
 * Ausser bei Libs/Apis kann der ganze Block "publishing" entfernt werden
