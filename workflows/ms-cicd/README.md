@@ -170,10 +170,12 @@ unten einen eigenen Abschnitt.
   * ARTIFACT_NAME und COVERAGE_APP müssen identisch sein
   * Wenn eines dieser beiden Konfigurationen nicht vorhanden ist, wird Sonar keine Coverage finden und somit 0%
     melden. Dasselbe passiert, wenn die Sonar-URL unter den AWS-Parametern fehlt
-* workflow.properties erweitern (<b>zu BEACHTEN:</b> Das erste Unterverzeichnis im DEPENDENCYTRACK_BOM_PATH ist servicespezifisch und entsprechend anzupassen)
+* workflow.properties erweitern (<b>zu BEACHTEN:</b> Das erste Unterverzeichnis im DEPENDENCYTRACK_BOM_PATH ist servicespezifisch und entsprechend anzupassen). Sicherstellen, dass APPLICATION_JAR_NAME sich aus "ms-" und COMPONENT zusammensetzt
 
   ```properties
   # .. 
+  APPLICATION_JAR_NAME=ms-test
+  COMPONENT=test
   DEPENDENCYTRACK_BOM_PATH=./mark-application/application/spring-boot/build/reports/
   DEPENDENCYTRACK_BOM_NAME=bom.json
   ```
@@ -236,6 +238,25 @@ unten einen eigenen Abschnitt.
             'release_notes': 'https://github.com/freenet-group/REPO_NAME/releases/tag/' + project.ARTIFACT_VERSION,
             'release_build': 'https://github.com/freenet-group/REPO_NAME/actions/runs/' + (System.getenv("GITHUB_RUN_ID") != null? System.getenv("GITHUB_RUN_ID"): "unknown")
     ```
+* In derselben build.gradle Datei muß zusätzlich folgendes gemacht werden
+  * Folgender Block muß vorhanden sein
+      ```groovy
+      //...
+      jar.enabled = false
+
+      bootJar {
+          // Sets output jar name
+          archiveFileName = "${project.ARTIFACT_NAME}-${project.ARTIFACT_VERSION}.${archiveExtension.get()}"
+          duplicatesStrategy = DuplicatesStrategy.INCLUDE
+      }
+      ```
+  * Folgende Properties sind zu entfernen
+    ```groovy
+    archivesBaseName = ...
+    group = project.ARTIFACT_GROUP_ID
+    version = rootProject.version 
+    ```
+  * Wenn vorhanden, ist der publishing Block zu entfernen
 
 ### Anpassung eines nicht-CA-projektes
 
