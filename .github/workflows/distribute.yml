@@ -437,7 +437,6 @@ jobs:
       matrix:
         repository:
           - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
-          - { name: ms-homer, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -503,7 +502,7 @@ jobs:
           - { name: ms-find, branch: develop, group: ms }
           - { name: ms-freeprint-router, branch: develop, group: ms }
           - { name: ms-gateway, branch: develop, group: ms }
-          - { name: ms-homer, branch: develop, group: ms }
+          - { name: ms-homer, branch: main, group: ms }
           - { name: ms-invoice, branch: develop, group: ms }
           - { name: ms-mark, branch: main, group: ms }
           - { name: ms-note-router, branch: develop, group: ms }
