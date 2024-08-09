@@ -361,8 +361,6 @@ PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von
 
 In den Releases das letzte SNAPSHOT-Release löschen
 
-PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von Hand korrigieren. (Bei Umstellung von alten auf CICD Workflows mit Aktualisierung des main-Branches können vermeintlich betroffene Tickets ermitteln werden, die zu löschen sind.)  
-
 ### DOGS melden
 
 DOGS Bescheid geben, dass der Deployment Branch geändert wird.
