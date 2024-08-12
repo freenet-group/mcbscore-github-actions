@@ -153,13 +153,14 @@ jobs:
       matrix:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
         repository:
-          - { name: ms-admin-dashboard, branch: main, group: ms-cicd }
-          - { name: ms-cicd, branch: main, group: ms-cicd }
-          - { name: ms-commondata, branch: develop, group: ms-cicd }
-          - { name: ms-configserver, branch: main, group: ms-cicd }
-          - { name: ms-contentprovider, branch: develop, group: ms-cicd }
-          - { name: ms-find, branch: main, group: ms-cicd }
-          - { name: ms-mark, branch: main, group: ms-cicd }
+          #{ name: ms-admin-dashboard, branch: main, group: ms-cicd }
+          #- { name: ms-cicd, branch: main, group: ms-cicd }
+          #- { name: ms-commondata, branch: develop, group: ms-cicd }
+          #- { name: ms-configserver, branch: main, group: ms-cicd }
+          #- { name: ms-contentprovider, branch: develop, group: ms-cicd }
+          #- { name: ms-find, branch: main, group: ms-cicd }
+          #- { name: ms-mark, branch: main, group: ms-cicd }
+          - { name: ms-rating, branch: main, group: ms-cicd }
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -203,7 +204,6 @@ jobs:
           - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
-          - { name: ms-rating, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s_only, ../encoding, postBuild, setPRIssueDone" }
 
@@ -510,7 +510,7 @@ jobs:
           - { name: ms-oidc, branch: develop, group: ms }
           - { name: ms-oms-router, branch: develop, group: ms }
           - { name: ms-proxy-support, branch: develop, group: ms }
-          - { name: ms-rating, branch: develop, group: ms }
+          - { name: ms-rating, branch: main, group: ms-cicd }
           - { name: ms-user, branch: develop, group: ms }
           - { name: ms-user-cleanup, branch: develop, group: ms }
           - { name: mslib-aws, branch: develop, group: mslib }
