@@ -154,12 +154,12 @@ jobs:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
         repository:
           #{ name: ms-admin-dashboard, branch: main, group: ms-cicd }
-          #- { name: ms-cicd, branch: main, group: ms-cicd }
-          #- { name: ms-commondata, branch: develop, group: ms-cicd }
-          #- { name: ms-configserver, branch: main, group: ms-cicd }
-          #- { name: ms-contentprovider, branch: develop, group: ms-cicd }
-          #- { name: ms-find, branch: main, group: ms-cicd }
-          #- { name: ms-mark, branch: main, group: ms-cicd }
+          - { name: ms-cicd, branch: main, group: ms-cicd }
+          - { name: ms-commondata, branch: develop, group: ms-cicd }
+          - { name: ms-configserver, branch: main, group: ms-cicd }
+          - { name: ms-contentprovider, branch: develop, group: ms-cicd }
+          - { name: ms-find, branch: main, group: ms-cicd }
+          - { name: ms-mark, branch: main, group: ms-cicd }
           - { name: ms-rating, branch: main, group: ms-cicd }
     steps:
       - name: Repository auschecken
