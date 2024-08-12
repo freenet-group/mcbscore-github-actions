@@ -7,10 +7,16 @@
   * [Allgemeiner Ablauf](#allgemeiner-ablauf)
   * [Workflows](#workflows)
   * [Installation](#installation)
+    * [Main Branch aktualisieren](#main-branch-aktualisieren)
+    * [GitHub Repo Einstellungen](#github-repo-einstellungen)
     * [Anpassung der distribute.yml](#anpassung-der-distributeyml)
-    * [Anpassung des GitHub Repo](#anpassung-des-github-repo)
-    * [Anpassung eines CA-Projektes](#anpassung-eines-ca-projektes)
-    * [Anpassung eines nicht-CA-Projektes wie ms-contentprovider](#anpassung-eines-nicht-ca-projektes)
+    * [Anpassung im Microservice](#anpassung-im-microservice)
+      * [Anpassung eines CA-Projektes](#anpassung-eines-ca-projektes)
+      * [Anpassung eines Projektes mit alter CA Struktur](#anpassung-eines-projektes-mit-alter-ca-struktur)
+      * [Anpassung eines nicht-CA-projektes](#anpassung-eines-nicht-ca-projektes)
+    * [Anpassung des GitHub Repo mit offenem Pull-Request](#anpassung-des-github-repo-mit-offenem-pull-request)
+    * [DOGS melden](#dogs-melden)
+    * [Renovate Assignee Verteilung überarbeiten](#renovate-assignee-verteilung-überarbeiten)
 
 ## Features der neuen automatischen CICD-Pipeline
 
@@ -61,8 +67,6 @@ graph TD;
 🛑 Es ist nicht möglich, einfach nur den Microservice in der distribute.yml umzuhängen.
 Sollten Probleme auftreten, dann bitte die alte distribute.yml wiederherstellen und Problem bei den GitHub / CICD Leuten melden.
 
-## Ablauf
-
 ### Main Branch aktualisieren
 
 * Repo mit Main Branch ausschecken
@@ -101,7 +105,9 @@ Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigene
 
 * Nach Abschluss des Umbau und Tests kann dieser PR ebenfalls gemerged werden.
 
-### Anpassung eines CA-Projektes (zu erkennen an folgendem Plugin in der build.gradle: de.freenet.cleanArchitecture)
+### Anpassung im Microservice
+#### Anpassung eines CA-Projektes
+(zu erkennen an folgendem Plugin in der build.gradle: de.freenet.cleanArchitecture)
 
 Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
@@ -157,7 +163,8 @@ unten einen eigenen Abschnitt.
             'release_build': 'https://github.com/freenet-group/REPO_NAME/actions/runs/' + (System.getenv("GITHUB_RUN_ID") != null? System.getenv("GITHUB_RUN_ID"): "unknown")
     ```
 
-### Anpassung eines Projektes mit alter CA Struktur (zu erkennen am Fehlen des folgenden Plugins in der build.gradle: de.freenet.cleanArchitecture)
+#### Anpassung eines Projektes mit alter CA Struktur
+(zu erkennen am Fehlen des folgenden Plugins in der build.gradle: de.freenet.cleanArchitecture)
 
 Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
@@ -258,7 +265,7 @@ unten einen eigenen Abschnitt.
     ```
   * Wenn vorhanden, ist der publishing Block zu entfernen
 
-### Anpassung eines nicht-CA-projektes
+#### Anpassung eines nicht-CA-projektes
 
 Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
@@ -360,8 +367,6 @@ Im PR müssen nun die Labels "release:patch", "ms-configuration:no", "ms-deploym
 PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von Hand korrigieren. (Bei Umstellung von alten auf CICD Workflows mit Aktualisierung des main-Branches können vermeintlich betroffene Tickets ermitteln werden, die zu löschen sind.)
 
 In den Releases das letzte SNAPSHOT-Release löschen
-
-PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von Hand korrigieren. (Bei Umstellung von alten auf CICD Workflows mit Aktualisierung des main-Branches können vermeintlich betroffene Tickets ermitteln werden, die zu löschen sind.)  
 
 ### DOGS melden
 

@@ -158,6 +158,7 @@ jobs:
           - { name: ms-commondata, branch: develop, group: ms-cicd }
           - { name: ms-configserver, branch: main, group: ms-cicd }
           - { name: ms-contentprovider, branch: develop, group: ms-cicd }
+          - { name: ms-homer, branch: main, group: ms-cicd }
           - { name: ms-find, branch: main, group: ms-cicd }
           - { name: ms-mark, branch: main, group: ms-cicd }
     steps:
@@ -197,7 +198,6 @@ jobs:
           - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-gateway, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
-          - { name: ms-homer, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-invoice, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-note-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
           - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
@@ -437,7 +437,6 @@ jobs:
       matrix:
         repository:
           - { name: mcbscore-reusable-workflows, branch: main, group: simple, workflows: "../ms/deployment_k8s"}
-          - { name: ms-homer, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -503,7 +502,7 @@ jobs:
           - { name: ms-find, branch: develop, group: ms }
           - { name: ms-freeprint-router, branch: develop, group: ms }
           - { name: ms-gateway, branch: develop, group: ms }
-          - { name: ms-homer, branch: develop, group: ms }
+          - { name: ms-homer, branch: main, group: ms }
           - { name: ms-invoice, branch: develop, group: ms }
           - { name: ms-mark, branch: main, group: ms }
           - { name: ms-note-router, branch: develop, group: ms }
