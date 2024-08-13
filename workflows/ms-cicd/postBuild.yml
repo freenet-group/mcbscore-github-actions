@@ -52,7 +52,7 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-      MAIL_PURPOSE: MSBuild
+      MAIL_PURPOSE: MSCICDBuild
       TEAMS_MAIL: b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms
       BAMBI_API_URL: 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild'
     steps:
