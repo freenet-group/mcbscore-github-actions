@@ -300,7 +300,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbscore-rating, branch: develop, group: rating, workflows: "../check, build, dbChanges, ../encoding, postBuild, Git-Deployment" }
+          - { name: mcbscore-rating, branch: develop, group: rating, workflows: "../check, build, dbChanges, ../encoding, ../vulnerability-detection, postBuild, Git-Deployment" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -404,16 +404,16 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: lib-amount, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-annotation, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-common, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-enterprise, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-io, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-persistence, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-process, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-relation, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-security, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
-          - { name: lib-service, branch: develop, group: framework, workflows: "../check, build, ../encoding, postBuild" }
+          - { name: lib-amount, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-annotation, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-common, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-enterprise, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-io, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-persistence, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-process, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-relation, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-security, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
+          - { name: lib-service, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
     steps:
       - uses: actions/checkout@v4
         with:
