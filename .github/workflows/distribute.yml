@@ -158,6 +158,7 @@ jobs:
           - { name: ms-commondata, branch: develop, group: ms-cicd }
           - { name: ms-configserver, branch: main, group: ms-cicd }
           - { name: ms-contentprovider, branch: develop, group: ms-cicd }
+          - { name: ms-discovery, branch: main, group: ms-cicd }
           - { name: ms-homer, branch: main, group: ms-cicd }
           - { name: ms-find, branch: main, group: ms-cicd }
           - { name: ms-mark, branch: main, group: ms-cicd }
@@ -194,7 +195,6 @@ jobs:
           - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
-          - { name: ms-discovery, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
@@ -494,7 +494,7 @@ jobs:
           - { name: ms-customerchange, branch: develop, group: ms }
           - { name: ms-customerproduct, branch: develop, group: ms }
           - { name: ms-delegate, branch: develop, group: ms }
-          - { name: ms-discovery, branch: develop, group: ms }
+          - { name: ms-discovery, branch: main, group: ms }
           - { name: ms-elasticupdate, branch: develop, group: ms }
           - { name: ms-event-relay, branch: develop, group: ms }
           - { name: ms-find, branch: develop, group: ms }
