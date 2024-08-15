@@ -106,6 +106,12 @@ Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigene
 * Nach Abschluss des Umbau und Tests kann dieser PR ebenfalls gemerged werden.
 
 ### Anpassung im Microservice
+In den workflow.properties muß die AtlassianTools Version >=4.0.17 sein.
+
+```properties
+ATLASSIAN_DEVELOPER_TOOLS_VERSION=4.0.17
+```
+
 #### Anpassung eines CA-Projektes
 (zu erkennen an folgendem Plugin in der build.gradle: de.freenet.cleanArchitecture)
 
