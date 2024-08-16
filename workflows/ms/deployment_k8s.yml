@@ -19,6 +19,11 @@ on:
         description: Zeit, nach der das Helm Deployment zurückgerollt wird, wenn noch nicht erfolgreich
         required: false
         default: 10m0s
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        type: string
+        required: false
+        default: main
       deploymentRepositoryBranch:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
@@ -52,6 +57,11 @@ on:
         required: false
         default: 10m0s
         type: string
+      actionsRepositoryBranch:
+        description: Zu benutzender Branch des Repositories mcbscore-github-actions
+        type: string
+        required: false
+        default: main
       deploymentRepositoryBranch:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
@@ -75,10 +85,10 @@ concurrency:
   cancel-in-progress: false
 env:
   DEPLOYMENT_PATH: mcbscore/deployment
+  ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
   DEPLOYMENT_REPO: freenet-group/ms-deployment
   JAVA_VERSION: 11
   GENERATED_SSH_KEY_FILE: id_rsa
-  KEY_SERVER: ${{ secrets.CERT_SERVER }}
 
 jobs:
   ################################################################################
@@ -233,6 +243,14 @@ jobs:
           /github/secrets/mcbs_token = GITHUB_TOKEN,
           /github/secrets/ssh/mdmcbsapi-app/zxrestapi_ppk = SSH_KEY
 
+    - name: Checkout mcbscore-github-actions
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ env.ACTIONS_REPOSITORY }}
+        token: ${{ env.GITHUB_TOKEN }}
+        path: mcbscore-github-actions
+        ref: ${{ inputs.actionsRepositoryBranch }}
+
     - name: Checkout Deployment Data / Scripts
       # Auschecken des Deployment Repositories
       uses: actions/checkout@v4
@@ -274,7 +292,7 @@ jobs:
 
     # Haupt-Deployment-Action
     - name: Deploy to K8s
-      uses: ./.github/actions/deploy-to-k8s
+      uses: ./mcbscore-github-actions/actions/deploy-to-k8s
       with:
         component: ${{ inputs.component }}
         domain: ${{ matrix.domain }}

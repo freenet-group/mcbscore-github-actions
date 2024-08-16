@@ -2,8 +2,6 @@ name: Build
 on:
   pull_request:
     types: [ opened, reopened, synchronize ]
-    branches-ignore:
-      - main
   workflow_dispatch:
     inputs:
       gradleOptions:
@@ -61,6 +59,11 @@ jobs:
           installGithubCli: true
           installJq: true
 
+      - name: Component Version setzen (legacy - Für die Kompatibilität mit alten Actions)
+        shell: bash
+        run: |
+          echo "COMPONENT_VERSION=0.0.0" >> $GITHUB_ENV
+
       - name: Microservice per Gradle bauen
         uses: ./mcbscore/github/actions/gradle-build
         with:
@@ -68,8 +71,7 @@ jobs:
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
-          # SBOM per cyclonedxBom erstellen
-          gradleOptions: cyclonedxBom ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ github.event.inputs.gradleOptions }}
 
       - name: Unit Test Ergebnisse hochladen
         uses: EnricoMi/publish-unit-test-result-action@v2

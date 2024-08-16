@@ -1,7 +1,7 @@
 name: MCBS-Freigabe
 
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: MCBS-FreigabeF ${{ github.event.inputs.component }}-${{ github.event.inputs.releaseVersion }}
+run-name: MCBS-Freigabe-${{ github.event.inputs.releaseVersion }}
 
 on:
   workflow_dispatch:
@@ -111,7 +111,7 @@ jobs:
             "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" \
             "${{ github.event.inputs.iterations }}"
           cat issueList.txt
-          issues=$(cat issues.txt)
+          issues=$(cat issueList.txt)
           echo "issues=$issues" >> $GITHUB_ENV          
           cat releaseIssues.csv
       # ##################################################################################

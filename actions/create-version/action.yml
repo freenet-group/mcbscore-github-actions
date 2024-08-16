@@ -88,7 +88,7 @@ runs:
         if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^ABRMS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
           echo "kein ABRMS-Commit"
         fi
-        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "^MCBS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 | sort | uniq  >> a.txt ; then
+        if ! git log $tag..HEAD --quiet --pretty=format:"%s %an" | grep "^MCBS*" | cut -d ' ' -f 1 | cut -d ':' -f 1 | cut -d 'g' -f 1 | sort | uniq  >> a.txt ; then
           echo "kein MCBS-Commit"
         fi
         if ! git log $tag..HEAD --pretty=format:"%s %an" | grep "^HOMER*" | cut -d ' ' -f 1 | cut -d ':' -f 1 |sort | uniq  >> a.txt ; then
@@ -99,14 +99,18 @@ runs:
         fi
         
         # sortieren und unique ausgeben in die Zieldatei
-        cat a.txt
+        # cat a.txt
         cat a.txt | sort | uniq >> branch_issues.txt
         rm -f a.txt
 
         # Kontrollausgabe
         cat branch_issues.txt | while read line
         do
-          printf $line" " 
+          if [[ "$line" == *"\'"* ]]; then
+             echo "It's there."
+          else
+             printf $line" " 
+          fi   
           printf $line" " >> issue_list.txt
         done
         

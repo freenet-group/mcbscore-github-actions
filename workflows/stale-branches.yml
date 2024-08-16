@@ -1,0 +1,20 @@
+name: Identify and remove stale branches
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Everday at midnight
+  workflow_dispatch:
+
+jobs:
+  remove-stale-branches:
+    name: Remove Stale Branches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fpicalausa/remove-stale-branches@v2.1.0
+        with:
+          dry-run: false
+          ignore-unknown-authors: true
+          default-recipient: zzzmcbscore
+          days-before-branch-stale: 90
+          days-before-branch-delete: 30
+          ignore-branches-with-open-prs: true

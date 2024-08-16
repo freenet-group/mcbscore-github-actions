@@ -5,6 +5,9 @@ on:
     types: [ closed ]
   workflow_dispatch:
     inputs:
+      gradleOptions:
+        description: Zusätzliche optionale Gradle Parameter
+        required: false
       branch:
         description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
         required: false
@@ -146,7 +149,7 @@ jobs:
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
           enableSonarCheckOnAllBranches: true
-          gradleOptions: cyclonedxBom
+          gradleOptions: ${{ github.event.inputs.gradleOptions }}
 
       - name: Sonar-Coverage abholen
         id: fetch-coverage
@@ -198,7 +201,10 @@ jobs:
             if [ -z "$uniqueIssueList" ]; then
               uniqueIssueList="${{ github.event.inputs.ticket }}"
             else
-              uniqueIssueList+=",${{ github.event.inputs.ticket }}"
+              # Prüfen ob das Ticket bereits in der uniqueIssueList enthalten ist
+              if [! echo "$uniqueIssueList" | grep -q "${{ github.event.inputs.ticket }}"]; then
+                uniqueIssueList+=",${{ github.event.inputs.ticket }}"
+              fi
             fi
           fi
 
@@ -539,7 +545,11 @@ jobs:
             {
               "releaseVersion": "${{ steps.version-calculation.outputs.new_version }}",
               "issueList": "${{ steps.update_release_template.outputs.issue_list }}",
-              "bambiArgs": "${{ env.BAMBI_ARGS }}"
+              "bambiArgs": "${{ env.BAMBI_ARGS }}",
+              "hasSQL": "${{ steps.update_release_template.outputs.db_changes }}",
+              "hasConfiguration": "${{ steps.update_release_template.outputs.ms_configuration }}",
+              "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}",
+              "hasDeployment": "${{ steps.update_release_template.outputs.ms_deployment }}"
             }
 
       - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
