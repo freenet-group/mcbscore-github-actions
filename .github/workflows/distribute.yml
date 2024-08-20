@@ -316,34 +316,6 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  restclient:
-    if: ${{ github.event.inputs.group == 'restclient' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        repository:
-          - { name: mcbscore-billingaccount-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-contractservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-customer-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-customerchange-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-documents-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-invoiceservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-notes-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Distribute Workflows
-        uses: ./.github/actions/distribute-workflows
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          workflows: ${{ matrix.repository.workflows }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
   simple:
     if: ${{ github.event.inputs.group == 'simple' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
