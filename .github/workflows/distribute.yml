@@ -25,7 +25,6 @@ on:
           - mslib
           - proxy
           - rating
-          - restclient
           - simple
           - standard
           - test
