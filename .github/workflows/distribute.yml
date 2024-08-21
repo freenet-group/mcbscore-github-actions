@@ -184,7 +184,8 @@ jobs:
 
   ms:
     if: ${{ github.event.inputs.group == 'ms' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
-    runs-on: ubuntu-latest    strategy:
+    runs-on: ubuntu-latest
+    strategy:
       matrix:
         repository:
           - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
