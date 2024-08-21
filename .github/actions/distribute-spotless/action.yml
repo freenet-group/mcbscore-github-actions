@@ -5,9 +5,6 @@ inputs:
   repositoryName:
     description: Der Name des Repositories
     required: true
-  repositoryGroup:
-    description: Die Gruppe der Repositories
-    required: true
   repositoryBranch:
     description: Der Branch des Repositories
     required: true
@@ -67,7 +64,6 @@ runs:
       env:
         thisRepository: ${{ github.repository }}
         thisWorkflow: ${{ github.workflow }}
-        repositoryGroup: ${{ inputs.repositoryGroup }}
         repositoryName: ${{ inputs.repositoryName }}
         javaVersion: ${{ env.JAVA_VERSION }}
         artifactoryUserName: ${{ inputs.artifactoryUserName }}
