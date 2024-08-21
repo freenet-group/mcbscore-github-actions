@@ -42,7 +42,6 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    if: ${{ !github.event.pull_request.draft }}
     steps:
       - name: Check Release Labels
         if: always()
