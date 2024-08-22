@@ -59,7 +59,7 @@ jobs:
       LANG: de_DE.UTF-8
     steps:
       - name: locale konfigurieren
-        run: sudo locale-gen de_DE.UTF-8 && sudo update-locale LANG=de_DE.UTF-8
+        run: sudo locale-gen "$LANG" && sudo update-locale LANG="$LANG"
 
       - name: Repository auschecken
         uses: actions/checkout@v4
