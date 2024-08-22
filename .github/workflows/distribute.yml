@@ -156,6 +156,7 @@ jobs:
           - { name: ms-alteration, branch: main, group: ms-cicd }
           - { name: ms-appcheck, branch: main, group: ms-cicd }
           - { name: ms-authorities-information, branch: main, group: ms-cicd }
+          - { name: ms-billingaccount-frontend, branch: main, group: ms-cicd }
           - { name: ms-cicd, branch: main, group: ms-cicd }
           - { name: ms-commondata, branch: develop, group: ms-cicd }
           - { name: ms-configserver, branch: main, group: ms-cicd }
@@ -188,7 +189,6 @@ jobs:
       matrix:
         repository:
           - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
-          - { name: ms-billingaccount-frontend, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-businesstransaction, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
@@ -456,7 +456,7 @@ jobs:
           - { name: ms-agreement, branch: develop }
           - { name: ms-appcheck, branch: main }
           - { name: ms-authorities-information, branch: main }
-          - { name: ms-billingaccount-frontend, branch: develop }
+          - { name: ms-billingaccount-frontend, branch: main }
           - { name: ms-businessinteraction-router, branch: develop }
           - { name: ms-businesstransaction, branch: develop }
           - { name: ms-configserver, branch: main }
