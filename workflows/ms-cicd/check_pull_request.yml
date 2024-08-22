@@ -42,63 +42,56 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    strategy:
-      # Matrix, sodass die einzelnen Label-Checks parallel ausgeführt werden können
-      matrix:
-        label:
-          - name: "Release"
-            labels: "release:patch, release:minor, release:major"
-            count: 1
-            mode: "exactly"
-            add_comment: true
-            message: "Pull-Request wurde aufgrund fehlender Release-Labels abgelehnt. \n
+    steps:
+      - name: Check Release Labels
+        if: always()
+        uses: mheap/github-action-required-labels@v5
+        with:
+          count: 1
+          mode: exactly
+          add_comment: true
+          labels: "release:patch, release:minor, release:major"
+          message: "Pull-Request wurde aufgrund fehlender Release-Labels abgelehnt. \n
                       Es muss exakt eines dieser Labels gesetzt werden: \n
                       - release:patch\n
                       - release:minor\n
                       - release:major"
-
-          - name: "MS-Configuration"
-            labels: "ms-configuration:yes, ms-configuration:no"
-            count: 1
-            mode: "exactly"
-            add_comment: true
-            message: "Pull-Request wurde aufgrund fehlender MS-Configuration-Labels abgelehnt. \n
-                      Es muss exakt eines dieser Labels gesetzt werden: \n
-                      - ms-configuration:yes\n
-                      - ms-configuration:no"
-
-          - name: "MS-Deployment"
-            labels: "ms-deployment:yes, ms-deployment:no"
-            count: 1
-            mode: "exactly"
-            add_comment: true
-            message: "Pull-Request wurde aufgrund fehlender MS-Deployment-Labels abgelehnt. \n
-                      Es muss exakt eines dieser Labels gesetzt werden: \n
-                      - ms-deployment:yes\n
-                      - ms-deployment:no"
-
-          - name: "AWS-Parameterstore"
-            labels: "aws-parameterstore:yes, aws-parameterstore:no"
-            count: 1
-            mode: "exactly"
-            add_comment: true
-            message: "Pull-Request wurde aufgrund fehlender AWS-Parameterstore-Labels abgelehnt. \n
-                      Es muss exakt eines dieser Labels gesetzt werden: \n
-                      - aws-parameterstore:yes\n
-                      - aws-parameterstore:no"
-
-    if: ${{ !github.event.pull_request.draft }}
-    steps:
-      - name: Check ${{ matrix.label.name }} Labels
+      - name: Check MS-Configuration Labels
         if: always()
         uses: mheap/github-action-required-labels@v5
         with:
-          count: ${{ matrix.label.count }}
-          mode: ${{ matrix.label.mode }}
-          add_comment: ${{ matrix.label.add_comment }}
-          labels: ${{ matrix.label.labels }}
-          message: ${{ matrix.label.message }}
-
+          count: 1
+          mode: exactly
+          add_comment: true
+          labels: "ms-configuration:yes, ms-configuration:no"
+          message: "Pull-Request wurde aufgrund fehlender MS-Configuration-Labels abgelehnt. \n
+                      Es muss exakt eines dieser Labels gesetzt werden: \n
+                      - ms-configuration:yes\n
+                      - ms-configuration:no"
+      - name: Check MS-Deployment Labels
+        if: always()
+        uses: mheap/github-action-required-labels@v5
+        with:
+          count: 1
+          mode: exactly
+          add_comment: true
+          labels: "ms-deployment:yes, ms-deployment:no"
+          message: "Pull-Request wurde aufgrund fehlender MS-Deployment-Labels abgelehnt. \n
+                      Es muss exakt eines dieser Labels gesetzt werden: \n
+                      - ms-deployment:yes\n
+                      - ms-deployment:no"
+      - name: Check AWS-Parameterstore Labels
+        if: always()
+        uses: mheap/github-action-required-labels@v5
+        with:
+          count: 1
+          mode: exactly
+          add_comment: true
+          labels: "aws-parameterstore:yes, aws-parameterstore:no"
+          message: "Pull-Request wurde aufgrund fehlender AWS-Parameterstore-Labels abgelehnt. \n
+                      Es muss exakt eines dieser Labels gesetzt werden: \n
+                      - aws-parameterstore:yes\n
+                      - aws-parameterstore:no"
   # Sendet eine Benachrichtigung an die angegebenen Benutzer, wenn bestimmte Labels gesetzt sind
   notifyOnLabel:
     needs: checkLabels
