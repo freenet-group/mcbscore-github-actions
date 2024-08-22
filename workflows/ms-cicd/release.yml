@@ -149,8 +149,6 @@ jobs:
       - name: Gradle Build mit Sonar Upload und CyclonedxBom (SBOM)
         uses: ./mcbscore/github/actions/gradle-build
         with:
-          artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
-          artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
           enableSonarCheckOnAllBranches: true
