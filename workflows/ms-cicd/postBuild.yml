@@ -55,7 +55,12 @@ jobs:
       MAIL_PURPOSE: MSCICDBuild
       TEAMS_MAIL: 'b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms#bernd.moeller-wacken@outlook.de'
       BAMBI_API_URL: 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild'
+      TZ: Europe/Berlin
+      LANG: de_DE.UTF-8
     steps:
+      - name: locale konfigurieren
+        run: sudo locale-gen de_DE.UTF-8 && sudo update-locale LANG=de_DE.UTF-8
+
       - name: Repository auschecken
         uses: actions/checkout@v4
         with:

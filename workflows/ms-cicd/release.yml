@@ -31,7 +31,12 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
+      TZ: Europe/Berlin
+      LANG: de_DE.UTF-8
     steps:
+      - name: locale konfigurieren
+        run: sudo locale-gen de_DE.UTF-8 && sudo update-locale LANG=de_DE.UTF-8
+
       - name: Repository auschecken
         uses: actions/checkout@v4
         with:
