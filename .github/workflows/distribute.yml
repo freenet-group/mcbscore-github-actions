@@ -160,7 +160,7 @@ jobs:
           - { name: ms-cicd, branch: main, group: ms-cicd }
           - { name: ms-commondata, branch: main, group: ms-cicd }
           - { name: ms-configserver, branch: main, group: ms-cicd }
-          - { name: ms-contentprovider, branch: develop, group: ms-cicd }
+          - { name: ms-contentprovider, branch: main, group: ms-cicd }
           - { name: ms-discovery, branch: main, group: ms-cicd }
           - { name: ms-homer, branch: main, group: ms-cicd }
           - { name: ms-find, branch: main, group: ms-cicd }
@@ -461,7 +461,7 @@ jobs:
           - { name: ms-businesstransaction, branch: develop }
           - { name: ms-configserver, branch: main }
           - { name: ms-cicd, branch: main }
-          - { name: ms-contentprovider, branch: develop }
+          - { name: ms-contentprovider, branch: main }
           - { name: ms-customerchange, branch: develop }
           - { name: ms-customerproduct, branch: develop }
           - { name: ms-delegate, branch: develop }
