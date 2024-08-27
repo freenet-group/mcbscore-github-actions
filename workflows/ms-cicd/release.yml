@@ -31,7 +31,12 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       KEY_SERVER: ${{ secrets.CERT_SERVER }}
+      TZ: Europe/Berlin
+      LANG: de_DE.UTF-8
     steps:
+      - name: locale konfigurieren
+        run: sudo locale-gen "$LANG" && sudo update-locale LANG="$LANG"
+
       - name: Repository auschecken
         uses: actions/checkout@v4
         with:
@@ -144,8 +149,6 @@ jobs:
       - name: Gradle Build mit Sonar Upload und CyclonedxBom (SBOM)
         uses: ./mcbscore/github/actions/gradle-build
         with:
-          artifactoryUserName: ${{ secrets.MD_ARTIFACTORY_USER }}
-          artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
           enableSonarCheckOnAllBranches: true
