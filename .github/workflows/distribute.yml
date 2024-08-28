@@ -25,7 +25,6 @@ on:
           - mslib
           - proxy
           - rating
-          - restclient
           - simple
           - standard
           - test
@@ -154,10 +153,14 @@ jobs:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
         repository:
           - { name: ms-admin-dashboard, branch: main, group: ms-cicd }
+          - { name: ms-alteration, branch: main, group: ms-cicd }
+          - { name: ms-appcheck, branch: main, group: ms-cicd }
+          - { name: ms-authorities-information, branch: main, group: ms-cicd }
+          - { name: ms-billingaccount-frontend, branch: main, group: ms-cicd }
           - { name: ms-cicd, branch: main, group: ms-cicd }
-          - { name: ms-commondata, branch: develop, group: ms-cicd }
+          - { name: ms-commondata, branch: main, group: ms-cicd }
           - { name: ms-configserver, branch: main, group: ms-cicd }
-          - { name: ms-contentprovider, branch: develop, group: ms-cicd }
+          - { name: ms-contentprovider, branch: main, group: ms-cicd }
           - { name: ms-discovery, branch: main, group: ms-cicd }
           - { name: ms-homer, branch: main, group: ms-cicd }
           - { name: ms-find, branch: main, group: ms-cicd }
@@ -186,10 +189,6 @@ jobs:
       matrix:
         repository:
           - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
-          - { name: ms-alteration, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
-          - { name: ms-appcheck, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
-          - { name: ms-authorities-information, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
-          - { name: ms-billingaccount-frontend, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-businesstransaction, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
@@ -301,34 +300,6 @@ jobs:
       matrix:
         repository:
           - { name: mcbscore-rating, branch: develop, group: rating, workflows: "../check, build, dbChanges, ../encoding, ../vulnerability-detection, postBuild, Git-Deployment" }
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Distribute Workflows
-        uses: ./.github/actions/distribute-workflows
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          workflows: ${{ matrix.repository.workflows }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-  restclient:
-    if: ${{ github.event.inputs.group == 'restclient' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        repository:
-          - { name: mcbscore-billingaccount-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-contractservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-customer-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-customerchange-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-documents-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-invoiceservice-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
-          - { name: mcbscore-notes-webclient, branch: main, group: restclient, workflows: "../check, build, ../encoding" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -458,61 +429,61 @@ jobs:
       fail-fast: false
       matrix:
         repository:
-          - { name: lib-amount, branch: develop, group: standard }
-          - { name: lib-annotation, branch: develop, group: standard }
-          - { name: lib-common, branch: develop, group: standard }
-          - { name: lib-enterprise, branch: develop, group: standard }
-          - { name: lib-io, branch: develop, group: standard }
-          - { name: lib-persistence, branch: develop, group: standard }
-          - { name: lib-process, branch: develop, group: standard }
-          - { name: lib-relation, branch: develop, group: standard }
-          - { name: lib-security, branch: develop, group: standard }
-          - { name: lib-service, branch: develop, group: standard }
-          - { name: mcbs-master, branch: develop, group: mcbs }
-          - { name: mcbs-logging, branch: develop, group: mcbs }
-          - { name: mcbscore-mandel, branch: develop, group: mandel }
-          - { name: mcbscore-bot, branch: develop, group: standard }
-          - { name: mcbscore-changelog-editor, branch: develop, group: standard }
-          - { name: mcbscore-customer-search-index, branch: develop, group: standard }
-          - { name: mcbscore-db-replica, branch: develop, group: standard }
-          - { name: mcbscore-es-plugin-collection, branch: develop }
-          - { name: mcbscore-framework, branch: develop, group: standard }
-          - { name: mcbscore-yaml-transform-plugin, branch: develop, group: standard}
-          - { name: metis, branch: develop, group: metis }
-          - { name: ms-alteration, branch: develop, group: ms }
-          - { name: ms-commondata, branch: develop, group: ms-cicd }
-          - { name: ms-admin-dashboard, branch: main, group: ms }
-          - { name: ms-agreement, branch: develop, group: ms }
-          - { name: ms-appcheck, branch: develop, group: ms }
-          - { name: ms-authorities-information, branch: develop, group: ms }
-          - { name: ms-billingaccount-frontend, branch: develop, group: ms }
-          - { name: ms-businessinteraction-router, branch: develop, group: ms }
-          - { name: ms-businesstransaction, branch: develop, group: ms }
-          - { name: ms-configserver, branch: main, group: ms }
-          - { name: ms-cicd, branch: main, group: ms-cicd }
-          - { name: ms-contentprovider, branch: develop, group: ms-cicd }
-          - { name: ms-customerchange, branch: develop, group: ms }
-          - { name: ms-customerproduct, branch: develop, group: ms }
-          - { name: ms-delegate, branch: develop, group: ms }
-          - { name: ms-discovery, branch: main, group: ms }
-          - { name: ms-elasticupdate, branch: develop, group: ms }
-          - { name: ms-event-relay, branch: develop, group: ms }
-          - { name: ms-find, branch: develop, group: ms }
-          - { name: ms-freeprint-router, branch: develop, group: ms }
-          - { name: ms-gateway, branch: develop, group: ms }
-          - { name: ms-homer, branch: main, group: ms }
-          - { name: ms-invoice, branch: develop, group: ms }
-          - { name: ms-mark, branch: main, group: ms }
-          - { name: ms-note-router, branch: develop, group: ms }
-          - { name: ms-oidc, branch: develop, group: ms }
-          - { name: ms-oms-router, branch: develop, group: ms }
-          - { name: ms-proxy-support, branch: develop, group: ms }
-          - { name: ms-rating, branch: main, group: ms-cicd }
-          - { name: ms-user, branch: develop, group: ms }
-          - { name: ms-user-cleanup, branch: develop, group: ms }
-          - { name: mslib-aws, branch: develop, group: mslib }
-          - { name: mslib-rest, branch: develop, group: mslib }
-          - { name: scaffold-clean-architecture-gradle-plugin, branch: develop, group: standard }
+          - { name: lib-amount, branch: develop }
+          - { name: lib-annotation, branch: develop }
+          - { name: lib-common, branch: develop }
+          - { name: lib-enterprise, branch: develop }
+          - { name: lib-io, branch: develop }
+          - { name: lib-persistence, branch: develop }
+          - { name: lib-process, branch: develop }
+          - { name: lib-relation, branch: develop }
+          - { name: lib-security, branch: develop }
+          - { name: lib-service, branch: develop }
+          - { name: mcbs-master, branch: develop }
+          - { name: mcbs-logging, branch: develop }
+          - { name: mcbscore-mandel, branch: develop }
+          - { name: mcbscore-bot, branch: develop }
+          - { name: mcbscore-changelog-editor, branch: develop }
+          - { name: mcbscore-customer-search-index, branch: develop }
+          - { name: mcbscore-db-replica, branch: develop }
+          - { name: mcbscore-es-plugin-collection }
+          - { name: mcbscore-framework, branch: develop }
+          - { name: mcbscore-yaml-transform-plugin, branch: develop }
+          - { name: metis, branch: develop }
+          - { name: ms-alteration, branch: main }
+          - { name: ms-commondata, branch: main }
+          - { name: ms-admin-dashboard, branch: main }
+          - { name: ms-agreement, branch: develop }
+          - { name: ms-appcheck, branch: main }
+          - { name: ms-authorities-information, branch: main }
+          - { name: ms-billingaccount-frontend, branch: main }
+          - { name: ms-businessinteraction-router, branch: develop }
+          - { name: ms-businesstransaction, branch: develop }
+          - { name: ms-configserver, branch: main }
+          - { name: ms-cicd, branch: main }
+          - { name: ms-contentprovider, branch: main }
+          - { name: ms-customerchange, branch: develop }
+          - { name: ms-customerproduct, branch: develop }
+          - { name: ms-delegate, branch: develop }
+          - { name: ms-discovery, branch: main }
+          - { name: ms-elasticupdate, branch: develop }
+          - { name: ms-event-relay, branch: develop }
+          - { name: ms-find, branch: develop }
+          - { name: ms-freeprint-router, branch: develop }
+          - { name: ms-gateway, branch: develop }
+          - { name: ms-homer, branch: main }
+          - { name: ms-invoice, branch: develop }
+          - { name: ms-mark, branch: main }
+          - { name: ms-note-router, branch: develop }
+          - { name: ms-oidc, branch: develop }
+          - { name: ms-oms-router, branch: develop }
+          - { name: ms-proxy-support, branch: develop }
+          - { name: ms-rating, branch: main }
+          - { name: ms-user, branch: develop }
+          - { name: ms-user-cleanup, branch: develop }
+          - { name: mslib-aws, branch: develop }
+          - { name: mslib-rest, branch: develop }
+          - { name: scaffold-clean-architecture-gradle-plugin, branch: develop }
 
     steps:
       - uses: actions/checkout@v4
@@ -523,7 +494,6 @@ jobs:
         uses: ./.github/actions/distribute-spotless
         with:
           repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
