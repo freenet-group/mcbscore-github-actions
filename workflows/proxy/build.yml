@@ -115,6 +115,15 @@ jobs:
           if [ -e ${{ env.COMPONENT }}-fm.tar.gz ]; then
             cp ${{ env.COMPONENT }}-fm.tar.gz  ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
           fi
+          if [ -e ${{ env.COMPONENT }}-km-extern.tar.gz ]; then
+            cp ${{ env.COMPONENT }}-km-extern.tar.gz  ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}-extern.tar.gz
+          fi
+          if [ -e ${{ env.COMPONENT }}-md-extern.tar.gz ]; then
+            cp ${{ env.COMPONENT }}-md-extern.tar.gz  ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}-extern.tar.gz
+          fi
+          if [ -e ${{ env.COMPONENT }}-fm-extern.tar.gz ]; then
+            cp ${{ env.COMPONENT }}-fm-extern.tar.gz  ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}-extern.tar.gz
+          fi
           if [ -e ${{ env.COMPONENT }}-km_k8s.tar.gz ]; then
             cp ${{ env.COMPONENT }}-km_k8s.tar.gz  ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
           fi
@@ -143,6 +152,9 @@ jobs:
             ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}.tar.gz
             ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
             ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}.tar.gz
+            ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}-extern.tar.gz
+            ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}-extern.tar.gz
+            ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}-extern.tar.gz
             ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
             ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
             ${{ env.COMPONENT }}-fm-${{ env.COMPONENT_VERSION }}_k8s.tar.gz
