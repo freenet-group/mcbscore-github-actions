@@ -224,6 +224,25 @@ jobs:
         targetPath: './release'
         token: ${{ env.TOKEN }}
 
+    - name: Download external Release
+      if: ${{ inputs.externalProxy == true }}
+      uses: ./mcbscore/github/actions/download-release-assets
+      with:
+        version: ${{ inputs.componentVersion }}
+        assetPattern: '${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}-extern.tar.gz'
+        targetPath: './release'
+        token: ${{ env.TOKEN }}
+
+    - name: Rename extern-Artifact
+      if: ${{ inputs.externalProxy == true }}
+      shell: bash
+      run: |
+        if [ -f "./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}-extern.tar.gz" ]; then
+          mv "./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}-extern.tar.gz" "./release/${{ env.COMPONENT }}-${{ inputs.company }}-${{ inputs.componentVersion }}.tar.gz"
+        else
+          echo "Externer Proxy ist identisch zum internen"
+        fi
+
     - name: Download k8s-Release
       if: ${{ inputs.deployForKubernetes == 'true' }}
       uses: ./mcbscore/github/actions/download-release-assets
