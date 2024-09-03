@@ -60,9 +60,7 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN, 
             /github/secrets/${{ inputs.environment }}/mcbs_app.client_id_sts = CLIENT_ID_STS,
-            /github/secrets/${{ inputs.environment }}/mcbs_app.client_secret_sts = CLIENT_SECRET_STS,
-            /github/secrets/prod/mcbs_app.client_id_sts = CLIENT_ID_PROD_STS,
-            /github/secrets/prod/mcbs_app.client_secret_sts = CLIENT_SECRET_PROD_STS
+            /github/secrets/${{ inputs.environment }}/mcbs_app.client_secret_sts = CLIENT_SECRET_STS
 
       # Die internen Actions auschecken
       - name: checkout mcbscore-github-actions
@@ -125,5 +123,3 @@ jobs:
           clientSecret: ${{ env.CLIENT_SECRET_STS }}
           environment: ${{ github.event.inputs.environment }}
           maturityLevel: ${{ matrix.type }}
-          prodClientId: ${{ env.CLIENT_ID_PROD_STS }}
-          prodClientSecret: ${{ env.CLIENT_SECRET_PROD_STS }}
