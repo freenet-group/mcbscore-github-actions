@@ -24,10 +24,6 @@ on:
         description: 'JSON string for Bambi API call. Should contain fields: ibnDate, changesInConfiguration, changesInDeployment, dbChanges, dependencies, renovateInfo, and renovate.'
         required: false
         default: '{"ibnDate": "", "changesInConfiguration": "", "changesInDeployment": "", "dbChanges": "", "dependencies": "", "renovateInfo": "", "renovate": ""}'
-      renovate:
-        description: War renovate die Ursache für dieses Releasebuild (true | false)
-        required: false
-        default: false
       hasSQL:
         description: Gibt an, ob SQL-Änderungen vorhanden sind
         required: false
@@ -131,11 +127,9 @@ jobs:
           issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
-      - name: Release bei Bambi melden
+      - name: Bambi Args auslesen
+        id: parse-bambi-args
         run: |
-          issueListWithDelimiter=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
-          echo "Create BAMBI-Entry for IssueList: $issueListWithDelimiter"
-
           bambiArgs='${{ github.event.inputs.bambiArgs }}'
           echo "bambiArgs: $bambiArgs"
           
@@ -147,21 +141,36 @@ jobs:
           renovateInfo=$(echo "$bambiArgs" | jq -r '.renovateInfo')
           renovate=$(echo "$bambiArgs" | jq -r '.renovate')
 
+          # Output parsed values to GITHUB_OUTPUT
+          echo "changesInConfiguration=$changesInConfiguration" >> $GITHUB_OUTPUT
+          echo "changesInDeployment=$changesInDeployment" >> $GITHUB_OUTPUT
+          echo "dbChanges=$dbChanges" >> $GITHUB_OUTPUT
+          echo "dependencies=$dependencies" >> $GITHUB_OUTPUT
+          echo "ibnDate=$ibnDate" >> $GITHUB_OUTPUT
+          echo "renovateInfo=$renovateInfo" >> $GITHUB_OUTPUT
+          echo "renovate=$renovate" >> $GITHUB_OUTPUT
+
+      - name: Release bei Bambi melden
+        run: |
+          issueListWithDelimiter=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
+          echo "Create BAMBI-Entry for IssueList: $issueListWithDelimiter"
+
           requestBody="{
             \"buildInfo\": {
-              \"ibnDate\": \"$ibnDate\",
-              \"changesInConfiguration\": \"$changesInConfiguration\",
-              \"changesInDeployment\": \"$changesInDeployment\",
-              \"dbChanges\": \"$dbChanges\",
-              \"dependencies\": \"$dependencies\",
-              \"renovateInfo\": \"$renovateInfo\"
+              \"ibnDate\": \"${{ steps.parse-bambi-args.outputs.ibnDate }}\",
+              \"changesInConfiguration\": \"${{ steps.parse-bambi-args.outputs.changesInConfiguration }}\",
+              \"changesInDeployment\": \"${{ steps.parse-bambi-args.outputs.changesInDeployment }}\",
+              \"dbChanges\": \"${{ steps.parse-bambi-args.outputs.dbChanges }}\",
+              \"dependencies\": \"${{ steps.parse-bambi-args.outputs.dependencies }}\",
+              \"renovateInfo\": \"${{ steps.parse-bambi-args.outputs.renovateInfo }}\"
             },
             \"buildUser\": \"mcbstest\",
             \"componentName\": \"${{ env.JIRA_COMPONENT }}\",
             \"issueList\": \"$issueListWithDelimiter\",
-            \"renovate\": \"$renovate\",
+            \"renovate\": \"${{ steps.parse-bambi-args.outputs.renovate }}\",
             \"versionNo\": \"${{ github.event.inputs.releaseVersion }}\"
           }"
+
           echo "Bambi RequestBody: $requestBody"
 
           http_response=$(curl -w "%{http_code}\n" --location --request POST "${{ env.BAMBI_API_URL }}" --header "Content-Type: application/json" --data-raw "$requestBody")
@@ -226,7 +235,7 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Info an Teams Kanal senden
-        if: ${{ github.event.inputs.renovate == 'false' }}
+        if: ${{ steps.parse-bambi-args.outputs.renovate == 'false' }}
         uses: ./mcbscore/github/actions/mail-notification
         with:
           component: ${{ env.JIRA_COMPONENT }}
@@ -243,4 +252,3 @@ jobs:
           purpose: ${{ env.MAIL_PURPOSE }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           repositoryName: ${{ github.REPOSITORY }}
-
