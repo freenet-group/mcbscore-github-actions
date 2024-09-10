@@ -322,12 +322,15 @@ jobs:
           echo "Platzhalter im Template austauschen"
           
           ## Tabellen
+          # Trennzeichen entfernen
+          cleanedIssueListLines=$(echo "$issueListLines" | sed 's/#//g')
+          cleanedLinkedIssuesListLines=$(echo "$linkedIssuesListLines" | sed 's/#//g')
           echo "IssueList setzen"
-          echo "$issueListLines"
-          sed -i "s#<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->#$issueListLines#" "$template_file"
+          echo "$cleanedIssueListLines"
+          sed -i "s#<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->#$cleanedIssueListLines#g" "$template_file"
           echo "Verlinkte Tickets setzen"
-          echo "$linkedIssuesListLines"
-          sed -i "s/<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->/$linkedIssuesListLines/" "$template_file"
+          echo "$cleanedLinkedIssuesListLines"
+          sed -i "s#<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->#$cleanedLinkedIssuesListLines#g" "$template_file"
           
           ## EPIC
           echo "EPIC setzen"
