@@ -157,7 +157,6 @@ jobs:
           - { name: ms-appcheck, branch: main, group: ms-cicd }
           - { name: ms-authorities-information, branch: main, group: ms-cicd }
           - { name: ms-billingaccount-frontend, branch: main, group: ms-cicd }
-          - { name: ms-cicd, branch: main, group: ms-cicd }
           - { name: ms-commondata, branch: main, group: ms-cicd }
           - { name: ms-configserver, branch: main, group: ms-cicd }
           - { name: ms-contentprovider, branch: main, group: ms-cicd }
@@ -460,7 +459,6 @@ jobs:
           - { name: ms-businessinteraction-router, branch: develop }
           - { name: ms-businesstransaction, branch: develop }
           - { name: ms-configserver, branch: main }
-          - { name: ms-cicd, branch: main }
           - { name: ms-contentprovider, branch: main }
           - { name: ms-customerchange, branch: develop }
           - { name: ms-customerproduct, branch: develop }
