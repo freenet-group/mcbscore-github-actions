@@ -42,33 +42,6 @@ runs:
         path: ${{ inputs.repositoryName }}
         ref: ${{ inputs.repositoryBranch }}
 
-    # - name: Remove invalid workflows
-    #   env:
-    #     workflows: ${{ inputs.workflows }}
-    #     repositoryName: ${{ inputs.repositoryName }}
-    #   shell: bash
-    #   run: |
-    #     # Workflows in grep-freundliche zeilenweise Liste überführen
-    #     workflowList=$(tr , '\n' <<< "$workflows" | sed -e 's/^[[:space:]]*//g')
-
-    #     workingDirectory=$(pwd)
-    #     workflowDirectory=${workingDirectory}/${repositoryName}/.github/workflows
-    #     cd -- "$repositoryName"
-
-    #     if [ -d "$workflowDirectory" ]; then
-    #       for filename in ./.github/workflows/*.yml; do
-    #         # Pfad und Dateiendung entfernen
-    #         basename=$(basename -- "$filename" .yml)
-
-    #         if ! grep --fixed --line-regexp --quiet -- "$basename" <<< "$workflowList"; then # $basename not contained in $workflowList
-    #           echo "git rm $filename"
-    #           git rm -- "$filename"
-    #         fi
-    #       done
-    #     fi
-
-    #     cd -- "$workingDirectory"
-
     - name: Remove invalid workflows
       env:
         workflows: ${{ inputs.workflows }}
@@ -83,17 +56,13 @@ runs:
         cd -- "$repositoryName"
 
         if [ -d "$workflowDirectory" ]; then
-          # .yml und .yaml prüfen
-          for filename in ./.github/workflows/*.{yml,yaml}; do
-            # Wenn Datei mit Dateiendung existiert
-            if [ -f "$filename" ]; then
-              # Pfad und Dateiendung entfernen
-              basename=$(basename -- "$filename" .yml | sed 's/\.yaml$//')
+          for filename in ./.github/workflows/*.yml; do
+            # Pfad und Dateiendung entfernen
+            basename=$(basename -- "$filename" .yml)
 
-              if ! grep --fixed --line-regexp --quiet -- "$basename" <<< "$workflowList"; then
-                echo "git rm $filename"
-                git rm -- "$filename"
-              fi
+            if ! grep --fixed --line-regexp --quiet -- "$basename" <<< "$workflowList"; then # $basename not contained in $workflowList
+              echo "git rm $filename"
+              git rm -- "$filename"
             fi
           done
         fi
