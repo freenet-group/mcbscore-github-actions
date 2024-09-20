@@ -1,0 +1,117 @@
+name: Deployment
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Die Version der Komponente
+        required: true
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, k8s]
+    steps:
+      # Vorbereitung
+      - name: Entweder die Übergebene Version oder die aktuelle Version auslesen
+        id: determine-version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
+
+      # Setup
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.determine-version.outputs.VERSION }}
+
+      - name: AWS Credentials konfigurieren
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Config von AWS SSM einlesen
+        uses: dkershner6/aws-ssm-getparameters-action@v2
+        with:
+          parameterPairs: |
+            /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
+            /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
+            /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
+            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
+
+      - name: workflow.config einlesen
+        id: read-properties
+        run: |
+          tee -a "$GITHUB_OUTPUT" < .github/workflow.config
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.read-properties.outputs.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com/'
+
+      - name: Dependencies installieren
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
+
+      - name: Versions-Tag in package.json schreiben
+        run: |
+          sed -i "s/\"version\": \".*\"/\"version\": \"${{ steps.determine-version.outputs.VERSION }}\"/" package.json
+
+      # Veröffentlichen
+      - name: Veröffentlichen
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # SBOM Upload
+      - name: Dateinamen für SBOM Upload ermitteln
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        id: sbom-file-name
+        run: |
+          echo "SBOM_FILE_NAME=$(basename ${{ steps.read-properties.outputs.SBOM_FILE }})" >> $GITHUB_OUTPUT
+
+      - name: SBOM vom Release herunterladen
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        uses: dsaltares/fetch-gh-release-asset@1.1.2
+        with:
+          version: 'tags/${{ steps.determine-version.outputs.VERSION }}'
+          file: ${{ steps.sbom-file-name.outputs.SBOM_FILE_NAME }}
+          target: ${{ steps.read-properties.outputs.SBOM_FILE }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: SBOM an DependencyTrack übergeben
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        uses: freenet-group/gh-upload-sbom-with-tagging@0.1.0
+        with:
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          component_version: ${{ steps.determine-version.outputs.VERSION }}
+          stage_tag: ${{ steps.determine-environment.outputs.ENVIRONMENT_LOWERCASE }}
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          bomfilename: ${{ steps.read-properties.outputs.SBOM_FILE }}
+
+      - name: Alte SBOMs löschen
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        uses: freenet-group/sbom-cleanup@1.1.0
+        with:
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          project_prefix: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          days_to_keep: '90'
+          dry_run: 'false'

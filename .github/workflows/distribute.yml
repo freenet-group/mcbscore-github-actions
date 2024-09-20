@@ -245,6 +245,33 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
+  npmlib:
+    if: ${{ github.event.inputs.group == 'npmlib' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_WORKFLOWS: "deployment, pullRequestCheck, pullRequestTests, release"
+    strategy:
+      matrix:
+        # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
+        repository:
+          - { name: async-api-event-generator, branch: main, group: npmlib }
+          # - { name: eslint-plugin-mcbs, branch: main, group: npmlib } # @todo Verteilung aktivieren, sobald vorbereitet
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Workflows verteilen
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows || env.DEFAULT_WORKFLOWS  }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
   proxy:
     if: ${{ github.event.inputs.group == 'proxy' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
