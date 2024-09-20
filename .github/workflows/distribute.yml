@@ -23,6 +23,7 @@ on:
           - ms
           - ms-cicd
           - mslib
+          - npmlib
           - proxy
           - rating
           - simple
