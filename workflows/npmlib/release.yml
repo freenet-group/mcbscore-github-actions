@@ -119,7 +119,7 @@ jobs:
       - name: Release-Template einlesen und ausfüllen
         id: update_release_template
         run: |
-          template_file=".github/templates/release_template_lib.md"
+          template_file=".github/templates/release_template_npmlib.md"
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
