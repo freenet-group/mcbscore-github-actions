@@ -15,7 +15,7 @@ inputs:
     required: true
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Read and set AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
