@@ -17,7 +17,7 @@
 
 ## Implementierte Issues
 
-| Issue | Beschreibung | Stichwörter | Komponenten |
+| Issue | Beschreibung | Status | Art der Verbindung |
 | ----- | ------------ | ------ | ------------------ |
 
 <!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->
