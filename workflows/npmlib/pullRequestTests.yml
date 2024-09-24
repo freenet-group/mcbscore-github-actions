@@ -14,7 +14,6 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: eu-central-1
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -24,7 +23,7 @@ jobs:
       - name: workflow.config einlesen
         id: read-properties
         run: |
-          tee -a "$GITHUB_OUTPUT" < .github/workflow.config
+          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4

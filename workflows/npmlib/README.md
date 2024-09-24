@@ -7,7 +7,6 @@ Folgende Voraussetzungen müssen im GitHub-Repository konfiguriert sein:
 - **AWS**: AWS-Zugangsdaten müssen als GitHub-Secrets konfiguriert werden:
   - `AWS_ACCESS_KEY_ID`
   - `AWS_SECRET_ACCESS_KEY`
-  - `AWS_REGION`
 
 Nach Umstellung sollten dann die Workflows Steps `check` und `test` aus dem Pull-Request-Workflows als Pflicht Checks in den Branch Protection Rules definiert werden.
 

@@ -50,7 +50,7 @@ jobs:
       - name: workflow.config einlesen
         id: read-properties
         run: |
-          tee -a "$GITHUB_OUTPUT" < .github/workflow.config
+          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -152,14 +152,14 @@ jobs:
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
+            prNumber=$(jq -r ".pull_request.number" <<<"$GITHUB_EVENT_PATH")
             apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
 
             # Prüfen ob es sich um ein Array oder einen String handelt
-            if echo "$apiResponse" | jq -e 'type == "array"' > /dev/null; then
-              prLabels=$(echo "$apiResponse" | jq -r ".[].name")
+            if jq -e 'type == "array"' <<<"$apiResponse" > /dev/null; then
+              prLabels=$(jq -r ".[].name" <<<"$apiResponse")
             else
-              prLabels=$(echo "$apiResponse" | jq -r ".name")
+              prLabels=$(jq -r ".name" <<<"$apiResponse")
             fi
 
             # ABRMS-5265 ist ein Renovate-Platzhalterticket, wenn renovate im PR-Label enthalten ist, dann hinzufügen
@@ -179,9 +179,8 @@ jobs:
           echo "issue_list=$uniqueIssueList" >> "$GITHUB_OUTPUT"
           echo "Folgende Issues werden analysiert $uniqueIssueList"
           IFS=',' read -ra issues <<< "$uniqueIssueList"
-          for line in "${issues[@]}"; do
+          for issueNumber in "${issues[@]}"; do
             # Tabellen Eintrag erstellen
-            issueNumber=$(echo "$line" | cut -d";" -f1 | xargs)
             echo "$issueNumber wird eingelesen"
 
             # Renovate Ticket überspringen, Rest aber prüfen
@@ -202,33 +201,27 @@ jobs:
 
             # Epic / Parent ermitteln
             echo "Epic name for $issueNumber is being extracted"
-            epicKey=$(echo "$issue_info" | jq -r '.fields.parent.key')
-            echo "Extracted epicKey: $epicKey"
-            if [ -n "$epicKey" ] && [ "$epicKey" != "null" ]; then
-              if [ -z "$epicList" ]; then
-                epicList="$epicKey"
-              else
-                epicList="$epicList,$epicKey"
-              fi
+            if epicKey=$(jq -r -e '.fields.parent.key' <<<"$issue_info"); then  
+              if [ -z "$epicList" ]; then epicList="$epicKey"; else epicList="$epicList,$epicKey"; fi  
+              echo "Extracted epicKey: $epicKey"  
             fi
 
             # Titel einlesen
             echo "Titel zu $issueNumber extrahieren"
-            title=$(echo "$issue_info" | jq -r '.fields.summary')
+            title=$(jq -r '.fields.summary' <<<"$issue_info")
 
             # Jira-Labels einlesen
             echo "Jira-Labels zu $issueNumber extrahieren"
-            jiraLabels=$(echo "$issue_info" | jq -r '.fields.labels[]' | paste -sd ", ")
+            jiraLabels=$(jq -r '.fields.labels[]' <<<"$issue_info" | paste -sd ", ")
 
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
-            componentList=$(echo "$issue_info" | jq -r '.fields.components[].name' | paste -sd ", ")
+            componentList=$(jq -r '.fields.components[].name' <<<echo "$issue_info" | paste -sd ", ")
             allComponentList+=$componentList
 
             # Dependencies extrahieren
             echo "Dependencies zu $issueNumber extrahieren"
-            custom_field_value=$(echo "$issue_info" | jq -r '.fields.customfield_10686')
-            if [ ! -z "$custom_field_value" ] && [ "$custom_field_value" != "null" ]; then
+            if custom_field_value=$(jq -r -e '.fields.customfield_10686' <<<"$issue_info"); then
               dependencyList+="\t * :warning: $issueNumber: $custom_field_value\n"
             else
               echo "No dependencies found for issue $issueNumber"
@@ -240,8 +233,7 @@ jobs:
 
             # Verknüpfte Tickets
             echo "Verknüpfte Tickets zu $issueNumber einlesen und Tabelle befüllen"
-            for k in $(jq '.fields.issuelinks | keys | .[]' <<<"$issue_info"); do
-              linkedIssue=$(jq -r ".fields.issuelinks[$k]" <<<"$issue_info");
+            for linkedIssue in $(jq -r '.fields.issuelinks | values[]' <<<"$issue_info"); do  
 
               # Prüfe auf ausgehende/eingehende Links
               isOutward=$(jq 'has("outwardIssue")' <<<"$linkedIssue")
@@ -256,8 +248,9 @@ jobs:
                 linkedSummary=$(jq -r '.inwardIssue.fields.summary' <<<"$linkedIssue")
                 linkedStatus=$(jq -r '.inwardIssue.fields.status.name' <<<"$linkedIssue")
               fi
-                linkedIssuesListLines+="| $linkedIssueNumber | $linkedSummary | $linkedStatus | $linkedRelation |\n"
-                echo "Verknüpftes Ticket erkannt: $linkedIssueNumber - $linkedSummary"
+
+              linkedIssuesListLines+="| $linkedIssueNumber | $linkedSummary | $linkedStatus | $linkedRelation |\n"
+              echo "Verknüpftes Ticket erkannt: $linkedIssueNumber - $linkedSummary"
             done
           done
 
@@ -327,7 +320,7 @@ jobs:
         run: |
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
-            if gh release list --json tagName --jq '.[] | select(.tagName == "${{ steps.version-calculation.outputs.new_version }}")' | grep -q '${{ steps.version-calculation.outputs.new_version }}'; then
+            if gh release list --json tagName --jq '.[] | select(.tagName == "${{ steps.version-calculation.outputs.new_version }}") | .tagName' | grep -q .; then
               gh release delete ${{ steps.version-calculation.outputs.new_version }} --cleanup-tag --yes
             else
               git tag -d "${{ steps.version-calculation.outputs.new_version }}"
