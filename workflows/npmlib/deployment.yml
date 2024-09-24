@@ -51,7 +51,10 @@ jobs:
       - name: workflow.config einlesen
         id: read-properties
         run: |
-          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
+          while IFS='=' read -r key value
+          do
+            echo "$key=$value" >> $GITHUB_OUTPUT
+          done < .github/workflow.config
 
       - name: Setup Node
         uses: actions/setup-node@v4
