@@ -165,7 +165,7 @@ jobs:
           - { name: ms-find, branch: main, group: ms-cicd }
           - { name: ms-mark, branch: main, group: ms-cicd }
           - { name: ms-rating, branch: main, group: ms-cicd }
-          - { name: ms-elasticupdate, branch: main, group: ms-cicd }
+          - { name: ms-elasticupdate, branch: feature/MCBS-4833, group: ms-cicd }
 
     steps:
       - name: Repository auschecken
