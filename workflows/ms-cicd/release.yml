@@ -327,11 +327,11 @@ jobs:
 
           echo "IssueList setzen"
           echo "$cleanedIssueListLines"
-          sed -i "s#<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->#$cleanedIssueListLines#g" "$template_file"
+          sed -i "/^$/N;/\n<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->/s#.*#$cleanedIssueListLines#" "$template_file"
 
           echo "Verlinkte Tickets setzen"
           echo "$cleanedLinkedIssuesListLines"
-          sed -i "s#<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->#$cleanedLinkedIssuesListLines#g" "$template_file"
+          sed -i "/^$/N;/\n<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->/s#.*#$cleanedLinkedIssuesListLines#" "$template_file"
 
           ## EPIC
           echo "EPIC setzen"
