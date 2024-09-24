@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: write
       actions: write
@@ -50,7 +50,10 @@ jobs:
       - name: workflow.config einlesen
         id: read-properties
         run: |
-          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
+          while IFS='=' read -r key value
+          do
+            echo "$key=$value" >> $GITHUB_OUTPUT
+          done < .github/workflow.config
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -138,7 +141,7 @@ jobs:
 
           # Alle Issues auslesen
           if [ -n "${{ steps.jira_keys.outputs.issue-keys }}" ]; then
-            issueList=$(echo "${{ steps.jira_keys.outputs.issue-keys }}")
+            issueList="${{ steps.jira_keys.outputs.issue-keys }}"
           fi
 
           # Prüfen ob der Input "ticket" gesetzt wurde, wenn ja, dann hinzufügen
@@ -151,7 +154,7 @@ jobs:
           fi
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
             prNumber=$(jq -r ".pull_request.number" <<<"$GITHUB_EVENT_PATH")
             apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
 
@@ -193,9 +196,9 @@ jobs:
             fi
 
             # Jira Ticket einlesen
-            echo "Jira CLI wird zu $issueNumber befragt"
+            echo "Jira API wird zu $issueNumber befragt"
             API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
-            BASIC_AUTH=$(echo -n ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }} | base64 -w0)
+            BASIC_AUTH=$(echo -n "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
 
@@ -216,7 +219,7 @@ jobs:
 
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
-            componentList=$(jq -r '.fields.components[].name' <<<echo "$issue_info" | paste -sd ", ")
+            componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ", ")
             allComponentList+=$componentList
 
             # Dependencies extrahieren
@@ -233,11 +236,10 @@ jobs:
 
             # Verknüpfte Tickets
             echo "Verknüpfte Tickets zu $issueNumber einlesen und Tabelle befüllen"
-            for linkedIssue in $(jq -r '.fields.issuelinks | values[]' <<<"$issue_info"); do  
-
+            jq -c '.fields.issuelinks[]' <<<"$issue_info" | while read -r linkedIssue; do
               # Prüfe auf ausgehende/eingehende Links
               isOutward=$(jq 'has("outwardIssue")' <<<"$linkedIssue")
-              if $isOutward; then
+              if [ "$isOutward" = "true" ]; then
                 linkedRelation=$(jq -r '.type.outward' <<<"$linkedIssue")
                 linkedIssueNumber=$(jq -r '.outwardIssue.key' <<<"$linkedIssue")
                 linkedSummary=$(jq -r '.outwardIssue.fields.summary' <<<"$linkedIssue")
@@ -256,19 +258,19 @@ jobs:
 
           # Platzhalter austauschen
           echo "Platzhalter im Template austauschen"
-
+          
           ## Tabellen
-          # Leerzeile und Platzhalter ersetzten
-          echo "IssueList setzen"
-          escapedIssueListLines=$(echo "$issueListLines" | sed 's/[&/\]/\\&/g')
-          echo "$issueListLines"
-          sed -i "/^$/N;/\n<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->/s~.*~$escapedIssueListLines~" "$template_file"
+          # Spezielle Sonderzeichen austauschen
+          cleanedIssueListLines=$(printf '%s' "$issueListLines" | sed 's/[&/\#]/\\&/g')
+          cleanedLinkedIssuesListLines=$(printf '%s' "$linkedIssuesListLines" | sed 's/[&/\#]/\\&/g')
 
-          # Verlinkte Tickets setzen
+          echo "IssueList setzen"
+          echo "$cleanedIssueListLines"
+          sed -i "s#<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->#$cleanedIssueListLines#g" "$template_file"
+
           echo "Verlinkte Tickets setzen"
-          escapedLinkedIssuesListLines=$(echo "$linkedIssuesListLines" | sed 's/[&/\]/\\&/g')
-          echo "$linkedIssuesListLines"
-          sed -i "/^$/N;/\n<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->/s~.*~$escapedLinkedIssuesListLines~" "$template_file"
+          echo "$cleanedLinkedIssuesListLines"
+          sed -i "s#<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->#$cleanedLinkedIssuesListLines#g" "$template_file"
 
           ## EPIC
           echo "EPIC setzen"
@@ -293,7 +295,7 @@ jobs:
       - name: Release erstellen
         uses: softprops/action-gh-release@v2.0.8
         with:
-          body_path: '.github/templates/release_template.md'
+          body_path: '.github/templates/release_template_npmlib.md'
           files: |
             ${{ steps.read-properties.outputs.SBOM_FILE }}
           generate_release_notes: true
@@ -320,7 +322,7 @@ jobs:
         run: |
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
-            if gh release list --json tagName --jq '.[] | select(.tagName == "${{ steps.version-calculation.outputs.new_version }}") | .tagName' | grep -q .; then
+            if gh release list --json tagName --jq '.[] | select(.tagName == "'${{ steps.version-calculation.outputs.new_version }}'") | .tagName' | grep -q .; then
               gh release delete ${{ steps.version-calculation.outputs.new_version }} --cleanup-tag --yes
             else
               git tag -d "${{ steps.version-calculation.outputs.new_version }}"

@@ -25,7 +25,7 @@ on:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
     runs-on: [ self-hosted, k8s ]
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
@@ -212,7 +212,7 @@ jobs:
           fi
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
             prNumber=$(jq -r ".pull_request.number" <<<"$GITHUB_EVENT_PATH")
             apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
 
@@ -253,7 +253,7 @@ jobs:
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
             API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
-            BASIC_AUTH=$(echo -n ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }} | base64 -w0)
+            BASIC_AUTH=$(echo -n "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
           
@@ -280,7 +280,7 @@ jobs:
 
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
-            componentList=$(jq -r '.fields.components[].name' <<<echo "$issue_info" | paste -sd ", ")
+            componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ", ")
             allComponentList+=$componentList
           
             # Dependencies extrahieren
@@ -297,11 +297,10 @@ jobs:
           
             # Verknüpfte Tickets
             echo "Verknüpfte Tickets zu $issueNumber einlesen und Tabelle befüllen"
-            for linkedIssue in $(jq -r '.fields.issuelinks | values[]' <<<"$issue_info"); do  
-          
+            jq -c '.fields.issuelinks[]' <<<"$issue_info" | while read -r linkedIssue; do
               # Prüfe auf ausgehende Links
               isOutward=$(jq 'has("outwardIssue")' <<<"$linkedIssue")
-              if $isOutward; then
+              if [ "$isOutward" = "true" ]; then
                 linkedRelation=$(jq -r '.type.outward' <<<"$linkedIssue")
                 linkedIssueNumber=$(jq -r '.outwardIssue.key' <<<"$linkedIssue")
                 linkedSummary=$(jq -r '.outwardIssue.fields.summary' <<<"$linkedIssue")
@@ -322,16 +321,18 @@ jobs:
           echo "Platzhalter im Template austauschen"
           
           ## Tabellen
-          # Trennzeichen entfernen
-          cleanedIssueListLines=$(echo "$issueListLines" | sed 's/#//g')
-          cleanedLinkedIssuesListLines=$(echo "$linkedIssuesListLines" | sed 's/#//g')
+          # Spezielle Sonderzeichen austauschen
+          cleanedIssueListLines=$(printf '%s' "$issueListLines" | sed 's/[&/\#]/\\&/g')
+          cleanedLinkedIssuesListLines=$(printf '%s' "$linkedIssuesListLines" | sed 's/[&/\#]/\\&/g')
+
           echo "IssueList setzen"
           echo "$cleanedIssueListLines"
           sed -i "s#<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->#$cleanedIssueListLines#g" "$template_file"
+
           echo "Verlinkte Tickets setzen"
           echo "$cleanedLinkedIssuesListLines"
           sed -i "s#<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->#$cleanedLinkedIssuesListLines#g" "$template_file"
-          
+
           ## EPIC
           echo "EPIC setzen"
           if [ -n "$epicList" ]; then
