@@ -69,8 +69,10 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
 
       - name: Versions-Tag in package.json schreiben
+        env:
+          VERSION: ${{ steps.determine-version.outputs.VERSION }}
         run: |
-          sed -i 's/"version": ".*"/"version": "${{ steps.determine-version.outputs.VERSION }}"/' package.json 
+          sed -i 's/"version": ".*"/"version": "$VERSION"/' package.json 
 
       # Veröffentlichen
       - name: Veröffentlichen
@@ -82,9 +84,9 @@ jobs:
       - name: Dateinamen für SBOM Upload ermitteln
         if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
         id: sbom-file-name
-        run: |
-          SBOM_FILE="${{ steps.read-properties.outputs.SBOM_FILE }}"
-          echo "SBOM_FILE_NAME=$(basename -- "$SBOM_FILE")" >> $GITHUB_OUTPUT
+        env: 
+          SBOM_FILE: ${{ steps.read-properties.outputs.SBOM_FILE }}
+        run: echo "SBOM_FILE_NAME=$(basename -- "$SBOM_FILE")" >> $GITHUB_OUTPUT
 
       - name: SBOM vom Release herunterladen
         if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
