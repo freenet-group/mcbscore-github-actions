@@ -165,6 +165,8 @@ jobs:
           - { name: ms-find, branch: main, group: ms-cicd }
           - { name: ms-mark, branch: main, group: ms-cicd }
           - { name: ms-rating, branch: main, group: ms-cicd }
+          - { name: ms-elasticupdate, branch: main, group: ms-cicd }
+
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -193,7 +195,6 @@ jobs:
           - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
-          - { name: ms-elasticupdate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-gateway, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
@@ -464,7 +465,7 @@ jobs:
           - { name: ms-customerproduct, branch: develop }
           - { name: ms-delegate, branch: develop }
           - { name: ms-discovery, branch: main }
-          - { name: ms-elasticupdate, branch: develop }
+          - { name: ms-elasticupdate, branch: main }
           - { name: ms-event-relay, branch: develop }
           - { name: ms-find, branch: develop }
           - { name: ms-freeprint-router, branch: develop }

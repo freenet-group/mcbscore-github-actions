@@ -321,6 +321,8 @@ Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird a
         // Override component version
         componentVersion = "local"
     }
+  
+    tasks.processResources.dependsOn(cyclonedxBom)
     ```
 * Sicherstellen, daß in folgendem Block korrekt auf das Release und nicht mehr auf das wiki verwiesen wird. Das Property ist in "release_notes" umzubenennen, falls es noch nicht so heißt. Das Property, welches auf den Workflow Run des Release Builds verweist, ist in release_build umzubenennen, falls es noch nicht so heißt. REPO_NAME ist bei beiden durch den Namen des Repositories zu ersetzen.
     ```groovy
