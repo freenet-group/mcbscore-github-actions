@@ -131,6 +131,7 @@ jobs:
           message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
       - name: Release Version in DB Changes eintragen
+        id: set-version-in-dbchanges
         if: hashFiles('.github/**/dbChanges.yml') != ''
         shell: bash
         run: |
@@ -142,6 +143,9 @@ jobs:
           then
             echo "Committing changes"
             git commit -am "Release Version in DB Changes eingetragen"
+            commit_id=$(git rev-parse HEAD)  # Speichert die Commit-ID in der Variablen
+            echo "DB Changes Version Commit: $commit_id"
+            echo "commit_id=$commit_id" >> "$GITHUB_OUTPUT"
             git push
           fi
           git tag -f -a sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }}"
@@ -516,7 +520,7 @@ jobs:
           fi
 
       - name: dbChanges Workflow starten
-        if: hashFiles('.github/**/dbChanges.yml') != ''
+        if: hashFiles('.github/**/dbChanges.yml') != '' && ${{ github.event.inputs.pre-release == 'false' }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: DB Changes
@@ -557,6 +561,21 @@ jobs:
               "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}",
               "hasDeployment": "${{ steps.update_release_template.outputs.ms_deployment }}"
             }
+
+      - name: DB Changes Version reverten, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
+        if: steps.set-version-in-dbchanges.conclusion == 'success' && (failure() || cancelled())
+        shell: bash
+        run: |
+          # sql Tag entfernen
+          git tag -d "sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }}"
+          git push origin
+          
+          if [ -n "${{ steps.set-version-in-dbchanges.outputs.commit_id }}" ]; then
+            # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
+            git revert ${{ steps.set-version-in-dbchanges.outputs.commit_id }}
+            git push
+          fi
+          
 
       - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
