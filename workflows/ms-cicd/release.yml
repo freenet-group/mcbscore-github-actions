@@ -223,7 +223,7 @@ jobs:
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            prNumber=$(jq -r ".pull_request.number" <<<"$GITHUB_EVENT_PATH")
+            prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
             apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
 
             # Prüfen ob es sich um ein Array oder einen String handelt

@@ -25,6 +25,10 @@ jobs:
         run: |
           while IFS='=' read -r key value
           do
+            # Leerzeilen und Kommentare überspringen
+            if [[ -z "$key" || "$key" =~ ^// ]]; then
+              continue
+            fi
             echo "$key=$value" >> $GITHUB_OUTPUT
           done < .github/workflow.config
 
