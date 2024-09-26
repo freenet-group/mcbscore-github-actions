@@ -160,13 +160,13 @@ jobs:
           - { name: ms-commondata, branch: main, group: ms-cicd }
           - { name: ms-configserver, branch: main, group: ms-cicd }
           - { name: ms-contentprovider, branch: main, group: ms-cicd }
+          - { name: ms-customerchange, branch: main, group: ms-cicd, workflows: "../encoding, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, dbChanges, release, deployment" }
           - { name: ms-discovery, branch: main, group: ms-cicd }
-          - { name: ms-homer, branch: main, group: ms-cicd }
+          - { name: ms-elasticupdate, branch: main, group: ms-cicd }
           - { name: ms-find, branch: main, group: ms-cicd }
+          - { name: ms-homer, branch: main, group: ms-cicd }
           - { name: ms-mark, branch: main, group: ms-cicd }
           - { name: ms-rating, branch: main, group: ms-cicd }
-          - { name: ms-elasticupdate, branch: main, group: ms-cicd }
-
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -192,7 +192,6 @@ jobs:
           - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-businesstransaction, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
-          - { name: ms-customerchange, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
@@ -461,7 +460,7 @@ jobs:
           - { name: ms-businesstransaction, branch: develop }
           - { name: ms-configserver, branch: main }
           - { name: ms-contentprovider, branch: main }
-          - { name: ms-customerchange, branch: develop }
+          - { name: ms-customerchange, branch: main }
           - { name: ms-customerproduct, branch: develop }
           - { name: ms-delegate, branch: develop }
           - { name: ms-discovery, branch: main }
