@@ -44,10 +44,10 @@ jobs:
             /github/secrets/mcbs_user = USER, 
             /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
 
-      - name: workflow.properties als Umgebungsvariablen setzen
-        shell: bash
+      - name: workflow.config einlesen
+        id: read-properties
         run: |
-          cat ./.github/workflow.properties >> $GITHUB_ENV
+          { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
 
       - name: mcbscore-github-actions auschecken
         uses: actions/checkout@v4

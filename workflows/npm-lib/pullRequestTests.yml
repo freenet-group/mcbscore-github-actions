@@ -23,14 +23,7 @@ jobs:
       - name: workflow.config einlesen
         id: read-properties
         run: |
-          while IFS='=' read -r key value
-          do
-            # Leerzeilen und Kommentare überspringen
-            if [[ -z "$key" || "$key" =~ ^// ]]; then
-              continue
-            fi
-            echo "$key=$value" >> $GITHUB_OUTPUT
-          done < .github/workflow.config
+          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4

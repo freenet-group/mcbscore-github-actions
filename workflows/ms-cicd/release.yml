@@ -59,10 +59,10 @@ jobs:
             /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
             /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
 
-      - name: workflow.properties einlesen und in ENV schreiben
-        shell: bash
+      - name: workflow.config einlesen
+        id: read-properties
         run: |
-          cat ./.github/workflow.properties >> $GITHUB_ENV
+          { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
 
       - name: Interne mcbscore-github-actions local auschecken
         uses: actions/checkout@v4
@@ -286,11 +286,11 @@ jobs:
 
             # Jira-Labels einlesen
             echo "Jira-Labels zu $issueNumber extrahieren"
-            jiraLabels=$(jq -r '.fields.labels[]' <<<"$issue_info" | paste -sd ", ")
+            jiraLabels=$(jq -r '.fields.labels[]' <<<"$issue_info" | paste -sd ",")
 
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
-            componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ", ")
+            componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ",")
             allComponentList+=$componentList
           
             # Dependencies extrahieren

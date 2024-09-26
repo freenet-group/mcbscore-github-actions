@@ -271,6 +271,11 @@ jobs:
         run: |
           cat ./.github/workflow.properties >> $GITHUB_ENV
 
+      - name: workflow.config einlesen
+        id: read-properties
+        run: |
+          { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
+
       - name: mcbscore-github-actions auschecken
         uses: actions/checkout@v4
         with:
