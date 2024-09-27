@@ -14,7 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      issues: write
       pull-requests: write
       contents: write
     env:
@@ -45,8 +44,11 @@ jobs:
         run: npm run build
 
       # Automatisch Fixes ausführen
-      - name: Autofixes ausführen oder Fehler melden
-        run: npm run lint:fix && npm run prettier:write
+      - name: Autofixes eslint ausführen oder Fehler melden
+        run: npm run lint:fix
+
+      - name: Autofixes prettier ausführen oder Fehler melden, sowie .github Ordner ausschließen
+        run: npm run prettier:write -- "**/*" "!./.github/**/*"
 
       - name: Änderungen aus dem Autofix committen
         uses: stefanzweifel/git-auto-commit-action@v5

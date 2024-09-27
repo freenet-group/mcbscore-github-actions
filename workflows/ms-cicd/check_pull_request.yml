@@ -40,7 +40,6 @@ jobs:
     needs: syncLabels
     runs-on: ubuntu-latest
     permissions:
-      issues: write
       pull-requests: write
     steps:
       - name: Check Release Labels
@@ -97,7 +96,6 @@ jobs:
     needs: checkLabels
     runs-on: ubuntu-latest
     permissions:
-      issues: write
       pull-requests: write
     if: ${{ !github.event.pull_request.draft }}
     steps:

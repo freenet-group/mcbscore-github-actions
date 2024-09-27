@@ -13,7 +13,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
     permissions:
-      issues: write
       pull-requests: write
     steps:
       - name: Semantic PR-Title Check
