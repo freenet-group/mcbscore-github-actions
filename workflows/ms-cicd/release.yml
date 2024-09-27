@@ -551,7 +551,7 @@ jobs:
           MS_CONFIGURATION: ${{ steps.update_release_template.outputs.ms_configuration }}
           MS_DEPLOYMENT: ${{ steps.update_release_template.outputs.ms_deployment }}
           DB_CHANGES: ${{ steps.update_release_template.outputs.db_changes }}
-          DEPENDENCIES: ${{ steps.update_release_template.outputs.dependencies
+          DEPENDENCIES: ${{ steps.update_release_template.outputs.dependencies }}
         run: |
           BAMBI_ARGS="{ \
             \"renovate\": \"$RENOVATE\", \
