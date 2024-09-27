@@ -136,6 +136,7 @@ jobs:
           message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
       - name: Release Version in DB Changes eintragen
+        id: set-version-in-dbchanges
         if: hashFiles('.github/**/dbChanges.yml') != ''
         shell: bash
         env:
@@ -149,6 +150,9 @@ jobs:
           then
             echo "Committing changes"
             git commit -am "Release Version in DB Changes eingetragen"
+            commit_id=$(git rev-parse HEAD)  # Speichert die Commit-ID in der Variablen
+            echo "DB Changes Version Commit: $commit_id"
+            echo "DB_CHANGES_VERSION_COMMIT_ID=$commit_id" >> $GITHUB_ENV
             git push
           fi
           git tag -f -a sql-${{ env.TAG_PREFIX }}$NEW_VERSION -m "tagging sql-${{ env.TAG_PREFIX }}$NEW_VERSION"
@@ -527,7 +531,7 @@ jobs:
           fi
 
       - name: dbChanges Workflow starten
-        if: hashFiles('.github/**/dbChanges.yml') != ''
+        if: hashFiles('.github/**/dbChanges.yml') != '' && ${{ github.event.inputs.pre-release == 'false' }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: DB Changes
@@ -577,13 +581,23 @@ jobs:
               "hasDeployment": "${{ steps.update_release_template.outputs.ms_deployment }}"
             }
 
-      - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
+      - name: Tag/Release löschen und DB Changes Version reverten, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -n "$NEW_VERSION" ]; then
+            # sql Tag entfernen
+            git tag -d "sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }}"
+            git push origin
+            
+            # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
+            if [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
+              git revert ${{ env.DB_CHANGES_VERSION_COMMIT_ID }}
+              git push
+            fi
+            
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
             if gh release list --json tagName --jq '.[] | select(.tagName == "$NEW_VERSION") | .tagName' | grep -q .; then
               gh release delete "$NEW_VERSION" --cleanup-tag --yes
