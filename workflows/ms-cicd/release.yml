@@ -148,7 +148,6 @@ jobs:
             echo "DB_CHANGES_VERSION_COMMIT_ID=$commit_id" >> $GITHUB_ENV
             git push
           fi
-          git tag -f -a sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }}"
 
       - name: Gradle Build mit Sonar Upload und CyclonedxBom (SBOM)
         uses: ./mcbscore/github/actions/gradle-build
@@ -565,16 +564,10 @@ jobs:
       - name: Tag/Release löschen und DB Changes Version reverten, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
         run: |
-          if [ "${{ steps.set-version-in-dbchanges.conclusion }}" == 'success' ]; then
-            # sql Tag entfernen
-            git tag -d "sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }}"
-            git push origin
-            
-            if [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
-              # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
-              git revert ${{ env.DB_CHANGES_VERSION_COMMIT_ID }}
-              git push
-            fi
+          if [ "${{ steps.set-version-in-dbchanges.conclusion }}" == 'success' ] && [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
+            # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
+            git revert ${{ env.DB_CHANGES_VERSION_COMMIT_ID }}
+            git push
           fi
           
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
