@@ -11,11 +11,14 @@ concurrency:
 jobs:
   # Führt automatisierte Fixes und Tests aus
   test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      issues: write
+      pull-requests: write
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       # Setup
       - uses: actions/checkout@v4
