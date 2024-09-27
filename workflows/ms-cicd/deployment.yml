@@ -269,11 +269,6 @@ jobs:
       - name: workflow.properties als Umgebungsvariablen setzen
         shell: bash
         run: |
-          cat ./.github/workflow.properties >> $GITHUB_ENV
-
-      - name: workflow.config einlesen
-        id: read-properties
-        run: |
           { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
 
       - name: mcbscore-github-actions auschecken
