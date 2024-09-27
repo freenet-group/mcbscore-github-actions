@@ -137,7 +137,7 @@ jobs:
 
       - name: Release Version in DB Changes eintragen
         id: set-version-in-dbchanges
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' }}
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs.pre-release == 'false' }}
         shell: bash
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
