@@ -255,7 +255,7 @@ jobs:
       matrix:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
         repository:
-          # - { name: async-api-event-generator, branch: main, group: npm-lib }
+          - { name: async-api-event-generator, branch: main, group: npm-lib }
           - { name: eslint-plugin-mcbs, branch: main, group: npm-lib } 
     steps:
       - name: Repository auschecken
