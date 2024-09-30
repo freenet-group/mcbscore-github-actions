@@ -169,6 +169,7 @@ jobs:
           - { name: ms-invoice, branch: main, group: ms-cicd }
           - { name: ms-mark, branch: main, group: ms-cicd }
           - { name: ms-rating, branch: main, group: ms-cicd }
+          - { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, deployment" }
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -204,7 +205,6 @@ jobs:
           - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, ../vulnerability-detection, setPRIssueDone" }
           - { name: ms-proxy-support, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
-          - { name: ms-user-cleanup, branch: develop, group: ms, workflows: "../check, build, deployment_k8s_only, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
 
           # ms-deployment/deployment_k8s: Kubernetes Namespace Konfig
           - { name: ms-deployment, branch: main, group: ms-deployment, workflows: "deployment_k8s" }
@@ -506,7 +506,7 @@ jobs:
           - { name: ms-proxy-support, branch: develop }
           - { name: ms-rating, branch: main }
           - { name: ms-user, branch: develop }
-          - { name: ms-user-cleanup, branch: develop }
+          - { name: ms-user-cleanup, branch: main }
           - { name: mslib-aws, branch: develop }
           - { name: mslib-rest, branch: develop }
           - { name: scaffold-clean-architecture-gradle-plugin, branch: develop }
