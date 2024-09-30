@@ -32,6 +32,12 @@ on:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
         default: main
+      sanityTestsEnabled:
+        default: true
+        description: Flag zum Deaktivieren der SanityTests
+        required: false
+        type: boolean
+
   workflow_call:
     inputs:
       component:
@@ -65,7 +71,11 @@ on:
         required: false
         default: main
         type: string
-
+      sanityTestsEnabled:
+        default: true
+        description: Flag zum Deaktivieren der SanityTests
+        required: false
+        type: boolean
 
 env:
   ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
@@ -290,6 +300,7 @@ jobs:
 
   sanity_test:
     needs: [deploy, deploy_k8s]
+    if: ${{ github.event.inputs.sanityTestsEnabled == 'true' }}
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     steps:
