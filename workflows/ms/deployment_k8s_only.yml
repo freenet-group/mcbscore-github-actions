@@ -42,7 +42,7 @@ on:
         default: false
       sanityTestsEnabled:
         default: true
-        description: Flag zum Deaktivieren der SanityTests
+        description: Flag zum Deaktivieren der SanityTests. Überschreibt nicht SANITY_TESTS_ENABLED in .github/workflow.properties. Die Tests laufen also nur, wenn die Property und dieser Input beide true sind.
         required: false
         type: boolean
 
