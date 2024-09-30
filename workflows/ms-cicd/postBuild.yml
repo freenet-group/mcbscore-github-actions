@@ -151,24 +151,34 @@ jobs:
           echo "renovate=$renovate" >> $GITHUB_OUTPUT
 
       - name: Release bei Bambi melden
+        env:
+          ISSUE_LIST: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
+          IBN_DATE: ${{ steps.parse-bambi-args.outputs.ibnDate }}
+          CHANGES_IN_CONFIGURATION: ${{ steps.parse-bambi-args.outputs.changesInConfiguration }}
+          CHANGES_IN_DEPLOYMENT: ${{ steps.parse-bambi-args.outputs.changesInDeployment }}
+          DB_CHANGES: ${{ steps.parse-bambi-args.outputs.dbChanges }}
+          DEPENDENCIES: ${{ steps.parse-bambi-args.outputs.dependencies }}
+          RENOVATE_INFO: ${{ steps.parse-bambi-args.outputs.renovateInfo }}
+          RENOVATE: ${{ steps.parse-bambi-args.outputs.renovate }}
+          INPUT_RELEASE_VERSION: ${{ github.event.inputs.releaseVersion }}
         run: |
-          issueListWithDelimiter=$(echo "${{ github.event.inputs.issueList }}" | tr -s ' ' ',')
+          issueListWithDelimiter=$(echo "$ISSUE_LIST" | tr -s ' ' ',')
           echo "Create BAMBI-Entry for IssueList: $issueListWithDelimiter"
 
           requestBody="{
             \"buildInfo\": {
-              \"ibnDate\": \"${{ steps.parse-bambi-args.outputs.ibnDate }}\",
-              \"changesInConfiguration\": \"${{ steps.parse-bambi-args.outputs.changesInConfiguration }}\",
-              \"changesInDeployment\": \"${{ steps.parse-bambi-args.outputs.changesInDeployment }}\",
-              \"dbChanges\": \"${{ steps.parse-bambi-args.outputs.dbChanges }}\",
-              \"dependencies\": \"${{ steps.parse-bambi-args.outputs.dependencies }}\",
-              \"renovateInfo\": \"${{ steps.parse-bambi-args.outputs.renovateInfo }}\"
+              \"ibnDate\": \"$IBN_DATE\",
+              \"changesInConfiguration\": \"$CHANGES_IN_CONFIGURATION\",
+              \"changesInDeployment\": \"$CHANGES_IN_DEPLOYMENT\",
+              \"dbChanges\": \"$DB_CHANGES\",
+              \"dependencies\": \"$DEPENDENCIES\",
+              \"renovateInfo\": \"$RENOVATE_INFO\"
             },
             \"buildUser\": \"mcbstest\",
             \"componentName\": \"${{ env.JIRA_COMPONENT }}\",
             \"issueList\": \"$issueListWithDelimiter\",
-            \"renovate\": \"${{ steps.parse-bambi-args.outputs.renovate }}\",
-            \"versionNo\": \"${{ github.event.inputs.releaseVersion }}\"
+            \"renovate\": \"$RENOVATE\",
+            \"versionNo\": \"$INPUT_RELEASE_VERSION\"
           }"
 
           echo "Bambi RequestBody: $requestBody"
