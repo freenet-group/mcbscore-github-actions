@@ -168,7 +168,7 @@ jobs:
           - { name: ms-homer, branch: main, group: ms-cicd }
           - { name: ms-mark, branch: main, group: ms-cicd }
           - { name: ms-rating, branch: main, group: ms-cicd }
-          - { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, ../ms/deployment_k8s_only" }
+          - { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, deployment" }
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
