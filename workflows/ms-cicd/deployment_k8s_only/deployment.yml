@@ -1,4 +1,4 @@
-name: K8s Deployment
+name: Deployment
 # Launcher Workflow für den reusable Workflow deployment_k8s.yml, Sanity Test und Github-Deployment-Status.
 # Für Microservices, die (den jetzt reusable Workflow) deployment_k8s.yml brauchen und kein klassisches Appserver-Deployment (deployment.yml).
 # Nicht nötig für Microservices, die deployment.yml haben, da der auch den reusable Workflow deployment_k8s.yml startet.
