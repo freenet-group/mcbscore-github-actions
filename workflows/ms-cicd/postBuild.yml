@@ -49,7 +49,7 @@ jobs:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
       MAIL_PURPOSE: MSCICDBuild
-      TEAMS_MAIL: 'b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms#bernd.moeller-wacken@outlook.de'
+      TEAMS_MAIL: 'b48281f2.freenetgroup.onmicrosoft.com@emea.teams.ms#tp.bs.abr.da.ps@freenet.ag#it.pa.testmanagement@freenet.ag'
       BAMBI_API_URL: 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v1/bambi/initialBuild'
       TZ: Europe/Berlin
       LANG: de_DE.UTF-8
