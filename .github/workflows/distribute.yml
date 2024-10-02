@@ -158,6 +158,7 @@ jobs:
           - { name: ms-appcheck, branch: main, group: ms-cicd }
           - { name: ms-authorities-information, branch: main, group: ms-cicd }
           - { name: ms-billingaccount-frontend, branch: main, group: ms-cicd }
+          - { name: ms-businesstransaction, branch: main, group: ms-cicd }
           - { name: ms-commondata, branch: main, group: ms-cicd }
           - { name: ms-configserver, branch: main, group: ms-cicd }
           - { name: ms-contentprovider, branch: main, group: ms-cicd }
@@ -193,7 +194,6 @@ jobs:
         repository:
           - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
-          - { name: ms-businesstransaction, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-event-relay, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
@@ -485,7 +485,7 @@ jobs:
           - { name: ms-authorities-information, branch: main }
           - { name: ms-billingaccount-frontend, branch: main }
           - { name: ms-businessinteraction-router, branch: develop }
-          - { name: ms-businesstransaction, branch: develop }
+          - { name: ms-businesstransaction, branch: main }
           - { name: ms-configserver, branch: main }
           - { name: ms-contentprovider, branch: main }
           - { name: ms-customerchange, branch: main }
@@ -498,7 +498,7 @@ jobs:
           - { name: ms-freeprint-router, branch: develop }
           - { name: ms-gateway, branch: develop }
           - { name: ms-homer, branch: main }
-          - { name: ms-invoice, branch: develop }
+          - { name: ms-invoice, branch: main }
           - { name: ms-mark, branch: main }
           - { name: ms-note-router, branch: develop }
           - { name: ms-oidc, branch: develop }
