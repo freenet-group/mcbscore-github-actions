@@ -475,17 +475,17 @@ jobs:
         run: |
           curlResult=$(curl -sw %{http_code} --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v2/bambi/deployment/environmentversion' \
           --header 'Content-Type: application/json' \
-          --data-raw '{
-            "version": "$INPUT_COMPONENT_VERSION",
-            "componentName": "$COMPONENT_NAME",
-            "originComponentName": "$INPUT_COMPONENT",
-            "workflowName": "${{ github.workflow }}",
-            "environment": "$INPUT_ENVIRONMENT",
-            "extern": false,
-            "workflowRunId": ${{ github.run_id }},
-            "deployState": "${{ env.DEPLOY_STATE }}",
-            "deployUser": "${{ github.actor }}"
-          }')
+          --data-raw "{ \
+            \"version\": \"$INPUT_COMPONENT_VERSION\", \
+            \"componentName\": \"$COMPONENT_NAME\", \
+            \"originComponentName\": \"$INPUT_COMPONENT\", \
+            \"workflowName\": \"${{ github.workflow }}\", \
+            \"environment\": \"$INPUT_ENVIRONMENT\", \
+            \"extern\": false, \
+            \"workflowRunId\": \"${{ github.run_id }}\", \
+            \"deployState\": \"${{ env.DEPLOY_STATE }}\", \
+            \"deployUser\": \"${{ github.actor }}\" \
+          }")
 
           statusCode="${curlResult:${#curlResult}-3}"
           echo "statusCode: $statusCode"
