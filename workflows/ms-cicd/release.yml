@@ -238,10 +238,10 @@ jobs:
 
             # ABRMS-5265 ist ein Renovate-Platzhalterticket, wenn renovate im PR-Label enthalten ist, dann hinzufügen
             if echo "$prLabels" | grep -q "renovate"; then
-              if [ -z "$issueList" ]; then
-                issueList="ABRMS-5265"
+              if [ -z "$uniqueIssueList" ]; then
+                uniqueIssueList="ABRMS-5265"
               else
-                issueList+=",ABRMS-5265"
+                uniqueIssueList+=",ABRMS-5265"
               fi
             fi
           fi
