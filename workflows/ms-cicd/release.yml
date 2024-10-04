@@ -207,20 +207,18 @@ jobs:
           echo "ms_deployment=false" >> "$GITHUB_OUTPUT"
           echo "db_changes=false" >> "$GITHUB_OUTPUT"
           echo "dependencies=false" >> "$GITHUB_OUTPUT"
-          
+
           # Alle Issues auslesen
-          uniqueIssueList=$(echo "$ISSUE_KEYS" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
-          uniqueIssueList=${uniqueIssueList#"[]"}
+          if [ -n "$ISSUE_KEYS" ]; then
+            issueList="$ISSUE_KEYS"
+          fi
 
           # Prüfen ob der Input "ticket" gesetzt wurde, wenn ja, dann hinzufügen
           if [ -n "$INPUT_TICKET" ]; then
-            if [ -z "$uniqueIssueList" ]; then
-              uniqueIssueList="$INPUT_TICKET"
+            if [ -z "$issueList" ]; then
+              issueList="$INPUT_TICKET"
             else
-              # Prüfen ob das Ticket bereits in der uniqueIssueList enthalten ist
-              if [! echo "$uniqueIssueList" | grep -q "$INPUT_TICKET"]; then
-                uniqueIssueList+=",$INPUT_TICKET"
-              fi
+              issueList+=",$INPUT_TICKET"
             fi
           fi
 
@@ -238,18 +236,21 @@ jobs:
 
             # ABRMS-5265 ist ein Renovate-Platzhalterticket, wenn renovate im PR-Label enthalten ist, dann hinzufügen
             if echo "$prLabels" | grep -q "renovate"; then
-              if [ -z "$uniqueIssueList" ]; then
-                uniqueIssueList="ABRMS-5265"
+              if [ -z "$issueList" ]; then
+                issueList="ABRMS-5265"
               else
-                uniqueIssueList+=",ABRMS-5265"
+                issueList+=",ABRMS-5265"
               fi
             fi
           fi
+
+          # Issue-Liste bereinigen
+          issue_list=$(echo "$issueList" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
           
           # IssueList / Implemented Issues
-          echo "issue_list=$uniqueIssueList" >> "$GITHUB_OUTPUT"
-          echo "Folgende Issues werden analysiert $uniqueIssueList"
-          IFS=',' read -ra issues <<< "$uniqueIssueList"
+          echo "issue_list=$issue_list" >> "$GITHUB_OUTPUT"
+          echo "Folgende Issues werden analysiert $issue_list"
+          IFS=',' read -ra issues <<< "$issue_list"
           for issueNumber in "${issues[@]}"; do
             # Tabellen Eintrag erstellen
             echo "$issueNumber wird eingelesen"

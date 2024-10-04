@@ -178,12 +178,12 @@ jobs:
           fi
 
           # Issue-Liste bereinigen
-          uniqueIssueList=$(echo "$issueList" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+          issue_list=$(echo "$issueList" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
 
           # IssueList / Implemented Issues
-          echo "issue_list=$uniqueIssueList" >> "$GITHUB_OUTPUT"
-          echo "Folgende Issues werden analysiert $uniqueIssueList"
-          IFS=',' read -ra issues <<< "$uniqueIssueList"
+          echo "issue_list=$issue_list" >> "$GITHUB_OUTPUT"
+          echo "Folgende Issues werden analysiert $issue_list"
+          IFS=',' read -ra issues <<< "$issue_list"
           for issueNumber in "${issues[@]}"; do
             # Tabellen Eintrag erstellen
             echo "$issueNumber wird eingelesen"
