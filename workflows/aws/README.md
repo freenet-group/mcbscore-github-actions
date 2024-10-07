@@ -21,17 +21,9 @@ git push origin 0.0.0
 
 ## GitHub Workflow Properties
 
-Diese Datei (`.github/workflow.config`) enthält wichtige Einstellungen, die für die Workflows erforderlich sind und in $GITHUB_OUTPUT geschrieben werden:
+Die Datei `.github/workflow.config` enthält wichtige Einstellungen, die für die Workflows erforderlich sind und in $GITHUB_OUTPUT geschrieben werden:
 
-```properties
-OPEN_API_SCHEMA=./src/docs/api/xxx.yaml
-EVENT_SCHEMA=./src/docs/event/XXXEvent.yaml
-SBOM_FILE=./src/.generated/sbom.json
-JIRA_COMPONENT=xxx
-JIRA_PROJECT=MCBS
-NODE_VERSION=20.x
-DEVELOPER_PORTAL_ID=
-```
+Ein aktuelles Beispiel kann in dieser [Beispiel-Datei](./workflow.config) gefunden werden.
 
 ## NPM Skripte
 
