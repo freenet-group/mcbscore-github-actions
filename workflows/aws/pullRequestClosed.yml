@@ -30,6 +30,12 @@ jobs:
         with:
           node-version: ${{ steps.read-properties.outputs.NODE_VERSION }}
           cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com/'
+
+      - name: Dependencies installieren
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
 
       - name: Stage setzen
         id: set-stage
@@ -41,10 +47,10 @@ jobs:
             echo "STAGE=pr-${PR_NUMBER}" >> $GITHUB_ENV
           fi
 
-      - name: Dependencies installieren
-        run: npm ci
-
-      # Aufräumen
-      - name: Serverless Deployment entfernen
+      - name: Serverless Deployment entfernen, wenn nicht GIT, PET oder PROD
         run: |
+          if [ "${{ env.STAGE }}" == "git" ] || [ "${{ env.STAGE }}" == "pet" ] || [ "${{ env.STAGE }}" == "prod" ]; then
+            echo "Stage darf nicht entfernt werden"
+            exit 1
+          fi
           npx sls remove --stage ${{ env.STAGE }} --verbose
