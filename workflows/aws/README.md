@@ -2,7 +2,7 @@
 
 ## GitHub Repository
 
-Folgende Voraussetzungen müssen im GitHub-Repository konfiguriert sein:
+Folgende Secrets müssen im GitHub-Repository konfiguriert sein:
 
 - **AWS**: AWS-Zugangsdaten müssen als GitHub-Secrets konfiguriert werden:
   - `AWS_ACCESS_KEY_ID`
@@ -10,9 +10,9 @@ Folgende Voraussetzungen müssen im GitHub-Repository konfiguriert sein:
   - `AWS_ACCESS_KEY_ID_PROD`
   - `AWS_SECRET_ACCESS_KEY_PROD`
 
-Nach Umstellung sollten dann die Workflows Steps "check" und "test" aus dem Pull-Request-Workflow als Pflicht Checks in den Branch Protection Rules definiert werden.
+Nach Umstellung sollten dann die Workflow-Steps "check" und "test" aus dem Pull-Request-Workflow als Pflicht Checks in den Branch Protection Rules definiert werden.
 
-Des Weiteren muss mindestens ein Tag bereits existiertieren, sodass der Release WF ein Diff ermitteln kann. Wenn kein Tag existiert, muss der Tag 0.0.0 erstellt werden:
+Des Weiteren muss mindestens ein Tag bereits existieren, sodass der Release WF ein Diff ermitteln kann. Wenn kein Tag existiert, muss der Tag 0.0.0 erstellt werden:
 
 ```bash
 git tag 0.0.0
@@ -21,7 +21,7 @@ git push origin 0.0.0
 
 ## GitHub Workflow Properties
 
-Die Datei `.github/workflow.config` enthält wichtige Einstellungen, die für die Workflows erforderlich sind und in $GITHUB_OUTPUT geschrieben werden:
+Die Datei `.github/workflow.config` enthält wichtige Einstellungen, die für die Workflows erforderlich sind und in [$GITHUB_OUTPUT](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/passing-information-between-jobs) geschrieben werden und von WF-Steps gelesen werden.
 
 Ein aktuelles Beispiel kann in dieser [Beispiel-Datei](./workflow.config) gefunden werden.
 
