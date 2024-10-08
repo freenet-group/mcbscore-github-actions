@@ -58,7 +58,7 @@ jobs:
     if: ${{ github.event.inputs.group == 'aws' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     env:
-      DEFAULT_WORKFLOWS: "deployment, pullRequest, pullRequestClosed, release"
+      DEFAULT_WORKFLOWS: "deployment, pullRequestCheck, pullRequestClosed, pullRequestTests, release"
     strategy:
       matrix:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
