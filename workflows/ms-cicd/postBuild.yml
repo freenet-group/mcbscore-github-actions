@@ -192,6 +192,7 @@ jobs:
           fi
 
       - name: FixVersion bei Jira eintragen
+      if: ${{ steps.parse-bambi-args.outputs.renovate == 'false' }}
         uses: ./mcbscore/github/actions/set-fix-version-jc
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
@@ -203,6 +204,7 @@ jobs:
           included_components: ${{ env.INCLUDED_COMPONENTS }}
 
       - name: Release Version als Kommentar im Ticket eintragen
+      if: ${{ steps.parse-bambi-args.outputs.renovate == 'false' }}
         uses: ./mcbscore/github/actions/set-issue-comment
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
@@ -237,6 +239,7 @@ jobs:
 
       - name: IBN Datum ermitteln
         id: determine-going-live-date
+        if: ${{ steps.parse-bambi-args.outputs.renovate == 'false' }}
         uses: ./mcbscore/github/actions/determine-going-live-date
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
