@@ -26,6 +26,8 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      ACTIONS_PATH: mcbscore/github
 
     steps:
       # Setup
@@ -46,10 +48,18 @@ jobs:
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
+      - name: mcbscore-github-actions Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          repository: freenet-group/mcbscore-github-actions
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: main
+
       - name: workflow.config einlesen
         id: read-properties
         run: |
-          tee -a "$GITHUB_OUTPUT" < .github/workflow.config
+          { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -59,9 +69,9 @@ jobs:
           registry-url: 'https://npm.pkg.github.com/'
 
       - name: Dependencies installieren
-        run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
+        run: npm ci
 
       - name: SBOM Generieren
         if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
@@ -117,6 +127,9 @@ jobs:
 
       - name: Release-Template einlesen und ausfüllen
         id: update_release_template
+        env:
+          ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
+          INPUT_TICKET: ${{ github.event.inputs.ticket }}
         run: |
           template_file=".github/templates/release_template_aws.md"
           issueList=""
@@ -136,29 +149,29 @@ jobs:
           echo "dependencies=false" >> "$GITHUB_OUTPUT"
 
           # Alle Issues auslesen
-          if [ -n "${{ steps.jira_keys.outputs.issue-keys }}" ]; then
-            issueList=$(echo "${{ steps.jira_keys.outputs.issue-keys }}")
+          if [ -n "$ISSUE_KEYS" ]; then
+            issueList="$ISSUE_KEYS"
           fi
 
           # Prüfen ob der Input "ticket" gesetzt wurde, wenn ja, dann hinzufügen
-          if [ -n "${{ github.event.inputs.ticket }}" ]; then
+          if [ -n "$INPUT_TICKET" ]; then
             if [ -z "$issueList" ]; then
-              issueList="${{ github.event.inputs.ticket }}"
+              issueList="$INPUT_TICKET"
             else
-              issueList+=",${{ github.event.inputs.ticket }}"
+              issueList+=",$INPUT_TICKET"
             fi
           fi
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
             prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
             apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
 
             # Prüfen ob es sich um ein Array oder einen String handelt
-            if echo "$apiResponse" | jq -e 'type == "array"' > /dev/null; then
-              prLabels=$(echo "$apiResponse" | jq -r ".[].name")
+            if jq -e 'type == "array"' <<<"$apiResponse" > /dev/null; then
+              prLabels=$(jq -r ".[].name" <<<"$apiResponse")
             else
-              prLabels=$(echo "$apiResponse" | jq -r ".name")
+              prLabels=$(jq -r ".name" <<<"$apiResponse")
             fi
 
             # ABRMS-5265 ist ein Renovate-Platzhalterticket, wenn renovate im PR-Label enthalten ist, dann hinzufügen
@@ -172,17 +185,16 @@ jobs:
           fi
 
           # Issue-Liste bereinigen
-          uniqueIssueList=$(echo "$issueList" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
-
+          issue_list=$(echo "$issueList" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
+          
           # IssueList / Implemented Issues
-          echo "issue_list=$uniqueIssueList" >> "$GITHUB_OUTPUT"
-          echo "Folgende Issues werden analysiert $uniqueIssueList"
-          IFS=',' read -ra issues <<< "$uniqueIssueList"
-          for line in "${issues[@]}"; do
+          echo "issue_list=$issue_list" >> "$GITHUB_OUTPUT"
+          echo "Folgende Issues werden analysiert: $issue_list"
+          IFS=',' read -ra issues <<< "$issue_list"
+          for issueNumber in "${issues[@]}"; do
             # Tabellen Eintrag erstellen
-            issueNumber=$(echo "$line" | cut -d";" -f1 | xargs)
             echo "$issueNumber wird eingelesen"
-
+          
             # Renovate Ticket überspringen, Rest aber prüfen
             if [ "$issueNumber" = "ABRMS-5265" ]; then
               title="${{ github.event.pull_request.title }}"
@@ -191,43 +203,43 @@ jobs:
               echo "renovate_title=$title" >> "$GITHUB_OUTPUT"
               continue  # Rest überspringen
             fi
-
+          
             # Jira Ticket einlesen
-            echo "Jira CLI wird zu $issueNumber befragt"
+            echo "Jira API wird zu $issueNumber befragt"
             API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
-            BASIC_AUTH=$(echo -n ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }} | base64 -w0)
+            BASIC_AUTH=$(echo -n "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
-
-            # Epic / Parent ermitteln
+          
+            # Extracting the epic name and dueDate
             echo "Epic name for $issueNumber is being extracted"
-            epicKey=$(echo "$issue_info" | jq -r '.fields.parent.key')
-            echo "Extracted epicKey: $epicKey"
-            if [ -n "$epicKey" ] && [ "$epicKey" != "null" ]; then
-              if [ -z "$epicList" ]; then
-                epicList="$epicKey"
-              else
-                epicList="$epicList,$epicKey"
+            if epicKey=$(jq -r -e '.fields.parent.key' <<<"$issue_info"); then  
+              if [ -z "$epicList" ]; then epicList="$epicKey"; else epicList="$epicList,$epicKey"; fi  
+              echo "Extracted epicKey: $epicKey"  
+              API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$epic_name"
+              epic_issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
+              epic_dueDate=$(echo "$epic_issue_info" | jq -r '.fields.duedate')
+              if [ -n "$epic_dueDate" ] && [ "$epic_dueDate" != "null" ]; then
+                echo "epic_due_date=$epic_dueDate" >> "$GITHUB_OUTPUT"
               fi
             fi
 
             # Titel einlesen
             echo "Titel zu $issueNumber extrahieren"
-            title=$(echo "$issue_info" | jq -r '.fields.summary')
+            title=$(jq -r '.fields.summary' <<<"$issue_info")
 
             # Jira-Labels einlesen
             echo "Jira-Labels zu $issueNumber extrahieren"
-            jiraLabels=$(echo "$issue_info" | jq -r '.fields.labels[]' | paste -sd ", ")
+            jiraLabels=$(jq -r '.fields.labels[]' <<<"$issue_info" | paste -sd ",")
 
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
-            componentList=$(echo "$issue_info" | jq -r '.fields.components[].name' | paste -sd ", ")
+            componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ",")
             allComponentList+=$componentList
-
+          
             # Dependencies extrahieren
             echo "Dependencies zu $issueNumber extrahieren"
-            custom_field_value=$(echo "$issue_info" | jq -r '.fields.customfield_10686')
-            if [ ! -z "$custom_field_value" ] && [ "$custom_field_value" != "null" ]; then
+            if custom_field_value=$(jq -r -e '.fields.customfield_10686' <<<"$issue_info"); then
               dependencyList+="\t * :warning: $issueNumber: $custom_field_value\n"
             else
               echo "No dependencies found for issue $issueNumber"
@@ -236,15 +248,13 @@ jobs:
             # Ticket Tabelle ausfüllen
             echo "Tabelleneintrag zum Ticket $issueNumber wird erstellt"
             issueListLines+="| $issueNumber | $title | $jiraLabels | $componentList |\n"
-
+          
             # Verknüpfte Tickets
             echo "Verknüpfte Tickets zu $issueNumber einlesen und Tabelle befüllen"
-            for k in $(jq '.fields.issuelinks | keys | .[]' <<<"$issue_info"); do
-              linkedIssue=$(jq -r ".fields.issuelinks[$k]" <<<"$issue_info");
-
-              # Prüfe auf ausgehende/eingehende Links
+            jq -c '.fields.issuelinks[]' <<<"$issue_info" | while read -r linkedIssue; do
+              # Prüfe auf ausgehende Links
               isOutward=$(jq 'has("outwardIssue")' <<<"$linkedIssue")
-              if $isOutward; then
+              if [ "$isOutward" = "true" ]; then
                 linkedRelation=$(jq -r '.type.outward' <<<"$linkedIssue")
                 linkedIssueNumber=$(jq -r '.outwardIssue.key' <<<"$linkedIssue")
                 linkedSummary=$(jq -r '.outwardIssue.fields.summary' <<<"$linkedIssue")
@@ -255,14 +265,15 @@ jobs:
                 linkedSummary=$(jq -r '.inwardIssue.fields.summary' <<<"$linkedIssue")
                 linkedStatus=$(jq -r '.inwardIssue.fields.status.name' <<<"$linkedIssue")
               fi
-                linkedIssuesListLines+="| $linkedIssueNumber | $linkedSummary | $linkedStatus | $linkedRelation |\n"
-                echo "Verknüpftes Ticket erkannt: $linkedIssueNumber - $linkedSummary"
+
+              linkedIssuesListLines+="| $linkedIssueNumber | $linkedSummary | $linkedStatus | $linkedRelation |\n"
+              echo "Verknüpftes Ticket erkannt: $linkedIssueNumber - $linkedSummary"
             done
           done
-
+          
           # Platzhalter austauschen
           echo "Platzhalter im Template austauschen"
-
+          
           ## Tabellen
           # Spezielle Sonderzeichen austauschen
           cleanedIssueListLines=$(printf '%s' "$issueListLines" | sed 's/[&/\#]/\\&/g')
@@ -278,21 +289,20 @@ jobs:
 
           ## EPIC
           echo "EPIC setzen"
-          echo "Final epicList: $epicList"
           if [ -n "$epicList" ]; then
             echo "epic_list=$epicList" >> "$GITHUB_OUTPUT"
             sed -i "s/<!-- EPIC_PLACEHOLDER -->/$epicList/" "$template_file";
           else
             sed -i "s/<!-- EPIC_PLACEHOLDER -->/:white_check_mark: Keine Änderung/" "$template_file";
           fi
-
+          
           ## Dependencies
           echo "Dependencies setzen"
           if [ -n "$dependencyList" ]; then
             echo "dependencies=true" >> "$GITHUB_OUTPUT"
             dependencyList="\n$dependencyList"
             sed -i "s/<!-- DEPENDENCIES_PLACEHOLDER -->/$dependencyList/" "$template_file";
-          else
+          else 
             sed -i 's/<!-- DEPENDENCIES_PLACEHOLDER -->/:white_check_mark: Keine Dependencies/' "$template_file";
           fi
 
@@ -322,18 +332,31 @@ jobs:
             jira edit "$ticket" -o fixVersions="$FIX_VERSION"
           done
 
+      - name: FixVersion bei Jira eintragen
+        if: ${{ steps.update_release_template.outputs.renovate == 'false' }}
+        uses: ./mcbscore/github/actions/set-fix-version-jc
+        with:
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
+          issueList: ${{ steps.update_release_template.outputs.issue_list }}
+          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          included_components: ${{ env.INCLUDED_COMPONENTS }}
+
       # Im Fehlerfall aufräumen
       - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
+        env:
+          NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
-            if gh release list --json tagName --jq '.[] | select(.tagName == "${{ steps.version-calculation.outputs.new_version }}")' | grep -q '${{ steps.version-calculation.outputs.new_version }}'; then
-              gh release delete ${{ steps.version-calculation.outputs.new_version }} --cleanup-tag --yes
+            if gh release list --json tagName --jq '.[] | select(.tagName == "$NEW_VERSION") | .tagName' | grep -q .; then
+              gh release delete "$NEW_VERSION" --cleanup-tag --yes
             else
-              git tag -d "${{ steps.version-calculation.outputs.new_version }}"
-              git push origin ":${{ steps.version-calculation.outputs.new_version }}"
+              git tag -d "$NEW_VERSION"
+              git push origin ":$NEW_VERSION"
             fi
           fi
-        env:
-          GH_TOKEN: ${{ env.TOKEN }}
