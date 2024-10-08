@@ -1,0 +1,60 @@
+name: Pull Request Tests
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Führt automatisierte Fixes und Tests aus
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      pull-requests: write
+      contents: write
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      # Setup
+      - uses: actions/checkout@v4
+
+      - name: workflow.config einlesen
+        id: read-properties
+        run: |
+          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.read-properties.outputs.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com/'
+
+      - name: Dependencies installieren
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
+
+      - name: Build
+        run: npm run build
+
+      # Automatisch Fixes ausführen
+      - name: Autofixes eslint ausführen oder Fehler melden
+        run: npm run lint:fix
+
+      - name: Autofixes prettier ausführen oder Fehler melden, sowie .github Ordner ausschließen
+        run: npm run prettier:write -- "**/*" "!./.github/**/*"
+
+      - name: Änderungen aus dem Autofix committen
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: run prettier:write and lint:fix'
+
+      # Tests starten
+      - name: Tests ausführen und Coverage generieren
+        run: npm run test

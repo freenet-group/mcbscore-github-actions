@@ -1,0 +1,58 @@
+name: Pull Request Check
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, labeled, unlabeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Pflichtprüfungen
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Semantic PR-Title Check
+        if: always()
+        uses: amannn/action-semantic-pull-request@v5.4.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Configure which types are allowed.
+          # Default: https://github.com/commitizen/conventional-commit-types
+          types: |
+            bump
+            ci
+            chore
+            feat
+            fix
+            improvement
+            refactor
+            test
+          requireScope: false
+
+      - name: Prüft die GitHub PR Labels auf Vollständigkeit
+        if: always()
+        uses: mheap/github-action-required-labels@v5
+        with:
+          count: 1
+          mode: 'exactly'
+          add_comment: true
+          labels: 'release:patch, release:minor, release:major'
+          message: "Pull-Request wurde aufgrund fehlender Release-Labels abgelehnt. \n
+            Es muss exakt eines dieser Labels gesetzt werden: \n
+            - release:patch\n
+            - release:minor\n
+            - release:major"
+
+      - name: UTF-8 encoding prüfen und invalide Dateien auflisten
+        shell: bash
+        run: |
+          if find "$GITHUB_WORKSPACE" -type f -not '(' -iname '*.properties' -o -iname '*.xml' ')' -exec file --mime '{}' ';' \
+              | grep --invert-match --perl-regexp '\bcharset=(binary|us-ascii|utf-8)$'; then
+            echo "Non-UTF-8 Dateien gefunden"
+            exit 1
+          fi

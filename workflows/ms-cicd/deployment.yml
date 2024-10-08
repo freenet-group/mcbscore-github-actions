@@ -33,6 +33,12 @@ on:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
         default: main
+      sanityTestsEnabled:
+        default: true
+        description: Flag zum Deaktivieren der SanityTests. Überschreibt nicht SANITY_TESTS_ENABLED in .github/workflow.properties. Die Tests laufen also nur, wenn die Property und dieser Input beide true sind.
+        required: false
+        type: boolean
+
   workflow_call:
     inputs:
       component:
@@ -66,6 +72,11 @@ on:
         required: false
         default: main
         type: string
+      sanityTestsEnabled:
+        default: true
+        description: Flag zum Deaktivieren der SanityTests. Überschreibt nicht SANITY_TESTS_ENABLED in .github/workflow.properties. Die Tests laufen also nur, wenn die Property und dieser Input beide true sind.
+        required: false
+        type: boolean
 
 env:
   ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
@@ -269,7 +280,7 @@ jobs:
       - name: workflow.properties als Umgebungsvariablen setzen
         shell: bash
         run: |
-          cat ./.github/workflow.properties >> $GITHUB_ENV
+          { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
 
       - name: mcbscore-github-actions auschecken
         uses: actions/checkout@v4
@@ -356,6 +367,7 @@ jobs:
 
   sanity_test:
     needs: [deploy, deploy_k8s]
+    if: ${{ github.event.inputs.sanityTestsEnabled == 'true' }}
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     steps:
@@ -455,20 +467,25 @@ jobs:
       - name: Bambi Meldung
         id: deploy_state
         shell: bash
+        env: 
+          INPUT_COMPONENT_VERSION: ${{ github.event.inputs.componentVersion }}
+          INPUT_COMPONENT: ${{ github.event.inputs.component }}
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          COMPONENT_NAME: ${{ needs.deploy.outputs.componentName }}
         run: |
           curlResult=$(curl -sw %{http_code} --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v2/bambi/deployment/environmentversion' \
           --header 'Content-Type: application/json' \
-          --data-raw '{
-            "version": "${{ github.event.inputs.componentVersion }}",
-            "componentName": "${{ needs.deploy.outputs.componentName }}",
-            "originComponentName": "${{ github.event.inputs.component }}",
-            "workflowName": "${{ github.workflow }}",
-            "environment": "${{ github.event.inputs.environment }}",
-            "extern": false,
-            "workflowRunId": ${{ github.run_id }},
-            "deployState": "${{ env.DEPLOY_STATE }}",
-            "deployUser": "${{ github.actor }}"
-          }')
+          --data-raw "{ \
+            \"version\": \"$INPUT_COMPONENT_VERSION\", \
+            \"componentName\": \"$COMPONENT_NAME\", \
+            \"originComponentName\": \"$INPUT_COMPONENT\", \
+            \"workflowName\": \"${{ github.workflow }}\", \
+            \"environment\": \"$INPUT_ENVIRONMENT\", \
+            \"extern\": false, \
+            \"workflowRunId\": \"${{ github.run_id }}\", \
+            \"deployState\": \"${{ env.DEPLOY_STATE }}\", \
+            \"deployUser\": \"${{ github.actor }}\" \
+          }")
 
           statusCode="${curlResult:${#curlResult}-3}"
           echo "statusCode: $statusCode"

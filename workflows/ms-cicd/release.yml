@@ -25,7 +25,7 @@ on:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
     runs-on: [ self-hosted, k8s ]
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
@@ -59,10 +59,10 @@ jobs:
             /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
             /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
 
-      - name: workflow.properties einlesen und in ENV schreiben
-        shell: bash
+      - name: workflow.config einlesen
+        id: read-properties
         run: |
-          cat ./.github/workflow.properties >> $GITHUB_ENV
+          { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
 
       - name: Interne mcbscore-github-actions local auschecken
         uses: actions/checkout@v4
@@ -79,7 +79,7 @@ jobs:
           installJq: true
 
       - name: keystore-files kopieren
-        if: env.KEY_SERVER != ''
+        if: ${{ env.KEY_SERVER != '' }}
         shell: bash
         run: |
           certServer='${{ env.KEY_SERVER }}'
@@ -108,20 +108,25 @@ jobs:
 
       - name: Semantic Version überschreiben, wenn eine spezifische Version angegeben wurde
         id: version-calculation
+        env: 
+          NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           # Setze die neue kalkulierte Version in die Outputs
-          echo "new_version=${{ steps.bump-semver.outputs.new_version }}" >> $GITHUB_OUTPUT
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
           # Überschreibe die neue kalkulierte Version, wenn eine spezifische Version angegeben wurde
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "new_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          if [ -n "${INPUT_VERSION}" ]; then
+            echo "new_version=${INPUT_VERSION}" >> $GITHUB_OUTPUT
           fi
 
       - name: Component Version setzen (legacy - Für die Kompatibilität mit alten Actions)
         shell: bash
+        env:
+          NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
         run: |
-          echo "COMPONENT_VERSION=${{ steps.version-calculation.outputs.new_version }}" >> $GITHUB_ENV
-          echo "RAW_VERSION=${{ steps.version-calculation.outputs.new_version }}" >> $GITHUB_ENV
+          echo "COMPONENT_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "RAW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
 
       - name: Neuen Versions-Tag einchecken
@@ -131,20 +136,25 @@ jobs:
           message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
       - name: Release Version in DB Changes eintragen
-        if: hashFiles('.github/**/dbChanges.yml') != ''
+        id: set-version-in-dbchanges
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
         shell: bash
+        env:
+          NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-          find ./${{ env.DB_CHANGES_DIRECTORY }} -type f -exec sed -i 's/{releaseVersion}/${{ steps.version-calculation.outputs.new_version }}/g' {} +
+          find ./${{ env.DB_CHANGES_DIRECTORY }} -type f -exec sed -i "s/{releaseVersion}/$NEW_VERSION/g" {} +
           changesDetected=`git status --porcelain`
           if [ -n "$changesDetected" ]
           then
             echo "Committing changes"
             git commit -am "Release Version in DB Changes eingetragen"
+            commit_id=$(git rev-parse HEAD)  # Speichert die Commit-ID in der Variablen
+            echo "DB Changes Version Commit: $commit_id"
+            echo "DB_CHANGES_VERSION_COMMIT_ID=$commit_id" >> $GITHUB_ENV
             git push
           fi
-          git tag -f -a sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }} -m "tagging sql-${{ env.TAG_PREFIX }}${{ steps.version-calculation.outputs.new_version }}"
 
       - name: Gradle Build mit Sonar Upload und CyclonedxBom (SBOM)
         uses: ./mcbscore/github/actions/gradle-build
@@ -174,6 +184,9 @@ jobs:
 
       - name: Release-Template einlesen und ausfüllen
         id: update_release_template
+        env:
+          ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
+          INPUT_TICKET: ${{ github.event.inputs.ticket }}
         run: |
           template_file=".github/templates/release_template.md"
           issueList=""
@@ -194,45 +207,52 @@ jobs:
           echo "ms_deployment=false" >> "$GITHUB_OUTPUT"
           echo "db_changes=false" >> "$GITHUB_OUTPUT"
           echo "dependencies=false" >> "$GITHUB_OUTPUT"
-          
+
           # Alle Issues auslesen
-          uniqueIssueList=$(echo "${{ steps.jira_keys.outputs.issue-keys }}" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
-          uniqueIssueList=${uniqueIssueList#"[]"}
+          if [ -n "$ISSUE_KEYS" ]; then
+            issueList="$ISSUE_KEYS"
+          fi
 
           # Prüfen ob der Input "ticket" gesetzt wurde, wenn ja, dann hinzufügen
-          if [ -n "${{ github.event.inputs.ticket }}" ]; then
-            if [ -z "$uniqueIssueList" ]; then
-              uniqueIssueList="${{ github.event.inputs.ticket }}"
+          if [ -n "$INPUT_TICKET" ]; then
+            if [ -z "$issueList" ]; then
+              issueList="$INPUT_TICKET"
             else
-              # Prüfen ob das Ticket bereits in der uniqueIssueList enthalten ist
-              if [! echo "$uniqueIssueList" | grep -q "${{ github.event.inputs.ticket }}"]; then
-                uniqueIssueList+=",${{ github.event.inputs.ticket }}"
-              fi
+              issueList+=",$INPUT_TICKET"
             fi
           fi
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
             prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
-            prLabels=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels" | jq -r ".[].name")
-            
-            # ABRMS-5265 ist ein Renovate-Platzhalterticket für DOGS
+            apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
+
+            # Prüfen ob es sich um ein Array oder einen String handelt
+            if jq -e 'type == "array"' <<<"$apiResponse" > /dev/null; then
+              prLabels=$(jq -r ".[].name" <<<"$apiResponse")
+            else
+              prLabels=$(jq -r ".name" <<<"$apiResponse")
+            fi
+
+            # ABRMS-5265 ist ein Renovate-Platzhalterticket, wenn renovate im PR-Label enthalten ist, dann hinzufügen
             if echo "$prLabels" | grep -q "renovate"; then
-              if [ -z "$uniqueIssueList" ]; then
-                uniqueIssueList="ABRMS-5265"
+              if [ -z "$issueList" ]; then
+                issueList="ABRMS-5265"
               else
-                uniqueIssueList+=",ABRMS-5265"
+                issueList+=",ABRMS-5265"
               fi
             fi
           fi
+
+          # Issue-Liste bereinigen
+          issue_list=$(echo "$issueList" | tr ',' '\n' | sort -u | tr '\n' ',' | sed 's/,$//')
           
           # IssueList / Implemented Issues
-          echo "issue_list=$uniqueIssueList" >> "$GITHUB_OUTPUT"
-          echo "Folgende Issues werden analysiert $uniqueIssueList"
-          IFS=',' read -ra issues <<< "$uniqueIssueList"
-          for line in "${issues[@]}"; do
+          echo "issue_list=$issue_list" >> "$GITHUB_OUTPUT"
+          echo "Folgende Issues werden analysiert $issue_list"
+          IFS=',' read -ra issues <<< "$issue_list"
+          for issueNumber in "${issues[@]}"; do
             # Tabellen Eintrag erstellen
-            issueNumber=$(echo "$line" | cut -d";" -f1 | xargs)
             echo "$issueNumber wird eingelesen"
           
             # Renovate Ticket überspringen, Rest aber prüfen
@@ -247,44 +267,39 @@ jobs:
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
             API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
-            BASIC_AUTH=$(echo -n ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }} | base64 -w0)
+            BASIC_AUTH=$(echo -n "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
           
             # Extracting the epic name and dueDate
             echo "Epic name for $issueNumber is being extracted"
-            epicKey=$(echo "$issue_info" | jq -r '.fields.customfield_10014')
-            if [ -n "$epicKey" ] && [ "$epicKey" != "null" ]; then
-              if [ -z "$epicList" ]; then
-                epicList="$epic_name"
-                API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$epic_name"
-                epic_issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
-                epic_dueDate=$(echo "$epic_issue_info" | jq -r '.fields.duedate')
-                if [ -n "$epic_dueDate" ] && [ "$epic_dueDate" != "null" ]; then
-                  echo "epic_due_date=$epic_dueDate" >> "$GITHUB_OUTPUT"
-                fi
-              else
-                epicList="$epicList,$epicKey"
+            if epicKey=$(jq -r -e '.fields.parent.key' <<<"$issue_info"); then  
+              if [ -z "$epicList" ]; then epicList="$epicKey"; else epicList="$epicList,$epicKey"; fi  
+              echo "Extracted epicKey: $epicKey"  
+              API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$epic_name"
+              epic_issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
+              epic_dueDate=$(echo "$epic_issue_info" | jq -r '.fields.duedate')
+              if [ -n "$epic_dueDate" ] && [ "$epic_dueDate" != "null" ]; then
+                echo "epic_due_date=$epic_dueDate" >> "$GITHUB_OUTPUT"
               fi
             fi
           
             # Titel einlesen
             echo "Titel zu $issueNumber extrahieren"
-            title=$(echo "$issue_info" | jq -r '.fields.summary')
-          
+            title=$(jq -r '.fields.summary' <<<"$issue_info")
+
             # Jira-Labels einlesen
             echo "Jira-Labels zu $issueNumber extrahieren"
-            jiraLabels=$(echo "$issue_info" | jq -r '.fields.labels[]' | paste -sd ", ")
-          
+            jiraLabels=$(jq -r '.fields.labels[]' <<<"$issue_info" | paste -sd ",")
+
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
-            componentList=$(echo "$issue_info" | jq -r '.fields.components[].name' | paste -sd ", ")
+            componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ",")
             allComponentList+=$componentList
           
             # Dependencies extrahieren
             echo "Dependencies zu $issueNumber extrahieren"
-            custom_field_value=$(echo "$issue_info" | jq -r '.fields.customfield_10686')
-            if [ ! -z "$custom_field_value" ] && [ "$custom_field_value" != "null" ]; then
+            if custom_field_value=$(jq -r -e '.fields.customfield_10686' <<<"$issue_info"); then
               dependencyList+="\t * :warning: $issueNumber: $custom_field_value\n"
             else
               echo "No dependencies found for issue $issueNumber"
@@ -296,12 +311,10 @@ jobs:
           
             # Verknüpfte Tickets
             echo "Verknüpfte Tickets zu $issueNumber einlesen und Tabelle befüllen"
-            for k in $(jq '.fields.issuelinks | keys | .[]' <<<"$issue_info"); do
-              linkedIssue=$(jq -r ".fields.issuelinks[$k]" <<<"$issue_info");
-          
+            jq -c '.fields.issuelinks[]' <<<"$issue_info" | while read -r linkedIssue; do
               # Prüfe auf ausgehende Links
               isOutward=$(jq 'has("outwardIssue")' <<<"$linkedIssue")
-              if $isOutward; then
+              if [ "$isOutward" = "true" ]; then
                 linkedRelation=$(jq -r '.type.outward' <<<"$linkedIssue")
                 linkedIssueNumber=$(jq -r '.outwardIssue.key' <<<"$linkedIssue")
                 linkedSummary=$(jq -r '.outwardIssue.fields.summary' <<<"$linkedIssue")
@@ -312,9 +325,9 @@ jobs:
                 linkedSummary=$(jq -r '.inwardIssue.fields.summary' <<<"$linkedIssue")
                 linkedStatus=$(jq -r '.inwardIssue.fields.status.name' <<<"$linkedIssue")
               fi
-                linkedIssuesListLines+="| $linkedIssueNumber | $linkedSummary | $linkedStatus | $linkedRelation |\n"
-          
-                echo "Verknüpftes Ticket erkannt: $linkedIssueNumber - $linkedSummary"
+
+              linkedIssuesListLines+="| $linkedIssueNumber | $linkedSummary | $linkedStatus | $linkedRelation |\n"
+              echo "Verknüpftes Ticket erkannt: $linkedIssueNumber - $linkedSummary"
             done
           done
           
@@ -322,16 +335,18 @@ jobs:
           echo "Platzhalter im Template austauschen"
           
           ## Tabellen
-          # Trennzeichen entfernen
-          cleanedIssueListLines=$(echo "$issueListLines" | sed 's/#//g')
-          cleanedLinkedIssuesListLines=$(echo "$linkedIssuesListLines" | sed 's/#//g')
+          # Spezielle Sonderzeichen austauschen
+          cleanedIssueListLines=$(printf '%s' "$issueListLines" | sed 's/[&/\#]/\\&/g')
+          cleanedLinkedIssuesListLines=$(printf '%s' "$linkedIssuesListLines" | sed 's/[&/\#]/\\&/g')
+
           echo "IssueList setzen"
           echo "$cleanedIssueListLines"
-          sed -i "s#<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->#$cleanedIssueListLines#g" "$template_file"
+          sed -i "/^$/N;/\n<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->/s#.*#$cleanedIssueListLines#" "$template_file"
+
           echo "Verlinkte Tickets setzen"
           echo "$cleanedLinkedIssuesListLines"
-          sed -i "s#<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->#$cleanedLinkedIssuesListLines#g" "$template_file"
-          
+          sed -i "/^$/N;/\n<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->/s#.*#$cleanedLinkedIssuesListLines#" "$template_file"
+
           ## EPIC
           echo "EPIC setzen"
           if [ -n "$epicList" ]; then
@@ -516,7 +531,7 @@ jobs:
           fi
 
       - name: dbChanges Workflow starten
-        if: hashFiles('.github/**/dbChanges.yml') != ''
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: DB Changes
@@ -529,20 +544,28 @@ jobs:
             }
 
       - name: Bambi Parameter setzen
+        env: 
+          RENOVATE: ${{ steps.update_release_template.outputs.renovate }}
+          RENOVATE_TITLE: ${{ steps.update_release_template.outputs.renovate_title }}
+          EPIC_DUEDATE: ${{ steps.update_release_template.outputs.epic_dueDate }}
+          MS_CONFIGURATION: ${{ steps.update_release_template.outputs.ms_configuration }}
+          MS_DEPLOYMENT: ${{ steps.update_release_template.outputs.ms_deployment }}
+          DB_CHANGES: ${{ steps.update_release_template.outputs.db_changes }}
+          DEPENDENCIES: ${{ steps.update_release_template.outputs.dependencies }}
         run: |
           BAMBI_ARGS="{ \
-            \"renovate\": \"${{ steps.update_release_template.outputs.renovate }}\", \
-            \"renovateInfo\": \"${{ steps.update_release_template.outputs.renovate_title }}\", \
-            \"ibnDate\": \"${{ steps.update_release_template.outputs.epic_dueDate }}\", \
-            \"changesInConfiguration\": \"${{ steps.update_release_template.outputs.ms_configuration }}\", \
-            \"changesInDeployment\": \"${{ steps.update_release_template.outputs.ms_deployment }}\", \
-            \"dbChanges\": \"${{ steps.update_release_template.outputs.db_changes }}\", \
-            \"dependencies\": \"${{ steps.update_release_template.outputs.dependencies }}\" \
+            \"renovate\": \"$RENOVATE\", \
+            \"renovateInfo\": \"$RENOVATE_TITLE\", \
+            \"ibnDate\": \"$EPIC_DUEDATE\", \
+            \"changesInConfiguration\": \"$MS_CONFIGURATION\", \
+            \"changesInDeployment\": \"$MS_DEPLOYMENT\", \
+            \"dbChanges\": \"$DB_CHANGES\", \
+            \"dependencies\": \"$DEPENDENCIES\" \
           }"
           echo "BAMBI_ARGS=$(echo "$BAMBI_ARGS" | sed 's/"/\\"/g')" >> $GITHUB_ENV
 
       - name: postBuild Workflow starten
-        if: hashFiles('.github/**/postBuild.yml') != '' && ${{ github.event.inputs.pre-release == 'false' }}
+        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && github.event.inputs['pre-release'] == false }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: PostBuild
@@ -558,17 +581,24 @@ jobs:
               "hasDeployment": "${{ steps.update_release_template.outputs.ms_deployment }}"
             }
 
-      - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
+      - name: Tag/Release löschen und DB Changes Version reverten, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
+        env:
+          NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          if [ "${{ steps.set-version-in-dbchanges.conclusion }}" == 'success' ] && [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
+            # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
+            git revert ${{ env.DB_CHANGES_VERSION_COMMIT_ID }}
+            git push
+          fi
+          
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
-            if gh release list --json tagName --jq '.[] | select(.tagName == "${{ steps.version-calculation.outputs.new_version }}")' | grep -q '${{ steps.version-calculation.outputs.new_version }}'; then
-              gh release delete ${{ steps.version-calculation.outputs.new_version }} --cleanup-tag --yes
+            if gh release list --json tagName --jq '.[] | select(.tagName == "$NEW_VERSION") | .tagName' | grep -q .; then
+              gh release delete "$NEW_VERSION" --cleanup-tag --yes
             else
-              git tag -d "${{ steps.version-calculation.outputs.new_version }}"
-              git push origin ":${{ steps.version-calculation.outputs.new_version }}"
+              git tag -d "$NEW_VERSION"
+              git push origin ":$NEW_VERSION"
             fi
           fi
-        env:
-          GH_TOKEN: ${{ env.TOKEN }}

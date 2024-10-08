@@ -37,6 +37,11 @@ on:
         type: string
         required: false
         default: main
+      sanityTestsEnabled:
+        default: true
+        description: Flag zum Deaktivieren der SanityTests. Überschreibt nicht SANITY_TESTS_ENABLED in .github/workflow.properties. Die Tests laufen also nur, wenn die Property und dieser Input beide true sind.
+        required: false
+        type: boolean
 
 jobs:
   create-deployment:
@@ -261,6 +266,7 @@ jobs:
 
   sanity_test:
     needs: [deploy, deploy_k8s]
+    if: ${{ github.event.inputs.sanityTestsEnabled == 'true' }}
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     env:

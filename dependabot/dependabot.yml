@@ -8,10 +8,10 @@ registries:
     password: ${{ secrets.GH_R_PACKAGES }}
 
 updates:
-  - package-ecosystem: "gradle"
-    directory: "/"
+  - package-ecosystem: 'gradle'
+    directory: '/'
     registries:
       - maven-github
     schedule:
-      interval: "monthly"
+      interval: 'monthly'
     open-pull-requests-limit: 0

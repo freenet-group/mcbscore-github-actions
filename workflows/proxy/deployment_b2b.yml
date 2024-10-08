@@ -8,11 +8,6 @@ on:
       componentVersion:
         description: 'Die Version der Komponente'
         required: true
-      deployForKubernetes:
-        description: soll für Kubernetes-Zugriff deployt werden?
-        type: string
-        required: false
-        default: "false"
 
 jobs:
   deploy:
@@ -42,7 +37,7 @@ jobs:
         with:
           workflow: B2B MD Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "deployForKubernetes": "${{ github.event.inputs.deployForKubernetes }}" }'
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
 
       # Starte KM Deployment auf B2B
       - name: Invoke deployment workflow B2B KM
@@ -51,7 +46,7 @@ jobs:
         with:
           workflow: B2B KM Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "deployForKubernetes": "${{ github.event.inputs.deployForKubernetes }}" }'
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
 
       # Starte FM Deployment auf B2B
       - name: Invoke deployment workflow B2B FM
@@ -60,4 +55,4 @@ jobs:
         with:
           workflow: B2B FM Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}", "deployForKubernetes": "${{ github.event.inputs.deployForKubernetes }}" }'
+          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
