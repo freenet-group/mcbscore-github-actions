@@ -65,7 +65,9 @@ jobs:
 
       - name: SBOM Generieren
         if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
-        run: npm run generate:sbom
+        run: |
+          mkdir -p ./src/.generated
+          npm run generate:sbom
 
       # Versionierung
       - name: Release Label einlesen
@@ -116,7 +118,7 @@ jobs:
       - name: Release-Template einlesen und ausfüllen
         id: update_release_template
         run: |
-          template_file=".github/templates/release_template.md"
+          template_file=".github/templates/release_template_aws.md"
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
@@ -297,7 +299,7 @@ jobs:
       - name: Release erstellen
         uses: softprops/action-gh-release@v2
         with:
-          body_path: '.github/templates/release_template.md'
+          body_path: '.github/templates/release_template_aws.md'
           files: |
             ${{ steps.read-properties.outputs.SBOM_FILE }}
             ${{ steps.read-properties.outputs.OPEN_API_SCHEMA }}
