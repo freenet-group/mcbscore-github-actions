@@ -153,27 +153,27 @@ jobs:
       matrix:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
         repository:
-          #- { name: ms-admin-dashboard, branch: main, group: ms-cicd }
-          #- { name: ms-alteration, branch: main, group: ms-cicd }
-          #- { name: ms-appcheck, branch: main, group: ms-cicd }
-          #- { name: ms-authorities-information, branch: main, group: ms-cicd }
-          #- { name: ms-billingaccount-frontend, branch: main, group: ms-cicd }
-          #- { name: ms-businesstransaction, branch: main, group: ms-cicd }
-          #- { name: ms-commondata, branch: main, group: ms-cicd }
-          #- { name: ms-configserver, branch: main, group: ms-cicd }
-          #- { name: ms-contentprovider, branch: main, group: ms-cicd }
-          #- { name: ms-customerchange, branch: main, group: ms-cicd, workflows: "../encoding, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, dbChanges, release, deployment" }
-          #- { name: ms-discovery, branch: main, group: ms-cicd }
-          #- { name: ms-elasticupdate, branch: main, group: ms-cicd }
-          #- { name: ms-find, branch: main, group: ms-cicd }
-          #- { name: ms-gateway, branch: main, group: ms-cicd }
-          #- { name: ms-homer, branch: main, group: ms-cicd }
-          #- { name: ms-invoice, branch: main, group: ms-cicd }
-          #- { name: ms-mark, branch: main, group: ms-cicd }
-          #- { name: ms-proxy-support, branch: main, group: ms-cicd }
-          #- { name: ms-rating, branch: main, group: ms-cicd }
+          - { name: ms-admin-dashboard, branch: main, group: ms-cicd }
+          - { name: ms-alteration, branch: main, group: ms-cicd }
+          - { name: ms-appcheck, branch: main, group: ms-cicd }
+          - { name: ms-authorities-information, branch: main, group: ms-cicd }
+          - { name: ms-billingaccount-frontend, branch: main, group: ms-cicd }
+          - { name: ms-businesstransaction, branch: main, group: ms-cicd }
+          - { name: ms-commondata, branch: main, group: ms-cicd }
+          - { name: ms-configserver, branch: main, group: ms-cicd }
+          - { name: ms-contentprovider, branch: main, group: ms-cicd }
+          - { name: ms-customerchange, branch: main, group: ms-cicd, workflows: "../encoding, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, dbChanges, release, deployment" }
+          - { name: ms-discovery, branch: main, group: ms-cicd }
+          - { name: ms-elasticupdate, branch: main, group: ms-cicd }
+          - { name: ms-find, branch: main, group: ms-cicd }
+          - { name: ms-gateway, branch: main, group: ms-cicd }
+          - { name: ms-homer, branch: main, group: ms-cicd }
+          - { name: ms-invoice, branch: main, group: ms-cicd }
+          - { name: ms-mark, branch: main, group: ms-cicd }
+          - { name: ms-proxy-support, branch: main, group: ms-cicd }
+          - { name: ms-rating, branch: main, group: ms-cicd }
           - { name: ms-user, branch: main, group: ms-cicd, workflows: "../encoding, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, dbChanges, release, deployment" }
-          #- { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, ./deployment_k8s_only/deployment" }          
+          - { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, ./deployment_k8s_only/deployment" }          
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
