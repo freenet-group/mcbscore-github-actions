@@ -320,6 +320,28 @@ jobs:
           token: ${{ env.TOKEN }}
 
       # Jira Fix-Version setzen
+      - name: Konfiguriere Jira für ABRMS Projekt und lege Version in Jira an
+        uses: ./mcbscore/github/actions/jira-configuration-jc
+        with:
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          jiraProject: ABRMS
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
+          componentList: '${{ steps.read-properties.outputs.JIRA_COMPONENT }},ABRMS (unspez.)'
+          atlassianToolsVersion: ${{ steps.read-properties.outputs.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+
+      - name: Konfiguriere Jira für MCBS Projekt und lege Version in Jira an
+        uses: ./mcbscore/github/actions/jira-configuration-jc
+        with:
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          jiraProject: MCBS
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
+          componentList: '${{ steps.read-properties.outputs.JIRA_COMPONENT }},Microservices'
+          atlassianToolsVersion: ${{ steps.read-properties.outputs.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+
       - name: FixVersion bei Jira eintragen
         if: ${{ steps.update_release_template.outputs.renovate == 'false' }}
         uses: ./mcbscore/github/actions/set-fix-version-jc
