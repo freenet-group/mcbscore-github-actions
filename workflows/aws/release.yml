@@ -320,6 +320,14 @@ jobs:
           token: ${{ env.TOKEN }}
 
       # Jira Fix-Version setzen
+      - name: Issuelist von "," auf " " umwandeln
+        id: issue-list-with-space
+        env:
+          ISSUE_LIST: ${{ steps.update_release_template.outputs.issue_list }}
+        run: |
+          ISSUE_LIST_WITH_SPACES=$(echo "${ISSUE_LIST}" | tr -s ',' ' ')
+          echo "issueListWithSpaces=${ISSUE_LIST_WITH_SPACES}" >> $GITHUB_OUTPUT
+
       - name: Konfiguriere Jira für ABRMS Projekt und lege Version in Jira an
         uses: ./mcbscore/github/actions/jira-configuration-jc
         with:
@@ -350,7 +358,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
           componentVersion: ${{ steps.version-calculation.outputs.new_version }}
-          issueList: ${{ steps.update_release_template.outputs.issue_list }}
+          issueList: ${{ steps.issue-list-with-space.outputs.issueListWithSpaces }}
           atlassianToolsVersion: ${{ steps.read-properties.outputs.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           included_components: ${{ steps.read-properties.outputs.INCLUDED_COMPONENTS }}
 
