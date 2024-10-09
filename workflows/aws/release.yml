@@ -329,8 +329,8 @@ jobs:
           component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
           componentVersion: ${{ steps.version-calculation.outputs.new_version }}
           issueList: ${{ steps.update_release_template.outputs.issue_list }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          included_components: ${{ env.INCLUDED_COMPONENTS }}
+          atlassianToolsVersion: ${{ steps.read-properties.outputs.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          included_components: ${{ steps.read-properties.outputs.INCLUDED_COMPONENTS }}
 
       # Im Fehlerfall aufräumen
       - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
