@@ -172,7 +172,8 @@ jobs:
           - { name: ms-mark, branch: main, group: ms-cicd }
           - { name: ms-proxy-support, branch: main, group: ms-cicd }
           - { name: ms-rating, branch: main, group: ms-cicd }
-          - { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, ./deployment_k8s_only/deployment" }
+          - { name: ms-user, branch: main, group: ms-cicd, workflows: "../encoding, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, dbChanges, release, deployment" }
+          - { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, ./deployment_k8s_only/deployment" }          
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -203,8 +204,7 @@ jobs:
           - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-note-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, ../vulnerability-detection, setPRIssueDone" }
           - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
-          - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, ../vulnerability-detection, setPRIssueDone" }
-          - { name: ms-user, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
+          - { name: ms-oms-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, ../vulnerability-detection, setPRIssueDone" }          
 
           # ms-deployment/deployment_k8s: Kubernetes Namespace Konfig
           - { name: ms-deployment, branch: main, group: ms-deployment, workflows: "deployment_k8s" }
