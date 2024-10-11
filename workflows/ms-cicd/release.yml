@@ -585,7 +585,7 @@ jobs:
         if: failure() || cancelled()
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
-          GH_TOKEN: ${{ env.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ env.TOKEN }}
         run: |
           if [ "${{ steps.set-version-in-dbchanges.conclusion }}" == 'success' ] && [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
             # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
