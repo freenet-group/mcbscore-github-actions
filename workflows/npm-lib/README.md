@@ -19,13 +19,9 @@ git push origin 0.0.0
 
 ## GitHub Workflow Properties
 
-Diese Datei (`.github/workflow.config`) enthält wichtige Einstellungen, die für die Workflows erforderlich sind und in $GITHUB_OUTPUT geschrieben werden:
+Die Datei `.github/workflow.config` enthält wichtige Einstellungen, die für die Workflows erforderlich sind und in [$GITHUB_OUTPUT](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/passing-information-between-jobs) geschrieben werden und von WF-Steps gelesen werden.
 
-```properties
-SBOM_FILE=./src/.generated/sbom.json
-JIRA_COMPONENT=<YOUR_COMPONENT>
-NODE_VERSION=20.x
-```
+Ein aktuelles Beispiel kann in dieser [Beispiel-Datei](./workflow.config) gefunden werden.
 
 ## NPM Skripte
 
@@ -55,3 +51,18 @@ Die Workflows in diesem Projekt verwenden AWS Systems Manager (SSM), um sicherhe
   - `/github/secrets/dependencytrack_hostname`: Der Hostname des Dependency Track Servers.
   - `/github/secrets/dependencytrack_port`: Der Port des Dependency Track Servers.
   - `/github/secrets/dependencytrack_api_key`: Der API-Key für den Zugriff auf Dependency Track.
+
+## Nutzung der erstellten Libs
+
+Füge das GitHub npm-Registry-Repository zu deiner npm-Konfiguration hinzu, indem du die folgende Zeile zu deiner `.npmrc`-Datei hinzufügst. Ersetze `YOUR_GITHUB_TOKEN` mit deinem GitHub-Token:
+
+```bash
+//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
+@freenet-group:registry=https://npm.pkg.github.com
+```
+
+Installiere das Plugin über npm:
+
+```bash
+npm install --save-dev @freenet-group/LIB_NAME
+```

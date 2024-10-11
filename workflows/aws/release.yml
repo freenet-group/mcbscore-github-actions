@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch'
+    if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -69,9 +69,9 @@ jobs:
           registry-url: 'https://npm.pkg.github.com/'
 
       - name: Dependencies installieren
+        run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
-        run: npm ci
 
       - name: SBOM Generieren
         if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
@@ -102,13 +102,16 @@ jobs:
 
       - name: Semantic Version überschreiben, wenn eine spezifische Version angegeben wurde
         id: version-calculation
+        env: 
+          NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
           # Setze die neue kalkulierte Version in die Outputs
-          echo "new_version=${{ steps.bump-semver.outputs.new_version }}" >> $GITHUB_OUTPUT
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
 
           # Überschreibe die neue kalkulierte Version, wenn eine spezifische Version angegeben wurde
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            echo "new_version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          if [ -n "${INPUT_VERSION}" ]; then
+            echo "new_version=${INPUT_VERSION}" >> $GITHUB_OUTPUT
           fi
 
       - name: Neuen Versions-Tag einchecken
@@ -211,17 +214,11 @@ jobs:
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
 
-            # Extracting the epic name and dueDate
+            # Epic / Parent ermitteln
             echo "Epic name for $issueNumber is being extracted"
             if epicKey=$(jq -r -e '.fields.parent.key' <<<"$issue_info"); then  
               if [ -z "$epicList" ]; then epicList="$epicKey"; else epicList="$epicList,$epicKey"; fi  
               echo "Extracted epicKey: $epicKey"  
-              API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$epic_name"
-              epic_issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
-              epic_dueDate=$(echo "$epic_issue_info" | jq -r '.fields.duedate')
-              if [ -n "$epic_dueDate" ] && [ "$epic_dueDate" != "null" ]; then
-                echo "epic_due_date=$epic_dueDate" >> "$GITHUB_OUTPUT"
-              fi
             fi
 
             # Titel einlesen
@@ -252,7 +249,7 @@ jobs:
             # Verknüpfte Tickets
             echo "Verknüpfte Tickets zu $issueNumber einlesen und Tabelle befüllen"
             jq -c '.fields.issuelinks[]' <<<"$issue_info" | while read -r linkedIssue; do
-              # Prüfe auf ausgehende Links
+              # Prüfe auf ausgehende/eingehende Links
               isOutward=$(jq 'has("outwardIssue")' <<<"$linkedIssue")
               if [ "$isOutward" = "true" ]; then
                 linkedRelation=$(jq -r '.type.outward' <<<"$linkedIssue")
@@ -289,6 +286,7 @@ jobs:
 
           ## EPIC
           echo "EPIC setzen"
+          echo "Final epicList: $epicList"
           if [ -n "$epicList" ]; then
             echo "epic_list=$epicList" >> "$GITHUB_OUTPUT"
             sed -i "s/<!-- EPIC_PLACEHOLDER -->/$epicList/" "$template_file";
@@ -369,7 +367,7 @@ jobs:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
+          if [ -n "$NEW_VERSION" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
             if gh release list --json tagName --jq '.[] | select(.tagName == "$NEW_VERSION") | .tagName' | grep -q .; then
               gh release delete "$NEW_VERSION" --cleanup-tag --yes

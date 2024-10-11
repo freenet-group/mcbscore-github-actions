@@ -2,7 +2,7 @@ name: Pull Request Check
 
 on:
   pull_request:
-    types: [opened, reopened, edited, labeled, unlabeled]
+    types: [opened, reopened, edited, labeled, unlabeled, synchronize]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,6 +13,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     permissions:
+      issues: write
       pull-requests: write
     steps:
       - name: Semantic PR-Title Check

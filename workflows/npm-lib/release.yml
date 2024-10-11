@@ -27,6 +27,8 @@ jobs:
       actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      ACTIONS_PATH: mcbscore/github
 
     steps:
       # Setup
@@ -46,6 +48,14 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
+
+      - name: mcbscore-github-actions Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          repository: freenet-group/mcbscore-github-actions
+          token: ${{ env.TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: main
 
       - name: workflow.config einlesen
         id: read-properties
@@ -116,7 +126,7 @@ jobs:
         id: jira_keys
         uses: varnerknut/jira-extract-issue-keys-from-tags@1.3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ env.TOKEN }}
           head-tag: ${{ steps.version-calculation.outputs.new_version }}
 
       - name: Release-Template einlesen und ausfüllen
@@ -182,7 +192,7 @@ jobs:
 
           # IssueList / Implemented Issues
           echo "issue_list=$issue_list" >> "$GITHUB_OUTPUT"
-          echo "Folgende Issues werden analysiert $issue_list"
+          echo "Folgende Issues werden analysiert: $issue_list"
           IFS=',' read -ra issues <<< "$issue_list"
           for issueNumber in "${issues[@]}"; do
             # Tabellen Eintrag erstellen
@@ -217,11 +227,11 @@ jobs:
 
             # Jira-Labels einlesen
             echo "Jira-Labels zu $issueNumber extrahieren"
-            jiraLabels=$(jq -r '.fields.labels[]' <<<"$issue_info" | paste -sd ", ")
+            jiraLabels=$(jq -r '.fields.labels[]' <<<"$issue_info" | paste -sd ",")
 
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
-            componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ", ")
+            componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ",")
 
             # Dependencies extrahieren
             echo "Dependencies zu $issueNumber extrahieren"
@@ -305,17 +315,47 @@ jobs:
           token: ${{ env.TOKEN }} # secrets.GITHUB_TOKEN würde keine Folge-WF triggern
 
       # Jira Fix-Version setzen
-      - name: Jira Tickets aktualisieren
+      - name: Issuelist von "," auf " " umwandeln
+        id: issue-list-with-space
         env:
-          TICKETS: ${{ steps.update_release_template.outputs.issue_list }}
-          FIX_VERSION: ${{ steps.version-calculation.outputs.new_version }}
+          ISSUE_LIST: ${{ steps.update_release_template.outputs.issue_list }}
         run: |
-          IFS=',' read -r -a ticket_array <<< "$TICKETS"
+          ISSUE_LIST_WITH_SPACES=$(echo "${ISSUE_LIST}" | tr -s ',' ' ')
+          echo "issueListWithSpaces=${ISSUE_LIST_WITH_SPACES}" >> $GITHUB_OUTPUT
 
-          for ticket in "${ticket_array[@]}"; do
-            echo "Updating Fix Version for $ticket"
-            jira edit "$ticket" -o fixVersions="$FIX_VERSION"
-          done
+      - name: Konfiguriere Jira für ABRMS Projekt und lege Version in Jira an
+        uses: ./mcbscore/github/actions/jira-configuration-jc
+        with:
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          jiraProject: ABRMS
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
+          componentList: '${{ steps.read-properties.outputs.JIRA_COMPONENT }},ABRMS (unspez.)'
+          atlassianToolsVersion: ${{ steps.read-properties.outputs.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+
+      - name: Konfiguriere Jira für MCBS Projekt und lege Version in Jira an
+        uses: ./mcbscore/github/actions/jira-configuration-jc
+        with:
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          jiraProject: MCBS
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
+          componentList: '${{ steps.read-properties.outputs.JIRA_COMPONENT }},Microservices'
+          atlassianToolsVersion: ${{ steps.read-properties.outputs.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+
+      - name: FixVersion bei Jira eintragen
+        if: ${{ steps.update_release_template.outputs.renovate == 'false' }}
+        uses: ./mcbscore/github/actions/set-fix-version-jc
+        with:
+          jiraUrl: ${{ env.JIRA_CLOUD_URL }}
+          jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
+          issueList: ${{ steps.issue-list-with-space.outputs.issueListWithSpaces }}
+          atlassianToolsVersion: ${{ steps.read-properties.outputs.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          included_components: ${{ steps.read-properties.outputs.INCLUDED_COMPONENTS }}
 
       # Im Fehlerfall aufräumen
       - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde

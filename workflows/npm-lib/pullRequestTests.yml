@@ -9,18 +9,63 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Führt automatisierte Fixes und Tests aus
-  test:
+  # Führt automatische Fixes aus
+  autofix:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      pull-requests: write
-      contents: write
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       # Setup
+      - name: AWS Credentials konfigurieren
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Config von AWS SSM einlesen
+        uses: dkershner6/aws-ssm-getparameters-action@v2
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ env.TOKEN }} # env.TOKEN anstatt default/secrets.GITHUB_TOKEN benutzen, um WF mit Autofix-Commit zu triggern
+
+      - name: workflow.config einlesen
+        id: read-properties
+        run: |
+          tee -a "$GITHUB_OUTPUT" < .github/workflow.config
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.read-properties.outputs.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com/'
+
+      - name: Dependencies installieren
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
+
+      - name: Build
+        run: npm run build
+
+      # Automatisch Fixes ausführen
+      - name: Autofixes ausführen
+        run: npm run lint:fix && npm run prettier:write
+
+      - name: Änderungen aus dem Autofix committen
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: run prettier:write and lint:fix'
+
+  # Führt Tests aus
+  test:
+    needs: autofix
+    runs-on: [self-hosted, k8s]
+    timeout-minutes: 20
+    steps:
       - uses: actions/checkout@v4
 
       - name: workflow.config einlesen
@@ -43,18 +88,5 @@ jobs:
       - name: Build
         run: npm run build
 
-      # Automatisch Fixes ausführen
-      - name: Autofixes eslint ausführen oder Fehler melden
-        run: npm run lint:fix
-
-      - name: Autofixes prettier ausführen oder Fehler melden, sowie .github Ordner ausschließen
-        run: npm run prettier:write -- "**/*" "!./.github/**/*"
-
-      - name: Änderungen aus dem Autofix committen
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'chore: run prettier:write and lint:fix'
-
-      # Tests starten
       - name: Tests ausführen und Coverage generieren
         run: npm run test
