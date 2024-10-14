@@ -210,7 +210,7 @@ jobs:
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
             API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
-            BASIC_AUTH=$(echo -n "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" | base64 -w0)
+            BASIC_AUTH=$(base64 -w0 <<<"${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}")
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
 
@@ -369,7 +369,7 @@ jobs:
         run: |
           if [ -n "$NEW_VERSION" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
-            if gh release list --json tagName --jq '.[] | select(.tagName == "$NEW_VERSION") | .tagName' | grep -q .; then
+            if gh release list --json tagName --jq ".[] | select(.tagName == \"$NEW_VERSION\") | .tagName" | grep -q .; then
               gh release delete "$NEW_VERSION" --cleanup-tag --yes
             else
               git tag -d "$NEW_VERSION"

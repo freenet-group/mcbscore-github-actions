@@ -63,7 +63,7 @@ jobs:
   # Führt Tests aus
   test:
     needs: autofix
-    runs-on: [self-hosted, k8s]
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4

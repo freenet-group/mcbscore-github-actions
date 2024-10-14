@@ -23,7 +23,7 @@ git push origin 0.0.0
 
 Die Datei `.github/workflow.config` enthält wichtige Einstellungen, die für die Workflows erforderlich sind und in [$GITHUB_OUTPUT](https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/passing-information-between-jobs) geschrieben werden und von WF-Steps gelesen werden.
 
-Ein aktuelles Beispiel kann in dieser [Beispiel-Datei](./workflow.config) gefunden werden.
+Ein aktuelles Beispiel kann in dieser [Beispiel-Datei](./workflow.config.example) gefunden werden.
 
 ## NPM Skripte
 

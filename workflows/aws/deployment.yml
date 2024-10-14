@@ -33,7 +33,7 @@ jobs:
 
     steps:
       # Vorbereitung
-      - name: Wenn Release:published dann Environment auf GIT setzen ansonsten vom Input
+      - name: Environment bestimmen
         id: determine-environment
         run: |
           ENVIRONMENT=GIT
@@ -41,7 +41,7 @@ jobs:
             ENVIRONMENT=${{ github.event.inputs.env }}
           fi
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_OUTPUT
-          echo "ENVIRONMENT_LOWERCASE=$(echo $ENVIRONMENT | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENT_LOWERCASE=$(tr '[:upper:]' '[:lower:]' <<<"$ENVIRONMENT")" >> $GITHUB_OUTPUT  
 
       - name: Entweder die Übergebene Version oder die aktuelle Version auslesen
         id: determine-version
@@ -89,7 +89,7 @@ jobs:
       - name: workflow.config einlesen
         id: read-properties
         run: |
-          tee -a "$GITHUB_OUTPUT" < .github/workflow.config
+          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4
