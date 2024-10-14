@@ -93,7 +93,7 @@ jobs:
 
       - name: Semantic Version überschreiben, wenn eine spezifische Version angegeben wurde
         id: version-calculation
-        env: 
+        env:
           NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
@@ -110,6 +110,25 @@ jobs:
         with:
           tag: ${{ steps.version-calculation.outputs.new_version }}
           message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
+
+      # Java-Lib bauen
+      - name: Setup Java
+        if: ${{ steps.read-properties.outputs.JAVA_VERSION != '' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: ${{ steps.read-properties.outputs.JAVA_VERSION }}
+
+      - name: JAR bauen
+        if: ${{ steps.read-properties.outputs.JAVA_VERSION != '' }}
+        run: |
+          workingDirectory=$(pwd)
+          mkdir -p ./src/.generated
+          npm run build
+          cp ./src/.generated/*.java ./java/src/main/java/de/md/ms/exception/rest/errorcodes
+          cd java
+          sh gradlew clean build -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }}
+          cd $workingDirectory
 
       # Release Template
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
@@ -259,7 +278,7 @@ jobs:
 
           # Platzhalter austauschen
           echo "Platzhalter im Template austauschen"
-          
+
           ## Tabellen
           # Spezielle Sonderzeichen austauschen
           cleanedIssueListLines=$(printf '%s' "$issueListLines" | sed 's/[&/\#]/\\&/g')
@@ -299,6 +318,7 @@ jobs:
           body_path: '.github/templates/release_template_npmlib.md'
           files: |
             ${{ steps.read-properties.outputs.SBOM_FILE }}
+            ${{ steps.read-properties.outputs.JAR_FILES }}
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
