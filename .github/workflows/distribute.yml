@@ -285,6 +285,7 @@ jobs:
         repository:
           - { name: async-api-event-generator, branch: main, group: npm-lib }
           - { name: eslint-plugin-mcbs, branch: main, group: npm-lib } 
+          - { name: md-error-codes, branch: main, group: npm-lib } 
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4

@@ -43,6 +43,7 @@ jobs:
         uses: dkershner6/aws-ssm-getparameters-action@v2
         with:
           parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
             /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
             /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
             /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
@@ -72,6 +73,26 @@ jobs:
           echo "Updating version in package.json to ${VERSION}"
           sed -i "s/\"version\": \".*\"/\"version\": \"${VERSION}\"/" package.json
 
+      # JAR veröffentlichen
+      - name: Setup Java
+        if: ${{ steps.read-properties.outputs.JAVA_VERSION != '' }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: ${{ steps.read-properties.outputs.JAVA_VERSION }}
+
+      - name: JAR bauen und veröffentlichen
+        if: ${{ steps.read-properties.outputs.JAVA_VERSION != '' }}
+        run: |
+          workingDirectory=$(pwd)
+          mkdir -p ./src/.generated
+          mkdir -p ./dist
+          npm run build
+          cp ./src/.generated/*.java ./java/src/main/java/de/md/ms/exception/rest/errorcodes
+          cd java
+          sh gradlew clean build publish -PARTIFACT_VERSION=${{ steps.determine-version.outputs.VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }}
+          cd $workingDirectory
+
       # Veröffentlichen
       - name: Veröffentlichen
         run: npm publish
@@ -82,7 +103,7 @@ jobs:
       - name: Dateinamen für SBOM Upload ermitteln
         if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
         id: sbom-file-name
-        env: 
+        env:
           SBOM_FILE: ${{ steps.read-properties.outputs.SBOM_FILE }}
         run: echo "SBOM_FILE_NAME=$(basename -- "$SBOM_FILE")" >> $GITHUB_OUTPUT
 
