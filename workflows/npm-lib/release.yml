@@ -127,7 +127,7 @@ jobs:
           npm run build
           cp ./src/.generated/*.java ./java/src/main/java/de/md/ms/exception/rest/errorcodes
           cd java
-          sh gradlew clean build -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }}
+          sh gradlew clean build -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }}
           cd $workingDirectory
 
       # Release Template

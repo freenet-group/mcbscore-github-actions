@@ -43,6 +43,7 @@ jobs:
         uses: dkershner6/aws-ssm-getparameters-action@v2
         with:
           parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
             /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
             /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
             /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
@@ -89,7 +90,7 @@ jobs:
           npm run build
           cp ./src/.generated/*.java ./java/src/main/java/de/md/ms/exception/rest/errorcodes
           cd java
-          sh gradlew clean build publish -PARTIFACT_VERSION=${{ steps.determine-version.outputs.VERSION }}
+          sh gradlew clean build publish -PARTIFACT_VERSION=${{ steps.determine-version.outputs.VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }}
           cd $workingDirectory
 
       # Veröffentlichen
