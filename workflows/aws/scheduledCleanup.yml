@@ -1,0 +1,170 @@
+name: Aufräumen alter CloudFormation Stacks
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Läuft täglich um Mitternacht UTC
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Testlauf ohne Stacks tatsächlich zu entfernen?'
+        required: false
+        default: false
+        type: boolean
+      threshold-days:
+        description: 'Anzahl der Tage, um alte Stacks zu ermitteln'
+        required: false
+        default: 4
+        type: number
+
+jobs:
+  cleanup:
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: eu-central-1
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: AWS Credentials konfigurieren
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: workflow.config einlesen
+        id: read-properties
+        run: |
+          tee -a "$GITHUB_OUTPUT" < .github/workflow.config
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.read-properties.outputs.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com/'
+
+      - name: Dependencies installieren
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
+
+      - name: Service-Name aus serverless.yml extrahieren
+        id: extract_service_name
+        uses: mikefarah/yq@v4.44.3
+        with:
+          cmd: yq '.service' 'serverless.yml'
+
+      - name: Überprüfen des Service-Name
+        run: |
+          if [ -z "${{ steps.extract_service_name.outputs.result }}" ]; then
+            echo "Fehler: Service-Name konnte nicht aus serverless.yml extrahiert werden."
+            exit 1
+          else
+            echo "Service-Name: ${{ steps.extract_service_name.outputs.result }}"
+          fi
+
+      - name: Alte CloudFormation Stacks auflisten und filtern
+        id: filter_stacks
+        env:
+          SERVICE_NAME: ${{ steps.extract_service_name.outputs.result }}
+        run: |
+          # Aktuelles Datum im ISO 8601-Format abrufen
+          CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          # Datum vor x Tagen (aus der Eingabe) berechnen
+          THRESHOLD_DATE=$(date -u -d "$CURRENT_DATE -${{ github.event.inputs.threshold-days }} days" +"%Y-%m-%dT%H:%M:%SZ")
+          echo "Prüfdatum: $THRESHOLD_DATE"
+
+          # Stacks auflisten
+          aws cloudformation describe-stacks --output json > stacks.json
+
+          # Inspect the JSON output for debugging
+          echo "Stacks output:"
+          cat stacks.json
+
+          # Stack-Namen extrahieren und nach Service-Name filtern
+          OLD_STACKS=$(jq -r --arg date "$THRESHOLD_DATE" --arg service "$SERVICE_NAME" \
+            '.Stacks[] | select(.CreationTime < $date and (.StackName | startswith($service + "-"))) | .StackName' stacks.json)
+
+          # Debugging: Check filtered stacks
+          echo "Filtered stacks based on service name and date: $OLD_STACKS"
+
+          # Ausgeschlossene Stages definieren
+          EXCLUDED_STAGES=("GIT" "PET" "PROD")
+
+          FILTERED_STACKS=""
+          for stack_name in $OLD_STACKS; do
+            STAGE_NAME=${stack_name#${SERVICE_NAME}-}
+            EXCLUDE_STAGE=false
+            for excluded_stage in "${EXCLUDED_STAGES[@]}"; do
+              if [ "$STAGE_NAME" = "$excluded_stage" ]; then
+                EXCLUDE_STAGE=true
+                break
+              fi
+            done
+            if [ "$EXCLUDE_STAGE" = false ]; then
+              FILTERED_STACKS+="$stack_name\n"
+            else
+              echo "Überspringe Stack mit Stage $STAGE_NAME"
+            fi
+          done
+
+          if [ -n "$FILTERED_STACKS" ]; then
+            # Stack-Namen in kommaseparierte Liste umwandeln
+            STACK_LIST=$(echo -e "$FILTERED_STACKS" | paste -sd "," -)
+            echo "old_stacks=$STACK_LIST" >> $GITHUB_OUTPUT
+            echo "has_old_stacks=true" >> $GITHUB_OUTPUT
+            echo "Stacks to be removed: $STACK_LIST"
+          else
+            echo "has_old_stacks=false" >> $GITHUB_OUTPUT
+            echo "No old stacks found for removal."
+          fi
+
+      - name: Alte Stacks entfernen (Dry-Run)
+        if: ${{ steps.filter_stacks.outputs.has_old_stacks == 'true' && github.event.inputs.dry-run == 'true' }}
+        env:
+          SERVICE_NAME: ${{ steps.extract_service_name.outputs.result }}
+          STACK_LIST: ${{ steps.filter_stacks.outputs.old_stacks }}
+        run: |
+          # Kommaseparierte Liste in Array umwandeln
+          IFS=',' read -r -a STACK_ARRAY <<< "$STACK_LIST"
+          for stack_name in "${STACK_ARRAY[@]}"; do
+            echo "Überprüfe Stack: $stack_name"
+            # Stage-Name extrahieren, indem der Service-Name entfernt wird
+            STAGE_NAME=${stack_name#${SERVICE_NAME}-}
+            echo "Stage-Name: $STAGE_NAME"
+
+            # Überprüfen, ob Stage GIT, PET oder PROD ist (unabhängig von Groß-/Kleinschreibung)
+            if echo "$STAGE_NAME" | grep -iqE '^(GIT|PET|PROD)$'; then
+              echo "[Dry-Run] Überspringe Stack mit Stage '$STAGE_NAME' (geschützte Stages)."
+              continue
+            fi
+
+            echo "[Dry-Run] Würde den Stack mit Stage '$STAGE_NAME' entfernen."
+          done
+
+      - name: Alte Stacks entfernen
+        if: ${{ steps.filter_stacks.outputs.has_old_stacks == 'true' && github.event.inputs.dry-run == 'false' }}
+        env:
+          SERVICE_NAME: ${{ steps.extract_service_name.outputs.result }}
+          STACK_LIST: ${{ steps.filter_stacks.outputs.old_stacks }}
+        run: |
+          # Kommaseparierte Liste in Array umwandeln
+          IFS=',' read -r -a STACK_ARRAY <<< "$STACK_LIST"
+          for stack_name in "${STACK_ARRAY[@]}"; do
+            echo "Überprüfe Stack: $stack_name"
+            # Stage-Name extrahieren, indem der Service-Name entfernt wird
+            STAGE_NAME=${stack_name#${SERVICE_NAME}-}
+            echo "Stage-Name: $STAGE_NAME"
+
+            # Überprüfen, ob Stage GIT, PET oder PROD ist (unabhängig von Groß-/Kleinschreibung)
+            if echo "$STAGE_NAME" | grep -iqE '^(GIT|PET|PROD)$'; then
+              echo "Überspringe Stack mit Stage '$STAGE_NAME' (geschützte Stages)."
+              continue
+            fi
+
+            # sls remove mit den entsprechenden Optionen ausführen
+            npx serverless remove --stage "$STAGE_NAME"
+          done

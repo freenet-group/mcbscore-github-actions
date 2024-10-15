@@ -64,7 +64,7 @@ jobs:
       matrix:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
         repository:
-          - { name: cure, branch: main, group: aws }
+          - { name: cure, branch: main, group: aws, workflows: "deployment, pullRequestCheck, pullRequestClosed, pullRequestTests, release, scheduledCleanup" }
           - { name: ms-elasticupdate-v2, branch: main, group: aws }
     steps:
       - name: Repository auschecken
