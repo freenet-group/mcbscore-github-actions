@@ -1,0 +1,56 @@
+name: Pull Request geschlossen
+
+on:
+  pull_request:
+    types: [closed]
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Welche Stage soll entfernt werden?'
+        required: false
+
+jobs:
+  remove-deployment:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: eu-central-1
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    steps:
+      # Setup
+      - uses: actions/checkout@v4
+
+      - name: workflow.config einlesen
+        id: read-properties
+        run: |
+          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.read-properties.outputs.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com/'
+
+      - name: Dependencies installieren
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
+
+      - name: Stage setzen
+        id: set-stage
+        run: |
+          if [ -n "${{ github.event.inputs.stage }}" ]; then
+            echo "STAGE=${{ github.event.inputs.stage }}" >> $GITHUB_ENV
+          else
+            PR_NUMBER=$(echo ${{ github.event.pull_request.number }})
+            echo "STAGE=pr-${PR_NUMBER}" >> $GITHUB_ENV
+          fi
+
+      - name: Serverless Deployment entfernen, wenn nicht GIT, PET oder PROD
+        run: |
+          if [ "${{ env.STAGE }}" == "git" ] || [ "${{ env.STAGE }}" == "pet" ] || [ "${{ env.STAGE }}" == "prod" ]; then
+            echo "Stage darf nicht entfernt werden"
+            exit 1
+          fi
+          npx sls remove --stage ${{ env.STAGE }} --verbose

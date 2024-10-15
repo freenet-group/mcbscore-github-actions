@@ -24,7 +24,6 @@ jobs:
     if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: write
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -135,10 +134,11 @@ jobs:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
           INPUT_TICKET: ${{ github.event.inputs.ticket }}
         run: |
-          template_file=".github/templates/release_template_npmlib.md"
+          template_file=".github/templates/release_template_aws.md"
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
+          allComponentList=""
           dependencyList=""
           linkedIssuesListLines=""
           epicList=""
@@ -232,6 +232,7 @@ jobs:
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
             componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ",")
+            allComponentList+=$componentList
 
             # Dependencies extrahieren
             echo "Dependencies zu $issueNumber extrahieren"
@@ -269,7 +270,7 @@ jobs:
 
           # Platzhalter austauschen
           echo "Platzhalter im Template austauschen"
-          
+
           ## Tabellen
           # Spezielle Sonderzeichen austauschen
           cleanedIssueListLines=$(printf '%s' "$issueListLines" | sed 's/[&/\#]/\\&/g')
@@ -299,20 +300,22 @@ jobs:
             echo "dependencies=true" >> "$GITHUB_OUTPUT"
             dependencyList="\n$dependencyList"
             sed -i "s/<!-- DEPENDENCIES_PLACEHOLDER -->/$dependencyList/" "$template_file";
-          else
+          else 
             sed -i 's/<!-- DEPENDENCIES_PLACEHOLDER -->/:white_check_mark: Keine Dependencies/' "$template_file";
           fi
 
       - name: Release erstellen
-        uses: softprops/action-gh-release@v2.0.8
+        uses: softprops/action-gh-release@v2
         with:
-          body_path: '.github/templates/release_template_npmlib.md'
+          body_path: '.github/templates/release_template_aws.md'
           files: |
             ${{ steps.read-properties.outputs.SBOM_FILE }}
+            ${{ steps.read-properties.outputs.OPEN_API_SCHEMA }}
+            ${{ steps.read-properties.outputs.EVENT_SCHEMA }}
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
-          token: ${{ env.TOKEN }} # secrets.GITHUB_TOKEN würde keine Folge-WF triggern
+          token: ${{ env.TOKEN }}
 
       # Jira Fix-Version setzen
       - name: Issuelist von "," auf " " umwandeln

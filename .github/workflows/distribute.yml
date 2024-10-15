@@ -14,6 +14,7 @@ on:
         default: ALL
         options:
           - ALL
+          - aws-ms-events
           - aws
           - errorcodes
           - framework
@@ -32,13 +33,13 @@ on:
           - spotless
 
 jobs:
-  aws:
-    if: ${{ github.event.inputs.group == 'aws' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+  aws-ms-events:
+    if: ${{ github.event.inputs.group == 'aws-ms-events' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
         repository:
-          - { name: aws-ms-events, branch: develop, group: aws, workflows: "build, deployment, deployment_dev, deployment_git, deployment_playground, deployment_prod, remove, remove_dev, remove_git, remove_playground, remove_prod" }
+          - { name: aws-ms-events, branch: develop, group: aws-ms-events, workflows: "build, deployment, deployment_dev, deployment_git, deployment_playground, deployment_prod, remove, remove_dev, remove_git, remove_playground, remove_prod" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,6 +52,33 @@ jobs:
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
           workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  aws:
+    if: ${{ github.event.inputs.group == 'aws' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_WORKFLOWS: "deployment, pullRequestCheck, pullRequestClosed, pullRequestTests, release"
+    strategy:
+      matrix:
+        # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
+        repository:
+          - { name: cure, branch: main, group: aws }
+          - { name: ms-elasticupdate-v2, branch: main, group: aws }
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Workflows verteilen
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows || env.DEFAULT_WORKFLOWS  }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 

@@ -1,0 +1,5 @@
+SBOM_FILE=./src/.generated/sbom.json
+JIRA_COMPONENT=async-api-event-generator
+NODE_VERSION=20.x
+INCLUDED_COMPONENTS=async-api-event-generator,Microservices,ABRMS (unspez.)
+ATLASSIAN_DEVELOPER_TOOLS_VERSION=4.0.18

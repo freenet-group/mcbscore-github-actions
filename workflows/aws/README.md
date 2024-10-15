@@ -2,15 +2,17 @@
 
 ## GitHub Repository
 
-Folgende Voraussetzungen müssen im GitHub-Repository konfiguriert sein:
+Folgende Secrets müssen im GitHub-Repository konfiguriert sein:
 
 - **AWS**: AWS-Zugangsdaten müssen als GitHub-Secrets konfiguriert werden:
   - `AWS_ACCESS_KEY_ID`
   - `AWS_SECRET_ACCESS_KEY`
+  - `AWS_ACCESS_KEY_ID_PROD`
+  - `AWS_SECRET_ACCESS_KEY_PROD`
 
-Nach Umstellung sollten dann die Workflows Steps `check` und `test` aus dem Pull-Request-Workflows als Pflicht Checks in den Branch Protection Rules definiert werden.
+Nach Umstellung sollten dann die Workflow-Steps "check" und "test" aus dem Pull-Request-Workflow als Pflicht Checks in den Branch Protection Rules definiert werden.
 
-Des Weiteren muss mindestens ein Tag bereits existiertieren, sodass der Release WF ein Diff ermitteln kann. Wenn kein Tag existiert, muss der Tag 0.0.0 erstellt werden:
+Des Weiteren muss mindestens ein Tag bereits existieren, sodass der Release WF ein Diff ermitteln kann. Wenn kein Tag existiert, muss der Tag 0.0.0 erstellt werden:
 
 ```bash
 git tag 0.0.0
@@ -28,12 +30,35 @@ Ein aktuelles Beispiel kann in dieser [Beispiel-Datei](./workflow.config.example
 Die folgenden `npm run`-Skripte werden in diesem Projekt verwendet und müssen in der `package.json`-Datei definiert sein:
 
 - **`npm run build`**: Baut das Projekt und generiert die notwendigen Artefakte.
+- **`npm run deploy --stage=<STAGE>`**: Führt das Deployment für eine spezifische Stage durch, z.B. `git`, `pet`, `prod`.
 - **`npm run generate:sbom`**: Generiert eine SBOM-Datei.
 - **`npm run lint`**: Führt Linting-Checks durch, um den Code auf Style-Verstöße und potenzielle Fehler zu prüfen.
 - **`npm run lint:fix`**: Führt Linting-Checks durch und versucht, die gefundenen Probleme automatisch zu beheben.
 - **`npm run prettier:check`**: Überprüft, ob der Code den Prettier-Formatierungsregeln entspricht.
 - **`npm run prettier:write`**: Formatiert den Code gemäß den Prettier-Regeln.
 - **`npm run test`**: Führt die Unit- und Integrationstests durch und erstellt eine Coverage unter coverage/coverage-summary.json.
+
+## Serverless Framework Plugins
+
+Dieses Projekt verwendet das Serverless Framework für die Verwaltung und Bereitstellung serverloser Anwendungen. Die folgenden Plugins sind in der `serverless.yml`-Datei erforderlich und sollten in der `package.json` unter den `devDependencies` aufgeführt sein:
+
+- **serverless-s3-cleaner**: Ermöglicht das Leeren von S3-Buckets, wenn der Serverless-Stack entfernt wird.
+
+### Beispielkonfiguration in `serverless.yml`
+
+```yaml
+service: cure
+
+plugins:
+  - serverless-s3-cleaner
+
+custom:
+  # Leert S3 Buckets bei sls remove
+  serverless-s3-cleaner:
+    # Bucket Name muss direkt angegeben werden, funktioniert nicht per !Ref / !GetAtt
+    buckets:
+      - ${self:provider.stackName}-bucketname
+```
 
 ## AWS Parameter Store
 
@@ -52,17 +77,6 @@ Die Workflows in diesem Projekt verwenden AWS Systems Manager (SSM), um sicherhe
   - `/github/secrets/dependencytrack_port`: Der Port des Dependency Track Servers.
   - `/github/secrets/dependencytrack_api_key`: Der API-Key für den Zugriff auf Dependency Track.
 
-## Nutzung der erstellten Libs
-
-Füge das GitHub npm-Registry-Repository zu deiner npm-Konfiguration hinzu, indem du die folgende Zeile zu deiner `.npmrc`-Datei hinzufügst. Ersetze `YOUR_GITHUB_TOKEN` mit deinem GitHub-Token:
-
-```bash
-//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN
-@freenet-group:registry=https://npm.pkg.github.com
-```
-
-Installiere das Plugin über npm:
-
-```bash
-npm install --save-dev @freenet-group/LIB_NAME
-```
+- **Umgebungsbezogene Zugangsdaten**:
+  - `/github/secrets/{environment}/mcbs_app.client_id_sts`: Der Client-ID für das jeweilige Environment.
+  - `/github/secrets/{environment}/mcbs_app.client_secret_sts`: Das Client-Secret für das jeweilige Environment.
