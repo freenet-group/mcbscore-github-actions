@@ -1,90 +1,195 @@
 name: Deployment
 
 on:
+  release:
+    types:
+      - published
   workflow_dispatch:
     inputs:
-      stage:
-        description: 'Die Ziel Stage'
+      version:
+        description: Die Version der Komponente
         required: true
-      aws_key_name:
-        description: 'Der Name des AWS Key Secrets'
-        required: true
-      aws_secret_name:
-        description: 'Der Name des AWS Secret Secrets'
-        required: true
-      componentVersion:
-        description: 'Die Release Version. Wenn nicht angegeben, wird vom gewählten Branch deployed'
-        required: false
+      env:
+        type: choice
+        description: Environment
+        options:
+          - GIT
+          - PET
+          - PROD
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, k8s]
+    permissions:
+      contents: read
+      id-token: write
+    timeout-minutes: 15
     env:
-      TOKEN: ${{ secrets.GH_MCBS_TOKEN }}
-      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
-      ACTIONS_PATH: mcbscore/github
+      AWS_REGION: eu-central-1
 
     steps:
-      # Repository auschecken unter $GITHUB_WORKSPACE
-      - id: checkout-repository
-        name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Die internen Actions auschecken
-      - name: checkout mcbscore-github-actions
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.ACTIONS_REPOSITORY }}
-          token: ${{ env.TOKEN }}
-          path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ inputs.actionsRepositoryBranch }}
-
-      - name: Set serverless.yml for release
-        if: ${{ github.event.inputs.componentVersion != null }}
-        shell: bash
+      # Vorbereitung
+      - name: Environment bestimmen
+        id: determine-environment
         run: |
-          echo "SERVERLESS_YML=/release/serverless.yaml" >> $GITHUB_ENV
+          ENVIRONMENT=GIT
+          if [ "${{ github.event.inputs.env }}" != "" ]; then
+            ENVIRONMENT=${{ github.event.inputs.env }}
+          fi
+          echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "ENVIRONMENT_LOWERCASE=$(tr '[:upper:]' '[:lower:]' <<<"$ENVIRONMENT")" >> $GITHUB_OUTPUT  
 
-      - name: Download Release
-        uses: ./mcbscore/github/actions/download-release-assets
-        with:
-          version: ${{ inputs.componentVersion }}
-          assetPattern: 'serverless-${{ github.event.inputs.componentVersion }}.tar.gz'
-          targetPath: './release'
-          token: ${{ env.TOKEN }}
-
-      - name: Unzip release
-        id: unzipRelease
-        if: ${{ github.event.inputs.componentVersion != null }}
-        shell: bash
+      - name: Entweder die Übergebene Version oder die aktuelle Version auslesen
+        id: determine-version
         run: |
-          cd release
-          tar -xvzf serverless-${{ github.event.inputs.componentVersion }}.tar.gz
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          fi
 
-      - id: init-workflow
-        name: Initialize Workflow
-        uses: ./mcbscore/github/actions/init-workflow
-        with:
-          installNodeJs: true
-          installJq: true
-
-      - name: Install Serverless Framework
-        run: npm install -g serverless
-
-      - name: Serverless AWS authentication
-        run: sls config credentials --provider aws --key ${{ secrets[github.event.inputs.aws_key_name] }} --secret ${{ secrets[github.event.inputs.aws_secret_name] }}
-
-      - name: Install NPM dependencies
-        run: npm install
-
-      - name: Deploy Lambda functions from Release
-        if: ${{ github.event.inputs.componentVersion != null }}
+      - name: AWS Credentials bestimmen
+        id: determine-aws-credentials
         run: |
-          export COMPONENT_VERSION=${{ github.event.inputs.componentVersion }}
-          sls deploy --config release/serverless.yaml --stage ${{ github.event.inputs.stage }}
+          if [ "${{ steps.determine-environment.outputs.ENVIRONMENT }}" == "GIT" ]; then
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+          else
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Deploy Lambda functions from Branch
-        if: ${{ github.event.inputs.componentVersion == null }}
-        run: sls deploy --stage ${{ github.event.inputs.stage }}
+      # Setup
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.determine-version.outputs.VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ steps.determine-aws-credentials.outputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ steps.determine-aws-credentials.outputs.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Config von AWS SSM einlesen
+        uses: dkershner6/aws-ssm-getparameters-action@v2
+        with:
+          parameterPairs: |
+            /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
+            /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
+            /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
+            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY,
+            /github/secrets/${{ steps.determine-environment.outputs.ENVIRONMENT_LOWERCASE }}/mcbs_app.client_id_sts = CLIENT_ID_STS,
+            /github/secrets/${{ steps.determine-environment.outputs.ENVIRONMENT_LOWERCASE }}/mcbs_app.client_secret_sts = CLIENT_SECRET_STS
+
+      - name: workflow.config einlesen
+        id: read-properties
+        run: |
+          { cat .github/workflow.config; echo; } | tee -a -- "$GITHUB_OUTPUT"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.read-properties.outputs.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com/'
+
+      - name: Dependencies installieren
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
+
+      - name: Setup Java für OpenApi-Generator-CLI
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      # Deployment
+      - name: Deployment auf GIT
+        if: steps.determine-environment.outputs.ENVIRONMENT == 'GIT'
+        run: npm run deploy --stage=git
+
+      - name: Deployment auf PET, wenn PROD oder PET
+        if: steps.determine-environment.outputs.ENVIRONMENT == 'PET' || steps.determine-environment.outputs.ENVIRONMENT == 'PROD'
+        run: npm run deploy --stage=pet
+
+      - name: Deployment auf PROD
+        if: steps.determine-environment.outputs.ENVIRONMENT == 'PROD'
+        run: npm run deploy --stage=prod
+
+      # SBOM Upload
+      - name: Dateinamen für SBOM Upload ermitteln
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        id: sbom-file-name
+        run: |
+          echo "SBOM_FILE_NAME=$(basename ${{ steps.read-properties.outputs.SBOM_FILE }})" >> $GITHUB_OUTPUT
+
+      - name: SBOM vom Release herunterladen
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        uses: dsaltares/fetch-gh-release-asset@1.1.2
+        with:
+          version: 'tags/${{ steps.determine-version.outputs.VERSION }}'
+          file: ${{ steps.sbom-file-name.outputs.SBOM_FILE_NAME }}
+          target: ${{ steps.read-properties.outputs.SBOM_FILE }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: SBOM an DependencyTrack übergeben
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        uses: freenet-group/gh-upload-sbom-with-tagging@0.1.0
+        with:
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          component_version: ${{ steps.determine-version.outputs.VERSION }}
+          stage_tag: ${{ steps.determine-environment.outputs.ENVIRONMENT_LOWERCASE }}
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          bomfilename: ${{ steps.read-properties.outputs.SBOM_FILE }}
+
+      - name: Alte SBOMs löschen
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        uses: freenet-group/sbom-cleanup@1.1.0
+        with:
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          project_prefix: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          days_to_keep: '90'
+          dry_run: 'false'
+
+      # API Spec Upload
+      - name: Dateinamen für OPEN_API_SCHEMA Upload ermitteln
+        if: ${{ steps.read-properties.outputs.OPEN_API_SCHEMA != '' && steps.read-properties.outputs.DEVELOPER_PORTAL_ID != '' }}
+        id: open-api-schema-file-name
+        run: |
+          echo "OPEN_API_SCHEMA_FILE_NAME=$(basename ${{ steps.read-properties.outputs.OPEN_API_SCHEMA }})" >> $GITHUB_OUTPUT
+
+      - name: OPEN_API_SCHEMA vom Release herunterladen
+        if: ${{ steps.read-properties.outputs.OPEN_API_SCHEMA != '' && steps.read-properties.outputs.DEVELOPER_PORTAL_ID != '' }}
+        uses: dsaltares/fetch-gh-release-asset@1.1.2
+        with:
+          version: 'tags/${{ steps.determine-version.outputs.VERSION }}'
+          file: ${{ steps.open-api-schema-file-name.outputs.OPEN_API_SCHEMA_FILE_NAME }}
+          target: ${{ steps.open-api-schema-file-name.outputs.OPEN_API_SCHEMA_FILE_NAME }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish API Spec
+        if: ${{ steps.read-properties.outputs.OPEN_API_SCHEMA != '' && steps.read-properties.outputs.DEVELOPER_PORTAL_ID != '' }}
+        uses: freenet-group/developer-portal-actions/upload-api-spec@v2
+        with:
+          openAPIPath: ${{ steps.read-properties.outputs.OPEN_API_SCHEMA }}
+          apiId: ${{ steps.read-properties.outputs.DEVELOPER_PORTAL_ID }}
+          tag: ${{ steps.determine-version.outputs.VERSION }}
+          clientId: ${{ env.CLIENT_ID_STS }}
+          clientSecret: ${{ env.CLIENT_SECRET_STS }}
+          environment: ${{ steps.determine-environment.outputs.ENVIRONMENT_LOWERCASE }}
+          maturityLevel: open-api
+
+      # @todo Deployment Mail im Falle von GIT+PROD (Teamskanal oder direkte Mail?)
+      ## Wenn Git, dann ankündigen für in 2 Wochen auf PROD

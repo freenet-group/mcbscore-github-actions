@@ -249,7 +249,7 @@ jobs:
           
           # IssueList / Implemented Issues
           echo "issue_list=$issue_list" >> "$GITHUB_OUTPUT"
-          echo "Folgende Issues werden analysiert $issue_list"
+          echo "Folgende Issues werden analysiert: $issue_list"
           IFS=',' read -ra issues <<< "$issue_list"
           for issueNumber in "${issues[@]}"; do
             # Tabellen Eintrag erstellen
@@ -267,7 +267,7 @@ jobs:
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
             API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
-            BASIC_AUTH=$(echo -n "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" | base64 -w0)
+            BASIC_AUTH=$(base64 -w0 <<<"${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}")
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
           
@@ -585,7 +585,7 @@ jobs:
         if: failure() || cancelled()
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ env.TOKEN }}
         run: |
           if [ "${{ steps.set-version-in-dbchanges.conclusion }}" == 'success' ] && [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
             # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
@@ -595,7 +595,7 @@ jobs:
           
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
-            if gh release list --json tagName --jq '.[] | select(.tagName == "$NEW_VERSION") | .tagName' | grep -q .; then
+            if gh release list --json tagName --jq ".[] | select(.tagName == \"$NEW_VERSION\") | .tagName" | grep -q .; then
               gh release delete "$NEW_VERSION" --cleanup-tag --yes
             else
               git tag -d "$NEW_VERSION"

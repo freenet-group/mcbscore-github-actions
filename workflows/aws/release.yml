@@ -24,7 +24,6 @@ jobs:
     if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: write
-      actions: write
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -103,7 +102,7 @@ jobs:
 
       - name: Semantic Version überschreiben, wenn eine spezifische Version angegeben wurde
         id: version-calculation
-        env:
+        env: 
           NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
@@ -121,25 +120,6 @@ jobs:
           tag: ${{ steps.version-calculation.outputs.new_version }}
           message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
-      # Java-Lib bauen
-      - name: Setup Java
-        if: ${{ steps.read-properties.outputs.JAVA_VERSION != '' }}
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: ${{ steps.read-properties.outputs.JAVA_VERSION }}
-
-      - name: JAR bauen
-        if: ${{ steps.read-properties.outputs.JAVA_VERSION != '' }}
-        run: |
-          workingDirectory=$(pwd)
-          mkdir -p ./src/.generated
-          npm run build
-          cp ./src/.generated/*.java ./java/src/main/java/de/md/ms/exception/rest/errorcodes
-          cd java
-          sh gradlew clean build -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }}
-          cd $workingDirectory
-
       # Release Template
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
@@ -154,10 +134,11 @@ jobs:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
           INPUT_TICKET: ${{ github.event.inputs.ticket }}
         run: |
-          template_file=".github/templates/release_template_npmlib.md"
+          template_file=".github/templates/release_template_aws.md"
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
+          allComponentList=""
           dependencyList=""
           linkedIssuesListLines=""
           epicList=""
@@ -251,6 +232,7 @@ jobs:
             # Komponenten extrahieren
             echo "Komponenten zu $issueNumber extrahieren"
             componentList=$(jq -r '.fields.components[].name' <<<"$issue_info" | paste -sd ",")
+            allComponentList+=$componentList
 
             # Dependencies extrahieren
             echo "Dependencies zu $issueNumber extrahieren"
@@ -318,21 +300,22 @@ jobs:
             echo "dependencies=true" >> "$GITHUB_OUTPUT"
             dependencyList="\n$dependencyList"
             sed -i "s/<!-- DEPENDENCIES_PLACEHOLDER -->/$dependencyList/" "$template_file";
-          else
+          else 
             sed -i 's/<!-- DEPENDENCIES_PLACEHOLDER -->/:white_check_mark: Keine Dependencies/' "$template_file";
           fi
 
       - name: Release erstellen
-        uses: softprops/action-gh-release@v2.0.8
+        uses: softprops/action-gh-release@v2
         with:
-          body_path: '.github/templates/release_template_npmlib.md'
+          body_path: '.github/templates/release_template_aws.md'
           files: |
             ${{ steps.read-properties.outputs.SBOM_FILE }}
-            ${{ steps.read-properties.outputs.JAR_FILES }}
+            ${{ steps.read-properties.outputs.OPEN_API_SCHEMA }}
+            ${{ steps.read-properties.outputs.EVENT_SCHEMA }}
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
-          token: ${{ env.TOKEN }} # secrets.GITHUB_TOKEN würde keine Folge-WF triggern
+          token: ${{ env.TOKEN }}
 
       # Jira Fix-Version setzen
       - name: Issuelist von "," auf " " umwandeln
