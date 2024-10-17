@@ -148,7 +148,7 @@ runs:
           tee -a -- "$GITHUB_ENV"
 
       # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND setzen
-      - name: Process kubernetes-deployment.generated.json: javaOptions, javaArgs
+      - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
         shell: bash
         run: |
           jq --slurp --raw-output --arg port "$K8S_INTERNAL_PORT" '
