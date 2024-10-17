@@ -155,8 +155,7 @@ runs:
           DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
         run: |
           chartDir="${DEPLOYMENT_PATH}/helm/${HELM_CHART}"
-          (set -x; find "$chartDir" -type f)
-          helm show values --jsonpath '{.port}' "$chartDir" \
+          (cd "$chartDir" && helm show values --jsonpath '{.port}' .) \
           | printf 'K8S_INTERNAL_PORT=%s\n' \
           | tee -a -- "$GITHUB_ENV"
 
