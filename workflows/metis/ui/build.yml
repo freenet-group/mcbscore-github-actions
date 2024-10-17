@@ -14,6 +14,10 @@ on:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
         default: main
+      deploymentRepositoryBranch:
+        description: Branch von Repository ms-deployment, der benutzt werden soll
+        required: false
+        default: main
 
 jobs:
   build:
@@ -151,9 +155,10 @@ jobs:
           workflow: K8s Deployment
           token: ${{ env.TOKEN }}
           inputs: >
-            { 
+            {
               "componentVersion": "${{ env.COMPONENT_VERSION }}",
-              "environment": "dev"
+              "environment": "dev",
+              "deploymentRepositoryBranch": "${{ inputs.deploymentRepositoryBranch }}"
             }
 
       - name: Commit bower.json

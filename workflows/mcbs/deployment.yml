@@ -217,9 +217,11 @@ jobs:
     uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@2
     secrets: inherit
     with:
+      component: ${{ github.event.inputs.component }}
       componentVersion: ${{ github.event.inputs.componentVersion }}
       environment: ${{ github.event.inputs.environment }}
-      component: ${{ github.event.inputs.component }}
+      actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+      deploymentRepositoryBranch: ${{ github.event.inputs.deploymentRepositoryBranch }}
 
   deployment_status:
     needs: [create-deployment, deploy, deploy_k8s]

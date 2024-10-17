@@ -110,11 +110,12 @@ jobs:
     uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@2
     secrets: inherit
     with:
+      component: ${{ inputs.component }}
       componentVersion: ${{ inputs.componentVersion }}
       environment: ${{ inputs.environment }}
-      component: ${{ inputs.component }}
       timeout: ${{ inputs.timeout }}
       deploymentRepositoryBranch: ${{ inputs.deploymentRepositoryBranch }}
+      actionsRepositoryBranch: ${{ inputs.actionsRepositoryBranch }}
       maxWaitForDeployment: ${{ inputs.maxWaitForDeployment }}
       dryRun: ${{ inputs.dryRun }}
 
