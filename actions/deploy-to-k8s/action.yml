@@ -85,7 +85,7 @@ runs:
           COMPONENT: ${{ inputs.component }}
         shell: bash
         run: |
-          # Umgebungsvariablen setzen
+          # einfache Umgebungsvariablen setzen
           jq --raw-output '
               "K8S_CLUSTER="        + (.cluster       // ("cluster fehlt"       | halt_error)) + "\n" +
               "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
@@ -135,6 +135,53 @@ runs:
 
           # Als (mehrzeilige) Umgebungsvariable DYNAMIC_AWS_PARAM_PAIRS setzen:
           printf 'DYNAMIC_AWS_PARAM_PAIRS<<...snip...\n%s\n...snip...\n' "$paramPairs" \
+          | tee -a -- "$GITHUB_ENV"
+
+      - name: Read port from Helm chart
+        shell: bash
+        env:
+          DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
+        run: |
+          chartDir="${DEPLOYMENT_PATH}/helm/${HELM_CHART}"
+          helm show values --jsonpath '{.port}' "$chartDir" \
+          printf 'K8S_INTERNAL_PORT=%s\n' \
+          tee -a -- "$GITHUB_ENV"
+
+      # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND setzen
+      - name: Process kubernetes-deployment.generated.json: javaOptions, javaArgs
+        shell: bash
+        run: |
+          jq --slurp --raw-output --arg port "$K8S_INTERNAL_PORT" '
+            // Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
+            def toCommandArg:
+              # String: literal (braucht also Shell-Quoting)
+              if (.|type) != "object" then
+                (.|@sh)
+
+              # Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
+              elif .type == "LITERAL" then
+                (.value|@sh)
+
+              # Objekt { "type": "SHELL_EVAL, "value": "…" }: Evaluieren, d.h. hier einfach nicht Shell-Quoten
+              elif .type == "SHELL_EVAL" then
+                .value
+
+              else
+                ("invalid type " + .type + ": " + . | halt_error)
+              end;
+
+            [
+              "printf", "(%s)\\n", //TODO: löschen
+              "java",
+              "-Dserver.port=" + $port,
+              (.javaOptions // [] | map(toCommandArg)[]),
+              "-jar",
+              (.jarName // ("jarName fehlt" | halt_error),
+              (.javaArgs // [] | map(toCommandArg)[])
+            ]
+            | join(" ")
+            | ("JAVA_COMMAND=" + .)
+          ' < kubernetes-deployment.generated.json \
           | tee -a -- "$GITHUB_ENV"
 
       # Secrets für K8S Deployment aus AWS auslesen
@@ -366,4 +413,5 @@ runs:
             --set="aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
             --set="version=$COMPONENT_VERSION" \
+            --set="command=$JAVA_COMMAND" \
             --set="runId='$RUN_ID'"
