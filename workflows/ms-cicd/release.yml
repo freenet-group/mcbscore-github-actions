@@ -602,3 +602,11 @@ jobs:
               git push origin ":$NEW_VERSION"
             fi
           fi
+      - name: Package Release Version löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
+        if: failure() || cancelled()
+        uses: actions/delete-package-versions@v5
+        with:
+          token: ${{ env.TOKEN }}
+          package-version-ids: ${{ steps.version-calculation.outputs.new_version }}
+          package-name: ${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}
+          package-type: 'maven'
