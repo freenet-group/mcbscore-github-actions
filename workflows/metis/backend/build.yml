@@ -17,6 +17,10 @@ on:
         description: EPIC als eventuelle Releaseklammer (META-170 = keine / unbestimmt)
         required: false
         default: META-170
+      deploymentRepositoryBranch:
+        description: Branch von Repository ms-deployment, der benutzt werden soll
+        required: false
+        default: main
       actionsRepositoryBranch:
         description: Zu benutzender Branch des Repositories mcbscore-github-actions
         required: false
@@ -266,6 +270,8 @@ jobs:
               "component": "${{ env.COMPONENT }}",
               "componentVersion": "${{ env.COMPONENT_VERSION }}",
               "environment": "dev",
+              "actionsRepositoryBranch": "${{ inputs.actionsRepositoryBranch }}",
+              "deploymentRepositoryBranch": "${{ inputs.deploymentRepositoryBranch }}",
               "dryRun": "false"
             }
 

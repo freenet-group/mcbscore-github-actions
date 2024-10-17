@@ -114,6 +114,7 @@ jobs:
       environment: ${{ inputs.environment }}
       component: ${{ inputs.component }}
       timeout: ${{ inputs.timeout }}
+      actionsRepositoryBranch: ${{ inputs.actionsRepositoryBranch }}
       deploymentRepositoryBranch: ${{ inputs.deploymentRepositoryBranch }}
       maxWaitForDeployment: ${{ inputs.maxWaitForDeployment }}
       dryRun: ${{ inputs.dryRun }}
