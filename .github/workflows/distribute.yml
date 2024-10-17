@@ -202,7 +202,7 @@ jobs:
           - { name: ms-proxy-support, branch: main, group: ms-cicd }
           - { name: ms-rating, branch: main, group: ms-cicd }
           - { name: ms-user, branch: main, group: ms-cicd, workflows: "../encoding, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, dbChanges, release, deployment" }
-          - { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, ./deployment_k8s_only/deployment" }          
+          - { name: ms-user-cleanup, branch: main, group: ms-cicd, workflows: "../encoding, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, ./deployment_k8s_only/deployment" }
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4

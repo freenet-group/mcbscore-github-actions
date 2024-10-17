@@ -156,8 +156,8 @@ runs:
         run: |
           chartDir="${DEPLOYMENT_PATH}/helm/${HELM_CHART}"
           helm show values --jsonpath '{.port}' "$chartDir" \
-          printf 'K8S_INTERNAL_PORT=%s\n' \
-          tee -a -- "$GITHUB_ENV"
+          | printf 'K8S_INTERNAL_PORT=%s\n' \
+          | tee -a -- "$GITHUB_ENV"
 
       # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND setzen
       - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
