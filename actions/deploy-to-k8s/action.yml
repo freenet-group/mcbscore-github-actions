@@ -409,10 +409,10 @@ runs:
             "${helmOpts[@]}" \
             --set="environment=$ENVIRONMENT" \
             --set="appName=$K8S_COMPONENT_NAME" \
+            --set="version=$COMPONENT_VERSION" \
+            --set="runId='$RUN_ID'" \
             --set="docker_config_base64=$K8S_REGISTRY" \
             --set="aws_access_key_id=$AWS_ACCESS_KEY_ID" \
             --set="aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
-            --set="version=$COMPONENT_VERSION" \
-            --set-json="command=$javaCommandJsonArray" \
-            --set="runId='$RUN_ID'"
+            --set-json="command=$javaCommandJsonArray"
