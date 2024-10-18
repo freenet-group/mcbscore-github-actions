@@ -170,7 +170,7 @@ runs:
           port=$(helm show values --jsonpath '{.port}' .)
           printf 'K8S_INTERNAL_PORT=%s\n' "$port" | tee -a -- "$GITHUB_ENV"
 
-      # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND_JSON setzen
+      # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND setzen
       - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
         shell: bash
         run: |
@@ -199,8 +199,9 @@ runs:
                   (.jarName //("jarName fehlt"|halt_error)),
                   (.javaArgs // [] | map(toCommandArg)[])
               ]
+              | join(" ")
           ' < kubernetes-deployment.generated.json)
-          printf 'JAVA_COMMAND_JSON=%s\n' "$cmd" | tee -a -- "$GITHUB_ENV"
+          printf 'JAVA_COMMAND=%s\n' "$cmd" | tee -a -- "$GITHUB_ENV"
 
       # AWS Secrets aus Umgebungsvariablen in JSON für Helm umwandeln
       - name: AWS Parameters to Helm JSON
@@ -363,7 +364,12 @@ runs:
             fi
           done
 
-          # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" 
+          printf 'javaCommandJsonArray == ' >&2
+          javaCommandJsonArray=$(jq --null-input --compact-output --arg cmd "$JAVA_COMMAND" '
+            [ "bash", "-x", "-c", "exec " + $cmd ]
+          ' | tee /dev/stderr)
+
+          # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME"
           # in einer Schleife (10s warten, insgesamt max. maxWaitForDeployment) prüfen
           maxWait='${{ inputs.maxWaitForDeployment }}'
           maxWait=${maxWait//h/hour}; maxWait=${maxWait//m/min}; maxWait=${maxWait//s/sec}
@@ -408,5 +414,5 @@ runs:
             --set="aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
             --set="version=$COMPONENT_VERSION" \
-            --set-json="command=$JAVA_COMMAND_JSON" \
+            --set-json="command=$javaCommandJsonArray" \
             --set="runId='$RUN_ID'"
