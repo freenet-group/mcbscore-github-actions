@@ -137,6 +137,18 @@ runs:
           printf 'DYNAMIC_AWS_PARAM_PAIRS<<...snip...\n%s\n...snip...\n' "$paramPairs" \
           | tee -a -- "$GITHUB_ENV"
 
+      # Secrets für K8S Deployment aus AWS auslesen
+      - name: Read AWS Parameters for K8S Deployment
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
+          awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
+          awsParameterPairs: |
+            ${{ env.DYNAMIC_AWS_PARAM_PAIRS }}
+            /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
+            /kubernetes/github-packages/token = K8S_REGISTRY,
+            /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
+
       # Kubernetes Setup & Login
       - name: 'helm installation, k8s login'
         uses: freenet-actions/prepare-k8s-env@v2
@@ -191,18 +203,6 @@ runs:
               | ("JAVA_COMMAND=" + .)
           ' < kubernetes-deployment.generated.json \
           | tee -a -- "$GITHUB_ENV"
-
-      # Secrets für K8S Deployment aus AWS auslesen
-      - name: Read AWS Parameters for K8S Deployment
-        uses: ./.github/actions/read-aws-secrets
-        with:
-          awsAccessKeyId: ${{ inputs.awsAccessKeyId }}
-          awsSecretAccessKey: ${{ inputs.awsSecretAccessKey }}
-          awsParameterPairs: |
-            ${{ env.DYNAMIC_AWS_PARAM_PAIRS }}
-            /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
-            /kubernetes/github-packages/token = K8S_REGISTRY,
-            /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
 
       # AWS Secrets aus Umgebungsvariablen in JSON für Helm umwandeln
       - name: AWS Parameters to Helm JSON
