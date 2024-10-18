@@ -371,7 +371,7 @@ runs:
           maxWait=${maxWait//h/hour}; maxWait=${maxWait//m/min}; maxWait=${maxWait//s/sec}
           maxWaitTimestamp=$(date -d "now +$maxWait" +%s)
           helmExit=0
-          helmList=$(helm list --namespace="$K8S_NAMESPACE" --selector="name=$K8S_COMPONENT_NAME")
+          helmList=$(helm list --namespace="$K8S_NAMESPACE" --selector="name=$K8S_COMPONENT_NAME" --no-headers)
           if grep . <<<"$helmList"; then
               while [ "$(date +%s)" -lt "$maxWaitTimestamp" ]; do
                   helmStatus=$(helm status --output=json --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" | jq -r .info.status)
