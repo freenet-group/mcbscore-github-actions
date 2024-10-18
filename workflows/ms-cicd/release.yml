@@ -601,19 +601,19 @@ jobs:
               git tag -d "$NEW_VERSION"
               git push origin ":$NEW_VERSION"
             fi
-            # Wenn bereits ein Package Release zur Version erstellt wurde, dann lösche dieses.
+            # Wenn bereits eine Version für das Paket erstellt wurde, dann lösche diese.
             resultJson=`
             gh api \
               -H "Accept: application/vnd.github+json" \
               /user/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions`
-            # Package Release Version Ids in ein Array überführen
-            IFS=',' read -ra releaseVersionIdArray < <(jq -r '.[] | select(.name == \"$NEW_VERSION\") | .id' <<< "$resultJson")
-            for releaseId in "${releaseIdArray[@]}"; do
-              if [ -n "$releaseId" ]; then
+            # Package VersionIds in ein Array überführen
+            IFS=',' read -ra versionIdArray < <(jq -r '.[] | select(.name == \"$NEW_VERSION\") | .id' <<< "$resultJson")
+            for versionId in "${versionIdArray[@]}"; do
+              if [ -n "$versionId" ]; then
                 gh api \
                   --method DELETE \
                   -H "Accept: application/vnd.github+json" \
-                  /user/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions/${releaseId}
+                  /user/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions/${versionId}
               fi
             done
           fi
