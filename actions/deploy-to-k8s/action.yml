@@ -170,11 +170,11 @@ runs:
           port=$(helm show values --jsonpath '{.port}' .)
           printf 'K8S_INTERNAL_PORT=%s\n' "$port" | tee -a -- "$GITHUB_ENV"
 
-      # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND setzen
+      # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND_JSON setzen
       - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
         shell: bash
         run: |
-          jq --slurp --raw-output --arg port "$K8S_INTERNAL_PORT" '
+          cmd=$(jq --slurp --compact-output --arg port "$K8S_INTERNAL_PORT" '
             # Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
             def toCommandArg:
               # String: literal (braucht also Shell-Quoting)
@@ -199,10 +199,8 @@ runs:
                   (.jarName //("jarName fehlt"|halt_error)),
                   (.javaArgs // [] | map(toCommandArg)[])
               ]
-              | join(" ")
-              | ("JAVA_COMMAND=" + .)
-          ' < kubernetes-deployment.generated.json \
-          | tee -a -- "$GITHUB_ENV"
+          ' < kubernetes-deployment.generated.json)
+          printf 'JAVA_COMMAND_JSON=%s\n' | tee -a -- "$GITHUB_ENV"
 
       # AWS Secrets aus Umgebungsvariablen in JSON für Helm umwandeln
       - name: AWS Parameters to Helm JSON
@@ -410,5 +408,5 @@ runs:
             --set="aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
             --set="version=$COMPONENT_VERSION" \
-            --set="command=$JAVA_COMMAND" \
+            --set-json="command=$JAVA_COMMAND_JSON" \
             --set="runId='$RUN_ID'"
