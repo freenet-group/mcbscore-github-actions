@@ -174,7 +174,7 @@ runs:
       - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
         shell: bash
         run: |
-          cmd=$(jq --slurp --compact-output --arg port "$K8S_INTERNAL_PORT" '
+          cmd=$(jq --slurp --raw-output --arg port "$K8S_INTERNAL_PORT" '
             # Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
             def toCommandArg:
               # String: literal (braucht also Shell-Quoting)
@@ -196,7 +196,7 @@ runs:
                   "-Dserver.port=" + $port,
                   (.javaOptions // [] | map(toCommandArg)[]),
                   "-jar",
-                  (.jarName //("jarName fehlt"|halt_error)),
+                  (.jarName //("jarName fehlt"|halt_error)) + ".jar",
                   (.javaArgs // [] | map(toCommandArg)[])
               ]
               | join(" ")
@@ -366,7 +366,7 @@ runs:
 
           printf 'javaCommandJsonArray == ' >&2
           javaCommandJsonArray=$(jq --null-input --compact-output --arg cmd "$JAVA_COMMAND" '
-            [ "bash", "-x", "-c", "exec " + $cmd ]
+            [ "bash", "-x", "-c", $cmd ]
           ' | tee /dev/stderr)
 
           # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME"
