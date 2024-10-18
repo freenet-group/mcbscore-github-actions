@@ -183,9 +183,10 @@ runs:
               # Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
               elif .type == "LITERAL" then
                 (.value|@sh)
-              # Objekt { "type": "SHELL_EVAL, "value": "…" }: Evaluieren, d.h. hier einfach nicht Shell-Quoten
+              # Objekt { "type": "SHELL_EVAL, "value": "…" }: Evaluieren, aber nicht an Whitespace
+              # in mehrere Argumente zerfallen lassen. Also in "…".
               elif .type == "SHELL_EVAL" then
-                .value
+                ("\"" + .value + "\"")
               else
                 ("invalid type " + .type + " in " + (.|tostring)) | halt_error
               end;
