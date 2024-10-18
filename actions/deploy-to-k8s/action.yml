@@ -163,7 +163,7 @@ runs:
         shell: bash
         run: |
           jq --slurp --raw-output --arg port "$K8S_INTERNAL_PORT" '
-            // Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
+            # Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
             def toCommandArg:
               # String: literal (braucht also Shell-Quoting)
               if (.|type) != "object" then
@@ -182,7 +182,7 @@ runs:
               end;
 
             [
-              "printf", "(%s)\\n", //TODO: löschen
+              "printf", "(%s)\\n", #TODO: löschen
               "java",
               "-Dserver.port=" + $port,
               (.javaOptions // [] | map(toCommandArg)[]),
