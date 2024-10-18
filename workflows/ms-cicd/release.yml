@@ -602,7 +602,7 @@ jobs:
               git push origin ":$NEW_VERSION"
             fi
           fi
-      - name: Älteste Version des Pakets löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde bereits ein Release zur Version erstellt wurde
+      - name: Älteste Version des Pakets löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde und bereits ein Release zur Version erstellt wurde
         if: (failure() || cancelled()) && ${{ steps.version-calculation.outputs.new_version != ""}}
         uses: actions/delete-package-versions@v5
         with:
