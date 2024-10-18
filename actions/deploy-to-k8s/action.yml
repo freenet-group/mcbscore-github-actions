@@ -168,30 +168,27 @@ runs:
               # String: literal (braucht also Shell-Quoting)
               if (.|type) != "object" then
                 (.|@sh)
-
               # Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
               elif .type == "LITERAL" then
                 (.value|@sh)
-
               # Objekt { "type": "SHELL_EVAL, "value": "…" }: Evaluieren, d.h. hier einfach nicht Shell-Quoten
               elif .type == "SHELL_EVAL" then
                 .value
-
               else
-                ("invalid type " + .type + ": " + . | halt_error)
+                ("invalid type " + .type + " in " + (.|tostring)) | halt_error
               end;
 
-            [
-              "printf", "(%s)\\n", #TODO: löschen
-              "java",
-              "-Dserver.port=" + $port,
-              (.javaOptions // [] | map(toCommandArg)[]),
-              "-jar",
-              (.jarName // ("jarName fehlt" | halt_error),
-              (.javaArgs // [] | map(toCommandArg)[])
-            ]
-            | join(" ")
-            | ("JAVA_COMMAND=" + .)
+              add
+              | [
+                  "java",
+                  "-Dserver.port=" + $port,
+                  (.javaOptions // [] | map(toCommandArg)[]),
+                  "-jar",
+                  (.jarName //("jarName fehlt"|halt_error)),
+                  (.javaArgs // [] | map(toCommandArg)[])
+              ]
+              | join(" ")
+              | ("JAVA_COMMAND=" + .)
           ' < kubernetes-deployment.generated.json \
           | tee -a -- "$GITHUB_ENV"
 
