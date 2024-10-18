@@ -200,7 +200,7 @@ runs:
                   (.javaArgs // [] | map(toCommandArg)[])
               ]
           ' < kubernetes-deployment.generated.json)
-          printf 'JAVA_COMMAND_JSON=%s\n' | tee -a -- "$GITHUB_ENV"
+          printf 'JAVA_COMMAND_JSON=%s\n' "$cmd" | tee -a -- "$GITHUB_ENV"
 
       # AWS Secrets aus Umgebungsvariablen in JSON für Helm umwandeln
       - name: AWS Parameters to Helm JSON
