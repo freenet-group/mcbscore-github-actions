@@ -601,4 +601,19 @@ jobs:
               git tag -d "$NEW_VERSION"
               git push origin ":$NEW_VERSION"
             fi
+            # Wenn bereits eine Version für das Paket erstellt wurde, dann lösche diese.
+            resultJson=`
+            gh api \
+              -H "Accept: application/vnd.github+json" \
+              /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions`
+            # Package VersionIds in ein Array überführen
+            IFS=',' read -ra versionIdArray < <(jq -r '.[] | select(.name == \"$NEW_VERSION\") | .id' <<< "$resultJson")
+            for versionId in "${versionIdArray[@]}"; do
+              if [ -n "$versionId" ]; then
+                gh api \
+                  --method DELETE \
+                  -H "Accept: application/vnd.github+json" \
+                  /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions/${versionId}
+              fi
+            done
           fi
