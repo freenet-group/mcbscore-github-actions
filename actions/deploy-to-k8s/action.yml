@@ -46,96 +46,24 @@ runs:
           DOMAIN: ${{ inputs.domain }}
           ENVIRONMENT: ${{ inputs.environment }}
           DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
+          ACTION_PATH: ${{ github.action_path }}
         shell: bash
         run: |
-          { # Start Pipe nach jq add
-
-            # Default "secrets" hier beimischen ist bequemer als nachher immer auch den Fall ohne "secrets" zu berücksichtigen.
-            printf '{ "secrets": [] }\n'
-
-            # Array von möglichen JSON-Dateien initialisieren; sortiert von niedriger zu hoher Prio.
-            # (Das letzte JSON-Objekt gewinnt in jq add.)
-            if [ "$DOMAIN" = '-' ]; then
-              files=(
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
-              )
-            else
-              files=(
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${DOMAIN}.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${DOMAIN}-${ENVIRONMENT}.json"
-              )
-            fi
-
-            for f in "${files[@]}"; do
-              if [ -e "$f" ]; then
-                printf '%s existiert.\n' "$f" >&2
-                cat -- "$f"
-              else
-                printf '%s existiert nicht.\n' "$f" >&2
-              fi
-            done
-          } | jq -s add | tee kubernetes-deployment.generated.json
+          cd -- "$DEPLOYMENT_PATH"
+          script=$ACTION_PATH/merge-kubernetes-deployment-json.sh
+          chmod a+x -- "$script"
+          "$script" | tee kubernetes-deployment.generated.json
 
       # kubernetes-deployment JSON auswerten
       - name: Process kubernetes-deployment.generated.json
         env:
           COMPONENT: ${{ inputs.component }}
+          ACTION_PATH: ${{ github.action_path }}
         shell: bash
         run: |
-          # einfache Umgebungsvariablen setzen
-          jq --raw-output '
-              "K8S_CLUSTER="        + (.cluster       // ("cluster fehlt"       | halt_error)) + "\n" +
-              "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
-              "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
-              "K8S_COMPONENT_NAME=" + (.componentName // ("ms-" + env["COMPONENT"]))           + "\n" +
-              "K8S_VS_HOSTNAME="    + (.virtualService.hostname // "")                         + "\n" +
-              "K8S_VS_GATEWAY="     + (.virtualService.gateway  // "")                         + "\n" +
-              "HELM_CHART="         + (.helmChart     // "ms")                                 + "\n" +
-              ""' \
-            < kubernetes-deployment.generated.json \
-          | tee -a -- "$GITHUB_ENV"
-
-          # awsParameterPairs für aws-ssm-getparameters-action ermitteln aus .secrets in kubernetes-deployment.generated.json
-          # Beispiel:
-          # kubernetes-deployment.generated.json enthält:
-          # {
-          # 	...
-          # 	"secrets": [
-          # 		{
-          # 			"sourceType": "AWS_PARAMETER",
-          # 			"source": "/config/ms/homer/homer.prince.license",
-          # 			"targetType": "FILE",
-          # 			"target": "/usr/lib/prince/license/license.dat"
-          # 		},
-          # 		{
-          # 			"sourceType": "AWS_PARAMETER",
-          # 			"source": "/config/ms/application/test",
-          # 			"targetType": "ENV",
-          # 			"target": "TEST_VAR",
-          # 			"conversion": "b64enc"
-          # 		},
-          # 		{
-          # 			"sourceType": "SOMETHING_UNSUPPORTED",
-          # 			"source": "...",
-          # 			"targetType": "...",
-          # 			"target": "..."
-          # 		}
-          # 	]
-          # }
-          # => jq Ergebnis:
-          #   /config/ms/homer/homer.prince.license=AWS_DYNAMIC_PARAM_NAME1,
-          #   /config/ms/application/test=AWS_DYNAMIC_PARAM_NAME2,
-          paramPairs=$(jq -r '
-              [ .secrets[] | select(.sourceType == "AWS_PARAMETER") ]
-              | foreach .[] as $x (0; . + 1; "\($x.source)=AWS_DYNAMIC_PARAM_NAME\(.),")' \
-            < kubernetes-deployment.generated.json)
-
-          # Als (mehrzeilige) Umgebungsvariable DYNAMIC_AWS_PARAM_PAIRS setzen:
-          printf 'DYNAMIC_AWS_PARAM_PAIRS<<...snip...\n%s\n...snip...\n' "$paramPairs" \
-          | tee -a -- "$GITHUB_ENV"
+          script=$ACTION_PATH/merge-kubernetes-deployment-json.sh
+          chmod a+x -- "$script"
+          "$script" <kubernetes-deployment.generated.json | tee -a -- "$GITHUB_ENV"
 
       # Secrets für K8S Deployment aus AWS auslesen
       - name: Read AWS Parameters for K8S Deployment
@@ -172,37 +100,13 @@ runs:
 
       # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND setzen
       - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
+        env:
+          ACTION_PATH: ${{ github.action_path }}
         shell: bash
         run: |
-          cmd=$(jq --slurp --raw-output --arg port "$K8S_INTERNAL_PORT" '
-            # Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
-            def toCommandArg:
-              # String: literal (braucht also Shell-Quoting)
-              if (.|type) != "object" then
-                (.|@sh)
-              # Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
-              elif .type == "LITERAL" then
-                (.value|@sh)
-              # Objekt { "type": "SHELL", "value": "…" }: $ evaluieren, aber nicht an Whitespace
-              # in mehrere Argumente zerfallen lassen. Also in "…".
-              elif .type == "SHELL" then
-                ("\"" + .value + "\"")
-              else
-                ("invalid type " + .type + " in " + (.|tostring)) | halt_error
-              end;
-
-              add
-              | [
-                  "java",
-                  "-Dserver.port=" + $port,
-                  (.javaOptions // [] | map(toCommandArg)[]),
-                  "-jar",
-                  (.jarName //("jarName fehlt"|halt_error)) + ".jar",
-                  (.javaArgs // [] | map(toCommandArg)[])
-              ]
-              | join(" ")
-          ' < kubernetes-deployment.generated.json)
-          printf 'JAVA_COMMAND=%s\n' "$cmd" | tee -a -- "$GITHUB_ENV"
+          script=$ACTION_PATH/k8s-deployment-json-command-to-githubenv.sh
+          chmod a+x -- "$script"
+          "$script" | tee -a -- "$GITHUB_ENV"
 
       # AWS Secrets aus Umgebungsvariablen in JSON für Helm umwandeln
       - name: AWS Parameters to Helm JSON
