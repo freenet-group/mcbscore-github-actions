@@ -15,7 +15,7 @@ GLOBL_DIR=environment
 
     # Array von möglichen JSON-Dateien initialisieren; sortiert von niedriger zu hoher Prio.
     # (Das letzte JSON-Objekt gewinnt in jq add.)
-    if [ "$DOMAIN" = '-' ]; then
+    if [ -z "$DOMAIN" -o "$DOMAIN" = '-' ]; then
         files=(
             "properties/${GLOBL_DIR}/kubernetes-deployment.json"
             "properties/${COMPONENT}/kubernetes-deployment.json"
@@ -43,4 +43,36 @@ GLOBL_DIR=environment
             printf -- '(%s existiert nicht.)\n' "$f" >&2
         fi
     done
-} | jq --slurp add
+} \
+| jq --slurp '
+	# Hilfsfunktion zur Abfrage von [k] in Objekt (.)
+	# Braucht man, wenn k beim Aufrufer schon ein Funktions-Parameter ist und die Syntax .[k]
+	# irgendwie nicht geht.
+	def get(k; defaultValue):
+		[to_entries[] | select(.key == k)] as $entries
+		| if ($entries | length) > 0 then $entries[0].value else defaultValue end
+	;
+
+	# Z.B. bei Pipe-Input:
+	# - { "x": "x1", "javaOptions": { "a": "1", "b": "2", "c": "3" } }
+	# - { "x": "x2", "javaOptions": { "a": null, "b": "20" } }
+	# liefert addSubObj("javaOptions") das Ergebnis: { "javaOptions": { "b": "20", "c": "3" } }.
+	# Die Einträge mit Schlüssel != k fallen weg.
+	def addSubObj(k):
+		[
+			{
+				"key": k,
+				"value": [
+					map(. | get(k; {}))
+					| add
+					| to_entries[]
+					| select(.value != null)
+				] | from_entries
+			}
+		] | from_entries
+	;
+
+	# add auf den ganzen Objekten hat .javaOptions nur von dem letzten mit .javaOptions.
+	# Um .javaOptions zu mergen, braucht man noch ein add, angewendet auf alle .javaOptions.
+	add + addSubObj("javaOptions") + addSubObj("javaArgs")
+'

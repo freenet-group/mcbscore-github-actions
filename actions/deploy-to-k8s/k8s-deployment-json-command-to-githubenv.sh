@@ -7,32 +7,41 @@ set -o errexit
 
 : ${K8S_INTERNAL_PORT:?}	# Pflichtvariablen prüfen
 
-cmd=$(jq --slurp --raw-output --arg port "$K8S_INTERNAL_PORT" '
-  # Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
-  def toCommandArg:
-	# String: literal (braucht also Shell-Quoting)
-	if (.|type) != "object" then
-	  (.|@sh)
-	# Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
-	elif .type == "LITERAL" then
-	  (.value|@sh)
-	# Objekt { "type": "SHELL", "value": "…" }: $ evaluieren, aber nicht an Whitespace
-	# in mehrere Argumente zerfallen lassen. Also in "…".
-	elif .type == "SHELL" then
-	  ("\"" + .value + "\"")
-	else
-	  ("invalid type " + .type + " in " + (.|tostring)) | halt_error
-	end;
+cmd=$(jq --raw-output --arg port "$K8S_INTERNAL_PORT" '
+	# Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
+	def toCommandArg:
+		# Wert null: kein Kommandozeilenargument
+		if (.value == null) then
+			null
+		else
+			# String: literal (braucht also Shell-Quoting)
+			if (.value|type) != "object" then
+			  ((.key + .value) | @sh)
+			# Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
+			elif .value.type == "LITERAL" then
+			  ((.key + .value) | @sh)
+			# Objekt { "type": "SHELL", "value": "…" }: $ evaluieren, aber nicht an Whitespace
+			# in mehrere Argumente zerfallen lassen. Also Schlüssel quoten, Wert nur in "…".
+			elif .value.type == "SHELL" then
+			  ((.key | @sh) + "\"" + .value.value + "\"")
+			else
+			  ("invalid type " + .value.type + " in " + (.key|tostring) + " → " + (.|tostring)) | halt_error
+			end
+		end
+	;
 
-	add
-	| [
+	def objectToCommandArgs:
+		to_entries | map(toCommandArg) | select(. != null)
+	;
+
+	[
 		"java",
 		"-Dserver.port=" + $port,
-		(.javaOptions // [] | map(toCommandArg)[]),
+		((.javaOptions // {}) | objectToCommandArgs),
 		"-jar",
 		(.jarName //("jarName fehlt"|halt_error)) + ".jar",
-		(.javaArgs // [] | map(toCommandArg)[])
+		((.javaArgs // {}) | objectToCommandArgs)
 	]
-	| join(" ")
+	| flatten | join(" ")
 ')
 printf 'JAVA_COMMAND=%s\n' "$cmd"
