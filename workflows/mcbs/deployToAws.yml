@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       stages:
-        description: Stages, auf die deployt werden soll (z.B. dev, git)
+        description: Umgebungen, auf die deployt werden soll, als Liste  (z.B. ["dev", "git"])
         required: false
 
 jobs:
@@ -17,12 +17,11 @@ jobs:
       - name: Stages bestimmen
         id: get-stages
         run: |
-          if [ -z "${{ inputs.stages }}" ]; then
+          if [[ "${{ inputs.stages }}" != "" ]]; then
             echo "RESPONSE=${{ inputs.stages }}" >> "$GITHUB_OUTPUT"
           else
-            echo "RESPONSE=dev" >> "$GITHUB_OUTPUT"
+            echo 'RESPONSE=["dev"]' >> "$GITHUB_OUTPUT"
           fi
-
     outputs:
       stages: ${{ steps.get-stages.outputs.RESPONSE }}
 
@@ -32,7 +31,7 @@ jobs:
     if: ${{ needs.prepare-matrix.outputs.stages != '' }}
     strategy:
       matrix:
-        stage: ${{ needs.prepare-matrix.outputs.stages }}    
+        stage: ${{ fromJSON(needs.prepare-matrix.outputs.stages) }}
     steps:
       - name: AWS Credentials bestimmen
         id: determine-aws-credentials
@@ -80,4 +79,4 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
 
       - name: Deploy
-        run: npm run deploy --stage ${{ matrix.stage }}
+        run: npm run deploy --stage=${{ matrix.stage }} 
