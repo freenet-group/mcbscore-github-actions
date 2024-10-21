@@ -1,0 +1,83 @@
+name: AWS Deployment
+
+on:
+  push:
+    paths:
+    - 'serverless.yml'
+  workflow_dispatch:
+    inputs:
+      stages:
+        description: Stages, auf die deployt werden soll (z.B. dev, git)
+        required: false
+
+jobs:
+  prepare-matrix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stages bestimmen
+        id: get-stages
+        run: |
+          if [ -z "${{ inputs.stages }}" ]; then
+            echo "RESPONSE=${{ inputs.stages }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "RESPONSE=dev" >> "$GITHUB_OUTPUT"
+          fi
+
+    outputs:
+      stages: ${{ steps.get-stages.outputs.RESPONSE }}
+
+  deploy:
+    needs: prepare-matrix
+    runs-on: ubuntu-latest
+    if: ${{ needs.prepare-matrix.outputs.stages != '' }}
+    strategy:
+      matrix:
+        stage: ${{ needs.prepare-matrix.outputs.stages }}    
+    steps:
+      - name: AWS Credentials bestimmen
+        id: determine-aws-credentials
+        run: |
+          if [ "${{ matrix.stage }}" == "prod" ]; then
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.SERVERLESS_ACCESS_KEY_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.SERVERLESS_SECRET_ACCESS_KEY_PROD }}" >> $GITHUB_OUTPUT
+          else
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.SERVERLESS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.SERVERLESS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: AWS Credentials konfigurieren
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ steps.determine-aws-credentials.outputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ steps.determine-aws-credentials.outputs.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-central-1'
+
+      - name: Config von AWS SSM einlesen
+        uses: dkershner6/aws-ssm-getparameters-action@v2
+        with:
+          parameterPairs: |
+            /github/secrets/mcbs_token = TOKEN
+
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ env.TOKEN }}
+
+      - name: workflow.properties einlesen
+        id: read-properties
+        run: |
+          { cat .github/mcbs_workflow.properties; echo; } | tee -a -- "$GITHUB_OUTPUT"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ steps.read-properties.outputs.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://npm.pkg.github.com/'
+
+      - name: Dependencies installieren
+        run: npm ci
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
+
+      - name: Deploy
+        run: npm run deploy --stage ${{ matrix.stage }}
