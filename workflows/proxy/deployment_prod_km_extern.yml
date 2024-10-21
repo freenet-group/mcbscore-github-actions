@@ -1,6 +1,6 @@
-name: PROD KM Deployment Extern
+name: PROD KM EXTERN Deployment
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: PROD KM Deployment Extern ${{ github.event.inputs.componentVersion }}
+run-name: PROD KM EXTERN Deployment ${{ github.event.inputs.componentVersion }}
 
 on:
   workflow_dispatch:
