@@ -4,7 +4,7 @@
 
 set -o errexit
 
-GLOBL_DIR=environment
+GLOBL_DIR=.
 
 : ${COMPONENT:?} ${ENVIRONMENT:?}	# Pflichtvariablen prüfen
 
