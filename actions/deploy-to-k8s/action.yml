@@ -100,6 +100,7 @@ runs:
       # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND setzen
       - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
         env:
+          ENVIRONMENT: ${{ inputs.environment }}
           ACTION_PATH: ${{ github.action_path }}
         shell: bash
         run: |
