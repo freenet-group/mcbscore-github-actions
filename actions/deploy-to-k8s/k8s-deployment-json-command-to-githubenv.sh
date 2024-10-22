@@ -7,32 +7,49 @@ set -o errexit
 
 : ${K8S_INTERNAL_PORT:?}	# Pflichtvariablen prüfen
 
-cmd=$(jq --raw-output --arg port "$K8S_INTERNAL_PORT" '
-	# Konvertiert einen Eintrag in javaOptions oder javaArgs zum Kommandozeilenargument in einem Shell-Befehl.
+jqCommand='
+	# Konvertiert einen Eintrag mit skalarem Wert in javaOptions oder javaArgs, hier gegeben als
+	# z.B. { "key": "-Xmx", "value": "800m" } zu einem Kommandozeilenargument in einem Shell-Befehl.
+	# Unterstützte .value Typen:
+	# - String: literaler String
+	# - Objekt der Form { "type": "LITERAL", "value": "…" }: literaler String
+	# - Objekt der Form { "type": "SHELL", "value": "…" }: String mit Shellkonstrukten
 	def toCommandArg:
-		# Wert null: kein Kommandozeilenargument
-		if (.value == null) then
-			null
+		# String: literal (braucht also Shell-Quoting)
+		if (.value|type) == "string" then
+		  ((.key + .value) | @sh)
+		# Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
+		elif .value.type == "LITERAL" then
+		  ((.key + .value) | @sh)
+		# Objekt { "type": "SHELL", "value": "…" }: $ evaluieren, aber nicht an Whitespace
+		# in mehrere Argumente zerfallen lassen. Also Schlüssel quoten, Wert nur in "…".
+		elif .value.type == "SHELL" then
+		  ((.key | @sh) + "\"" + .value.value + "\"")
 		else
-			# String: literal (braucht also Shell-Quoting)
-			if (.value|type) != "object" then
-			  ((.key + .value) | @sh)
-			# Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
-			elif .value.type == "LITERAL" then
-			  ((.key + .value) | @sh)
-			# Objekt { "type": "SHELL", "value": "…" }: $ evaluieren, aber nicht an Whitespace
-			# in mehrere Argumente zerfallen lassen. Also Schlüssel quoten, Wert nur in "…".
-			elif .value.type == "SHELL" then
-			  ((.key | @sh) + "\"" + .value.value + "\"")
-			else
-			  ("invalid type " + .value.type + " in " + (.key|tostring) + " → " + (.|tostring)) | halt_error
-			end
+		  ("invalid value .type " + .value.type + " in " + (.key|tostring) + " → " + (.|tostring)) | halt_error
 		end
 	;
 
-	def objectToCommandArgs:
-		to_entries | map(toCommandArg) | select(. != null)
+	# Konvertiert einen Eintrag mit potentiell Array-Wert in javaOptions oder javaArgs, hier gegeben
+	# als z.B. { "key": "-x", "value": ["a", "b", "c"] } zu Kommandozeilenargumenten in einem Shell-
+	# Befehl.
+	# Ruft dazu für jedes Element von .value toCommandArg auf.
+	# Unterstützte .value Typen:
+	# - null: Kommandozeilenargument unterdrücken
+	# - ein Wert, den toCommandArg akzeptiert,
+	# - ein Array von Werten, die toCommandArg akzeptiert.
+	def toCommandArgs:
+		# Wert null: kein Kommandozeilenargument
+		if (.value == null) then
+			[]
+		else
+			. as $entry
+			| (if ($entry.value | type) == "array" then .value else [.value] end)
+			| map(({ "key": $entry.key, "value": .}) | toCommandArg)
+		end
 	;
+
+	def objectToCommandArgs: to_entries | map(toCommandArgs | .[]) | .[];
 
 	[
 		"java",
@@ -42,6 +59,8 @@ cmd=$(jq --raw-output --arg port "$K8S_INTERNAL_PORT" '
 		(.jarName //("jarName fehlt"|halt_error)) + ".jar",
 		((.javaArgs // {}) | objectToCommandArgs)
 	]
-	| flatten | join(" ")
-')
+	| join(" ")
+'
+
+cmd=$(jq --raw-output --arg port "$K8S_INTERNAL_PORT" "$jqCommand")
 printf 'JAVA_COMMAND=%s\n' "$cmd"
