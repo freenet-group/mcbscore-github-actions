@@ -50,7 +50,7 @@ runs:
         shell: bash
         run: |
           cd -- "$DEPLOYMENT_PATH"
-          script=$ACTION_PATH/merge-kubernetes-deployment-json.sh
+          script=$ACTION_PATH/merge-k8s-deployment-json.sh
           chmod a+x -- "$script"
           "$script" | tee kubernetes-deployment.generated.json
 
@@ -61,7 +61,7 @@ runs:
           ACTION_PATH: ${{ github.action_path }}
         shell: bash
         run: |
-          script=$ACTION_PATH/merge-kubernetes-deployment-json.sh
+          script=$ACTION_PATH/k8s-deployment-json-to-githubenv.sh
           chmod a+x -- "$script"
           "$script" <kubernetes-deployment.generated.json | tee -a -- "$GITHUB_ENV"
 
@@ -106,7 +106,7 @@ runs:
         run: |
           script=$ACTION_PATH/k8s-deployment-json-command-to-githubenv.sh
           chmod a+x -- "$script"
-          "$script" | tee -a -- "$GITHUB_ENV"
+          "$script" <kubernetes-deployment.generated.json | tee -a -- "$GITHUB_ENV"
 
       # AWS Secrets aus Umgebungsvariablen in JSON für Helm umwandeln
       - name: AWS Parameters to Helm JSON
