@@ -49,10 +49,9 @@ runs:
           ACTION_PATH: ${{ github.action_path }}
         shell: bash
         run: |
-          cd -- "$DEPLOYMENT_PATH"
-          script=$ACTION_PATH/merge-k8s-deployment-json.sh
+          script=$(realpath -- "$ACTION_PATH/merge-k8s-deployment-json.sh")
           chmod a+x -- "$script"
-          "$script" | tee kubernetes-deployment.generated.json
+          (cd -- "$DEPLOYMENT_PATH" && "$script") | tee kubernetes-deployment.generated.json
 
       # kubernetes-deployment JSON auswerten
       - name: Process kubernetes-deployment.generated.json
