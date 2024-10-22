@@ -88,14 +88,18 @@ runs:
          # die wir per Default benutzt hatten:
          helm-version: "3.14.4"
 
-      - name: Read port from Helm chart
+      - name: Read some values from Helm chart
         shell: bash
         env:
           DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
         run: |
           cd -- "${DEPLOYMENT_PATH}/helm/${HELM_CHART}"
           port=$(helm show values --jsonpath '{.port}' .)
-          printf 'K8S_INTERNAL_PORT=%s\n' "$port" | tee -a -- "$GITHUB_ENV"
+          workDir=$(helm show values --jsonpath '{.workDir}' .)
+          printf '%s=%s\n' \
+            K8S_INTERNAL_PORT "$port" \
+            K8S_WORKDIR       "$workDir" \
+          | tee -a -- "$GITHUB_ENV"
 
       # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und in Umgebungsvariable JAVA_COMMAND setzen
       - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
