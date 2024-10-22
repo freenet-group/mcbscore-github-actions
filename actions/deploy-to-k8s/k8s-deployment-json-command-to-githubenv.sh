@@ -5,7 +5,7 @@
 
 set -o errexit
 
-: ${K8S_INTERNAL_PORT:?}	# Pflichtvariablen prüfen
+: ${ENVIRONMENT:?} ${K8S_CLUSTER:?} ${K8S_INTERNAL_PORT:?}	# Pflichtvariablen prüfen
 
 jqCommand='
 	# Konvertiert einen Eintrag mit skalarem Wert in javaOptions oder javaArgs, hier gegeben als
@@ -49,18 +49,25 @@ jqCommand='
 		end
 	;
 
-	def objectToCommandArgs: to_entries | map(toCommandArgs | .[]) | .[];
+	def objectToCommandArgs: to_entries | map(toCommandArgs);
 
 	[
 		"java",
-		"-Dserver.port=" + $port,
+		"-Dserver.port=" + $ENV.K8S_INTERNAL_PORT,
+		"-Dmd.kubernetes.cluster=" + $ENV.K8S_CLUSTER,
+		# Spring-Profile z.B. dev, kube, kubedev:
+		"-Dspring.profiles.active=" + $ENV.ENVIRONMENT + ",kube,kube" + $ENV.ENVIRONMENT,
+		"-Denvironment=" + $ENV.ENVIRONMENT,
+		"-Dmd.environment=" + $ENV.ENVIRONMENT,
+		if ($ENV.DOMAIN // "") == "" then [] else ["-Dmcbs.domain=" + $ENV.DOMAIN] end,
 		((.javaOptions // {}) | objectToCommandArgs),
 		"-jar",
 		(.jarName //("jarName fehlt"|halt_error)) + ".jar",
 		((.javaArgs // {}) | objectToCommandArgs)
 	]
+	| flatten
 	| join(" ")
 '
 
-cmd=$(jq --raw-output --arg port "$K8S_INTERNAL_PORT" "$jqCommand")
+cmd=$(jq --raw-output "$jqCommand")
 printf 'JAVA_COMMAND=%s\n' "$cmd"
