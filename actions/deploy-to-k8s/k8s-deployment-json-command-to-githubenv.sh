@@ -5,7 +5,7 @@
 
 set -o errexit
 
-: ${ENVIRONMENT:?} ${K8S_CLUSTER:?} ${K8S_WORKDIR:?} ${K8S_INTERNAL_PORT:?}	# Pflichtvariablen prüfen
+: ${ENVIRONMENT:?} ${K8S_WORKDIR:?} ${K8S_INTERNAL_PORT:?}	# Pflichtvariablen prüfen
 
 jqCommand='
 	# Konvertiert einen Eintrag mit skalarem Wert in javaOptions oder javaArgs, hier gegeben als
@@ -55,7 +55,7 @@ jqCommand='
 		"java",
 		"-Dserver.port=" + $ENV.K8S_INTERNAL_PORT,
 		"-Dlogging.config=" + $ENV.K8S_WORKDIR + "/config/logback-kube.xml",
-		"-Dmd.kubernetes.cluster=" + $ENV.K8S_CLUSTER,
+		"-Dmd.kubernetes.cluster=" + .cluster,
 		# Spring-Profile z.B. dev, kube, kubedev:
 		"-Dspring.profiles.active=" + $ENV.ENVIRONMENT + ",kube,kube" + $ENV.ENVIRONMENT,
 		"-Denvironment=" + $ENV.ENVIRONMENT,
@@ -63,7 +63,7 @@ jqCommand='
 		if ($ENV.DOMAIN // "") == "" then [] else ["-Dmcbs.domain=" + $ENV.DOMAIN] end,
 		((.javaOptions // {}) | objectToCommandArgs),
 		"-jar",
-		(.jarName //("jarName fehlt"|halt_error)) + ".jar",
+		(.jarName // ("jarName fehlt"|halt_error)) + ".jar",
 		((.javaArgs // {}) | objectToCommandArgs)
 	]
 	| flatten
