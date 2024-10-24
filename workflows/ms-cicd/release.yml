@@ -267,7 +267,7 @@ jobs:
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
             API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
-            BASIC_AUTH=$(base64 -w0 <<<"${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}")
+            BASIC_AUTH=$(printf %s "$MCBSTEST_JIRACLOUD_CREDENTIALS" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
           
@@ -427,7 +427,7 @@ jobs:
             ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
-          prerelease: ${{ github.event.inputs.pre-release == 'true' }}
+          prerelease: ${{ github.event.inputs.pre-release }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
           token: ${{ env.TOKEN }}
 
