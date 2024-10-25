@@ -1,0 +1,64 @@
+name: Build
+on:
+  pull_request:
+    types: [ opened, reopened, synchronize ]
+  workflow_dispatch:
+    inputs:
+      gradleOptions:
+        description: Zusätzliche optionale Gradle Parameter
+        required: false
+
+# Concurrency beendet alle anderen Jobs mit der gleichen Gruppe, wenn ein neuer Job startet
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/Berlin
+      LANG: de_DE.UTF-8
+    steps:
+      - name: locale konfigurieren
+        run: sudo locale-gen "$LANG" && sudo update-locale LANG="$LANG"
+
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: AWS Parameter als Umgebungsvariablen setzen
+        uses: ./.github/actions/read-aws-secrets
+        with:
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsParameterPairs: |
+            /github/secrets/mcbs_token = TOKEN,
+            /github/secrets/mcbs_user = USER
+
+      # Extract the JAVA_VERSION from gradle.properties
+      - name: Read Java version from gradle.properties
+        id: java_version
+        run: |
+          JAVA_VERSION=$(grep 'JAVA_VERSION' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "JAVA_VERSION=$JAVA_VERSION"
+          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'zulu'
+
+      - name: Build with Gradle
+        shell: bash
+        run: |
+          sh ./gradlew -PARTIFACT_VERSION=0.0.0 -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build ${{ github.event.inputs.gradleOptions }}
+
+      - name: Unit Test Ergebnisse hochladen
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          junit_files: '**/test-results/**/*.xml'
+          large_files: true
