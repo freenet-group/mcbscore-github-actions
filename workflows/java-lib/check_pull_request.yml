@@ -1,0 +1,31 @@
+name: Check Pull-Request
+
+# Concurrency beendet alle anderen Jobs mit der gleichen Gruppe, wenn ein neuer Job startet
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize, reopened, ready_for_review]
+
+jobs:
+  # Prüft die GitHub PR Labels auf Vollständigkeit
+  checkLabels:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Check Release Labels
+        if: always()
+        uses: mheap/github-action-required-labels@v5
+        with:
+          count: 1
+          mode: exactly
+          add_comment: true
+          labels: "release:patch, release:minor, release:major"
+          message: "Pull-Request wurde aufgrund fehlender Release-Labels abgelehnt. \n
+                      Es muss exakt eines dieser Labels gesetzt werden: \n
+                      - release:patch\n
+                      - release:minor\n
+                      - release:major"

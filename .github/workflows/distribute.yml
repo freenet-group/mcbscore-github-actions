@@ -17,6 +17,7 @@ on:
           - aws-ms-events
           - aws
           - framework
+          - java-lib
           - mandel
           - mcbs
           - metis
@@ -248,6 +249,32 @@ jobs:
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
           workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  java-lib:
+    if: ${{ github.event.inputs.group == 'java-lib' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_WORKFLOWS: "../encoding, ../vulnerability_detection_with_toolchains, build, check_code, check_pull_request, postBuild, release"
+    strategy:
+      matrix:
+        # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
+        repository:
+          - { name: mcbs-connector-api, branch: main, group: java-lib }
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Workflows verteilen
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows || env.DEFAULT_WORKFLOWS  }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
