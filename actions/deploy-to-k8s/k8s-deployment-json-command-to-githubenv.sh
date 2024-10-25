@@ -5,28 +5,87 @@
 
 set -o errexit
 
-: ${ENVIRONMENT:?} ${K8S_WORKDIR:?} ${K8S_INTERNAL_PORT:?}	# Pflichtvariablen prüfen
+: ${GITHUB_CONTEXT_JSON:?} ${HELM_CHART_DIR:?}	# Pflichtvariablen prüfen
 
+json=$(cat)	#weil wir Stdin mehrfach lesen wollen, in Variable speichern
+
+# javaOptions und javaArgs Werte ermitteln, die außerhalb vom Haupt-jq-Kommando evaluiert werden müssen:
+# Beispiel javaOptions Eintrag: "-Dmd.kubernetes.cluster=": {"type": "JQ", "value": ".config.cluster"}.
+# Unterstützte Typen: "JQ", "HELM_VALUE", "GITHUB_INPUT".
+#
+# Ausgabe-Zeilenformat (Tab-separiert): Map-Schlüssel, Typ, (zu evaluierender) Wert.
+# Map-Schlüssel ist das ganze {"type": …, "value": …} Objekt als JSON-String und dann Base64-kodiert.
+# Als JSON-String sollte eigentlich reichen, aber für Eintrag
+#	"-Dspring.profiles.active=": {
+#		"type": "JQ",
+#		"value": "[.github.event.inputs.environment, \"kube\", \"kube\" + .github.event.inputs.environment] | join(\",\")"
+#	},
+# tat es das irgendwie nicht. Deshalb zusätzlich Base64.
+substitutions=$(jq --raw-output '
+	(.javaOptions + .javaArgs)
+	| to_entries[]
+	| select(
+		((.value | type) == "object")
+		and (.value.type as $vt | $vt == "JQ" or $vt == "GITHUB_INPUT" or $vt == "HELM_VALUE"))
+	| .value
+	| [(tojson | @base64), .type, .value] | @tsv' <<<"$json")
+
+# JSON-Map aufbauen mit o.g. Schlüsseln und den evaluierten Werten:
+substMapJson='{}'
+substInputJson=$(jq --null-input --compact-output --argjson g "$GITHUB_CONTEXT_JSON" --argjson c "$json" '{"config": $c, "github": $g}')
+while IFS=$'\t' read -r key type valueExpr; do
+	case "$type" in
+	(HELM_VALUE)
+		value=$(helm show values --jsonpath "$valueExpr" "$HELM_CHART_DIR");;
+	(JQ)
+		value=$(jq --raw-output "($valueExpr)" <<<"$substInputJson");;
+	(GITHUB_INPUT)
+		value=$(jq --raw-output ".event.inputs.$valueExpr" <<<"$GITHUB_CONTEXT_JSON");;
+	(*)
+		echo "unbekannter Wertetyp $type in $(base64 --decode <<<"$key")" >&2; exit 1;;
+	esac
+	printf 'Konfig-Ersetzung: %s "%s": "%s"\n' "$type" "$valueExpr" "$value" >&2
+	substMapJson=$(jq --null-input --compact-output --argjson m "$substMapJson" --arg k "$key" --arg v "$value" '$m + {$k: $v}')
+done <<<"$substitutions"
+
+# Haupt-jq-Kommando: java-Kommando ausgeben
 jqCommand='
-	# Konvertiert einen Eintrag mit skalarem Wert in javaOptions oder javaArgs, hier gegeben als
+	def applySubst:
+		to_entries
+		| map(
+			$subst[(.value | tojson | @base64)] as $substValue
+			| (if $substValue == null then . else {"key": .key, "value": $substValue} end)
+		)
+		| from_entries;
+
+	# Konvertiert einen Eintrag mit skalarem Wert (in javaOptions oder javaArgs), hier gegeben als
 	# z.B. { "key": "-Xmx", "value": "800m" } zu einem Kommandozeilenargument in einem Shell-Befehl.
-	# Unterstützte .value Typen:
+	# Unterstützte .value:
 	# - String: literaler String
-	# - Objekt der Form { "type": "LITERAL", "value": "…" }: literaler String
-	# - Objekt der Form { "type": "SHELL", "value": "…" }: String mit Shellkonstrukten
+	# - Objekt der Form {"type": "LITERAL", "value": "…"}: literaler String
+	# - Objekt der Form {"type": "SHELL", "value": "…"}: String mit Shellkonstrukten
+	# - beliebiges Objekt, dessen JSON-Darstellung ein Schlüssel in $subst ist ⇒ wird durch den zug. Wert ersetzt
+	#   (also in Kombination mit der Vorarbeit Formen
+	#   - {"type": "HELM_VALUE", "value": "…"},
+	#   - {"type": "JQ", "value": "…"},
+	#   - {"type": "GITHUB_INPUT", "value": "…"}
 	def toCommandArg:
 		# String: literal (braucht also Shell-Quoting)
-		if (.value|type) == "string" then
+		if (.value | type) == "string" then
 		  ((.key + .value) | @sh)
-		# Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
-		elif .value.type == "LITERAL" then
-		  ((.key + .value) | @sh)
-		# Objekt { "type": "SHELL", "value": "…" }: $ evaluieren, aber nicht an Whitespace
-		# in mehrere Argumente zerfallen lassen. Also Schlüssel quoten, Wert nur in "…".
-		elif .value.type == "SHELL" then
-		  ((.key | @sh) + "\"" + .value.value + "\"")
+		elif (.value | type) == "object" then
+			if .value.type == "LITERAL" then
+				# Objekt { "type": "LITERAL", "value": "…" } ist nur eine fancy Schreibweise für String "…"
+				((.key + .value) | @sh)
+			elif .value.type == "SHELL" then
+				# Objekt { "type": "SHELL", "value": "…" }: $ evaluieren, aber nicht an Whitespace
+				# in mehrere Argumente zerfallen lassen. Also Schlüssel quoten, Wert nur in "…".
+				((.key | @sh) + "\"" + .value.value + "\"")
+			#else
+			#	("ungültiger .value.type " + .value.type + " in " + (.key|tostring) + " → " + (.|tostring)) | halt_error
+			end
 		else
-		  ("invalid value .type " + .value.type + " in " + (.key|tostring) + " → " + (.|tostring)) | halt_error
+		  ("ungültiger value Typ " + (.value | type) + " in " + (.key|tostring) + " → " + (.|tostring)) | halt_error
 		end
 	;
 
@@ -53,22 +112,13 @@ jqCommand='
 
 	[
 		"java",
-		"-Dserver.port=" + $ENV.K8S_INTERNAL_PORT,
-		"-Dlogging.config=" + $ENV.K8S_WORKDIR + "/config/logback-kube.xml",
-		"-Dmd.kubernetes.cluster=" + .cluster,
-		# Spring-Profile z.B. dev, kube, kubedev:
-		"-Dspring.profiles.active=" + $ENV.ENVIRONMENT + ",kube,kube" + $ENV.ENVIRONMENT,
-		"-Denvironment=" + $ENV.ENVIRONMENT,
-		"-Dmd.environment=" + $ENV.ENVIRONMENT,
-		if ($ENV.DOMAIN // "") == "" then [] else ["-Dmcbs.domain=" + $ENV.DOMAIN] end,
-		((.javaOptions // {}) | objectToCommandArgs),
+		((.javaOptions // {}) | applySubst | objectToCommandArgs),
 		"-jar",
-		(.jarName // ("jarName fehlt"|halt_error)) + ".jar",
-		((.javaArgs // {}) | objectToCommandArgs)
+		(.jarName // ("jarName fehlt" | halt_error)) + ".jar",
+		((.javaArgs // {}) | applySubst | objectToCommandArgs)
 	]
 	| flatten
 	| join(" ")
 '
-
-cmd=$(jq --raw-output "$jqCommand")
+cmd=$(jq --argjson subst "$substMapJson" --raw-output "$jqCommand" <<<"$json")
 printf 'JAVA_COMMAND=%s\n' "$cmd"
