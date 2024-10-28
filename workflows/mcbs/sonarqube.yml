@@ -54,7 +54,7 @@ jobs:
 
       # Gradle Build
       - name: Build with Gradle
-        run: sh ./gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build sonarqube -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} ${{ github.event.inputs.gradleOptions }}
+        run: sh ./gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build sonar -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} ${{ github.event.inputs.gradleOptions }}
 
       # JUnit Ergebnisse publizieren
       - name: Upload Unit Test Results
