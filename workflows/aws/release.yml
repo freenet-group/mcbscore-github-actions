@@ -210,7 +210,7 @@ jobs:
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
             API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
-            BASIC_AUTH=$(base64 -w0 <<<"${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}")
+            BASIC_AUTH=$(printf %s "$MCBSTEST_JIRACLOUD_CREDENTIALS" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
             issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
 

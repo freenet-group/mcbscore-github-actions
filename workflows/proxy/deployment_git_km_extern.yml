@@ -1,6 +1,6 @@
-name: GIT KM Deployment Extern
+name: GIT KM EXTERN Deployment
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: GIT KM Deployment Extern ${{ github.event.inputs.componentVersion }}
+run-name: GIT KM EXTERN Deployment ${{ github.event.inputs.componentVersion }}
 
 on:
   workflow_dispatch:

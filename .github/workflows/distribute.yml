@@ -16,8 +16,8 @@ on:
           - ALL
           - aws-ms-events
           - aws
-          - errorcodes
           - framework
+          - java-lib
           - mandel
           - mcbs
           - metis
@@ -82,28 +82,6 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  errorcodes:
-    if: ${{ github.event.inputs.group == 'errorcodes' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        repository:
-          - { name: md-error-codes, branch: main, group: errorcodes, workflows: "../check, build" }
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Distribute Workflows
-        uses: ./.github/actions/distribute-workflows
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          workflows: ${{ matrix.repository.workflows }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
   mandel:
     if: ${{ github.event.inputs.group == 'mandel' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
@@ -132,7 +110,7 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild_MCBS, postBuild_MS, sonarqube, MCBS-Freigabe, refcalls_deployment, setPRIssueDone" }
+          - { name: mcbs-master, branch: develop, group: mcbs, workflows: "../check, preCheck, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild_MCBS, postBuild_MS, sonarqube, MCBS-Freigabe, refcalls_deployment, setPRIssueDone, deployToAws" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -191,6 +169,7 @@ jobs:
           - { name: ms-configserver, branch: main, group: ms-cicd }
           - { name: ms-contentprovider, branch: main, group: ms-cicd }
           - { name: ms-customerchange, branch: main, group: ms-cicd, workflows: "../encoding, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, dbChanges, release, deployment" }
+          - { name: ms-delegate, branch: main, group: ms-cicd }
           - { name: ms-discovery, branch: main, group: ms-cicd }
           - { name: ms-elasticupdate, branch: main, group: ms-cicd }
           - { name: ms-event-relay, branch: main, group: ms-cicd }
@@ -225,10 +204,8 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
-          - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-freeprint-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-note-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, postBuild, ../vulnerability-detection, setPRIssueDone" }
           - { name: ms-oidc, branch: develop, group: ms, workflows: "../check, build, dbChanges, deployment, ../developerPortal, ../developer-portal-internal, postBuild, setPRIssueDone" }
@@ -271,6 +248,32 @@ jobs:
           repositoryGroup: ${{ matrix.repository.group }}
           repositoryBranch: ${{ matrix.repository.branch }}
           workflows: ${{ matrix.repository.workflows }}
+          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  java-lib:
+    if: ${{ github.event.inputs.group == 'java-lib' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    env:
+      DEFAULT_WORKFLOWS: "../encoding, ../vulnerability_detection_with_toolchains, build, check_code, check_pull_request, postBuild, release"
+    strategy:
+      matrix:
+        # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
+        repository:
+          - { name: mcbs-connector-api, branch: main, group: java-lib }
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Workflows verteilen
+        uses: ./.github/actions/distribute-workflows
+        with:
+          repositoryName: ${{ matrix.repository.name }}
+          repositoryGroup: ${{ matrix.repository.group }}
+          repositoryBranch: ${{ matrix.repository.branch }}
+          workflows: ${{ matrix.repository.workflows || env.DEFAULT_WORKFLOWS  }}
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
@@ -317,7 +320,7 @@ jobs:
           - { name: mcbscore-cuba-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_b2b_km_b2balt, deployment_b2b_km_b2bneu, deployment_b2b_km_ngbilling, deployment_b2b_md_b2balt, deployment_b2b_md_b2bneu, deployment_b2b_md_ngbilling, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
           - { name: mcbscore-customerchange-proxy, branch: develop, group: proxy, workflows: "../check, deployment, build, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_b2b_km_b2balt, deployment_b2b_km_b2bneu, deployment_b2b_km_ngbilling, deployment_b2b_md_b2balt, deployment_b2b_md_b2bneu, deployment_b2b_md_ngbilling, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
           - { name: mcbscore-customerproduct-proxy, branch: develop, group: proxy, workflows: "../check, deployment, build, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_b2b_km_b2balt, deployment_b2b_km_b2bneu, deployment_b2b_km_ngbilling, deployment_b2b_md_b2balt, deployment_b2b_md_b2bneu, deployment_b2b_md_ngbilling, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
-          - { name: mcbscore-customer-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_b2b_km_b2balt, deployment_b2b_km_b2bneu, deployment_b2b_km_ngbilling, deployment_b2b_md_b2balt, deployment_b2b_md_b2bneu, deployment_b2b_md_ngbilling, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
+          - { name: mcbscore-customer-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_ngbilling, deployment_b2b_md_ngbilling, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
           - { name: mcbscore-elasticupdate-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_b2b_km_b2balt, deployment_b2b_km_b2bneu, deployment_b2b_km_ngbilling, deployment_b2b_md_b2balt, deployment_b2b_md_b2bneu, deployment_b2b_md_ngbilling, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
           - { name: mcbscore-find-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_km, deployment_b2b_md, deployment_b2b_km_regtestalt, deployment_b2b_km_regtestneu, deployment_b2b_md_regtestalt, deployment_b2b_md_regtestneu, deployment_b2b_km_b2balt, deployment_b2b_km_b2bneu, deployment_b2b_km_ngbilling, deployment_b2b_md_b2balt, deployment_b2b_md_b2bneu, deployment_b2b_md_ngbilling, deployment_dev, deployment_dev_km, deployment_dev_md, deployment_git, deployment_git_km, deployment_git_km_extern, deployment_git_md, deployment_git_md_extern, deployment_prod, deployment_prod_km, deployment_prod_km_extern, deployment_prod_md, deployment_prod_md_extern, ../encoding, postBuild" }
           - { name: mcbscore-healthcheck-proxy, branch: develop, group: proxy, workflows: "../check, build, deployment, deployment_b2b, deployment_b2b_md, deployment_dev, deployment_dev_md, deployment_git, deployment_git_md, deployment_prod, deployment_prod_md, ../encoding, postBuild" }
@@ -509,7 +512,6 @@ jobs:
           - { name: ms-alteration, branch: main }
           - { name: ms-commondata, branch: main }
           - { name: ms-admin-dashboard, branch: main }
-          - { name: ms-agreement, branch: develop }
           - { name: ms-appcheck, branch: main }
           - { name: ms-authorities-information, branch: main }
           - { name: ms-billingaccount-frontend, branch: main }
@@ -519,7 +521,7 @@ jobs:
           - { name: ms-contentprovider, branch: main }
           - { name: ms-customerchange, branch: main }
           - { name: ms-customerproduct, branch: develop }
-          - { name: ms-delegate, branch: develop }
+          - { name: ms-delegate, branch: main }
           - { name: ms-discovery, branch: main }
           - { name: ms-elasticupdate, branch: main }
           - { name: ms-event-relay, branch: main }

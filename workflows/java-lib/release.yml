@@ -11,7 +11,7 @@ on:
       branch:
         description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
         required: false
-      ticket: 
+      ticket:
         description: 'Welches Ticket (MCBS-1234 / ABRMS-1234) soll für das Release verwendet werden?'
         required: true
       version:
@@ -28,9 +28,6 @@ jobs:
     if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
     runs-on: [ self-hosted, k8s ]
     env:
-      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
-      ACTIONS_PATH: mcbscore/github
-      KEY_SERVER: ${{ secrets.CERT_SERVER }}
       TZ: Europe/Berlin
       LANG: de_DE.UTF-8
     steps:
@@ -50,41 +47,8 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_user = USER,
             /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
-            /github/common/sonar/api_url = SONAR_API_URL,
-            /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
-            /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
-            /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
-            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
-
-      - name: workflow.config einlesen
-        id: read-properties
-        run: |
-          { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
-
-      - name: Interne mcbscore-github-actions local auschecken
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ env.ACTIONS_REPOSITORY }}
-          token: ${{ env.TOKEN }}
-          path: ${{ env.ACTIONS_PATH }}
-
-      - name: Workflow initialisieren
-        uses: ./mcbscore/github/actions/init-workflow
-        with:
-          installJava: true
-          installGithubCli: true
-          installJq: true
-
-      - name: keystore-files kopieren
-        if: ${{ env.KEY_SERVER != '' }}
-        shell: bash
-        run: |
-          certServer='${{ env.KEY_SERVER }}'
-          scp -p "${certServer}:oidc/keys/keystore.jwks" "${certServer}:oidc/keys/samlKeystore.jks" docker/home/oidc/keys/
-          ls -l docker/home/oidc/keys
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
       - name: Release Label einlesen
         id: release-label
@@ -108,7 +72,7 @@ jobs:
 
       - name: Semantic Version überschreiben, wenn eine spezifische Version angegeben wurde
         id: version-calculation
-        env: 
+        env:
           NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
@@ -120,60 +84,30 @@ jobs:
             echo "new_version=${INPUT_VERSION}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Component Version setzen (legacy - Für die Kompatibilität mit alten Actions)
-        shell: bash
-        env:
-          NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
-        run: |
-          echo "COMPONENT_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "RAW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
-
       - name: Neuen Versions-Tag einchecken
         uses: actions-ecosystem/action-push-tag@v1
         with:
           tag: ${{ steps.version-calculation.outputs.new_version }}
           message: '${{ steps.version-calculation.outputs.new_version }}: PR #${{ github.event.pull_request.number }} ${{ github.event.pull_request.title }}'
 
-      - name: Release Version in DB Changes eintragen
-        id: set-version-in-dbchanges
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
-        shell: bash
-        env:
-          NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
+      - name: Java Version aus gradle.properties auslesen
+        id: java_version
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          find ./${{ env.DB_CHANGES_DIRECTORY }} -type f -exec sed -i "s/{releaseVersion}/$NEW_VERSION/g" {} +
-          changesDetected=`git status --porcelain`
-          if [ -n "$changesDetected" ]
-          then
-            echo "Committing changes"
-            git commit -am "Release Version in DB Changes eingetragen"
-            commit_id=$(git rev-parse HEAD)  # Speichert die Commit-ID in der Variablen
-            echo "DB Changes Version Commit: $commit_id"
-            echo "DB_CHANGES_VERSION_COMMIT_ID=$commit_id" >> $GITHUB_ENV
-            git push
-          fi
+          JAVA_VERSION=$(grep 'JAVA_VERSION' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "JAVA_VERSION=$JAVA_VERSION"
+          echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
 
-      - name: Gradle Build mit Sonar Upload und CyclonedxBom (SBOM)
-        uses: ./mcbscore/github/actions/gradle-build
+      - name: Set up JDK
+        id: setup-java
+        uses: actions/setup-java@v3
         with:
-          sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
-          sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
-          enableSonarCheckOnAllBranches: true
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'zulu'
 
-      - name: Sonar-Coverage abholen
-        id: fetch-coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
-        uses: ./mcbscore/github/actions/sonar-check
-        with:
-          sonarUrl: ${{ env.SONAR_API_URL }} 
-          sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          projectKeyPath: ${{ env.COVERAGE_PATH }}
-          projectKeyName: ${{ env.COVERAGE_APP }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+      - name: Gradle Build mit CyclonedxBom (SBOM)
+        shell: bash
+        run: |
+          sh ./gradlew -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build publish ${{ github.event.inputs.gradleOptions }}
 
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
@@ -182,13 +116,16 @@ jobs:
           token: ${{ env.TOKEN }}
           head-tag: ${{ steps.version-calculation.outputs.new_version }}
 
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v3
+
       - name: Release-Template einlesen und ausfüllen
         id: update_release_template
         env:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
           INPUT_TICKET: ${{ github.event.inputs.ticket }}
         run: |
-          template_file=".github/templates/release_template.md"
+          template_file=".github/templates/release_template_javalib.md"
           issueList=""
           issueListLines=""
           linkIssuesListLines=""
@@ -203,9 +140,6 @@ jobs:
           echo "renovate_title=" >> "$GITHUB_OUTPUT"
           echo "epic_list=" >> "$GITHUB_OUTPUT"
           echo "epic_due_date=" >> "$GITHUB_OUTPUT"
-          echo "ms_configuration=false" >> "$GITHUB_OUTPUT"
-          echo "ms_deployment=false" >> "$GITHUB_OUTPUT"
-          echo "db_changes=false" >> "$GITHUB_OUTPUT"
           echo "dependencies=false" >> "$GITHUB_OUTPUT"
 
           # Alle Issues auslesen
@@ -358,38 +292,7 @@ jobs:
           
           ## Java
           echo "Java setzen"
-          sed -i 's/<!-- JAVA_VERSION_PLACEHOLDER -->/${{ env.RELEASENOTES_JAVA_RELEASE }}/' "$template_file";
-          
-          ## MS-Configuration
-          echo "MS-Configuration Flag setzen"
-          if echo "$allComponentList" | grep -iq "ms-configuration"; then
-            echo "ms_configuration=true" >> "$GITHUB_OUTPUT"
-            url="${{ github.SERVER_URL }}/ms-configuration"
-            escaped_url=$(sed 's/[\/&]/\\&/g' <<< "$url")
-            sed -i "s/<!-- MS_CONFIGURATION_PLACEHOLDER -->/:warning: Achtung [MS-Configuration]($escaped_url) wurde geändert/" "$template_file";
-          else
-            sed -i 's/<!-- MS_CONFIGURATION_PLACEHOLDER -->/:white_check_mark: Keine Änderung/' "$template_file";
-          fi
-          
-          ## MS-Deployment
-          echo "MS-Deployment Flag setzen"
-          if echo "$allComponentList" | grep -iq "ms-deployment"; then
-            echo "ms_deployment=true" >> "$GITHUB_OUTPUT"
-            url="${{ github.SERVER_URL }}/ms-deployment"
-            escaped_url=$(sed 's/[\/&]/\\&/g' <<< "$url")
-            sed -i "s/<!-- MS_DEPLOYMENT_PLACEHOLDER -->/:warning: Achtung [MS-Deployment]($escaped_url) wurde geändert/" "$template_file";
-          else
-            sed -i 's/<!-- MS_DEPLOYMENT_PLACEHOLDER -->/:white_check_mark: Keine Änderung/' "$template_file";
-          fi
-          
-          ## DB-Changes
-          echo "DB-Changes Flag setzen"
-          if echo "$allComponentList" | grep -iq "sql update script"; then
-            echo "db_changes=true" >> "$GITHUB_OUTPUT"
-            sed -i "s/<!-- DB_CHANGES_PLACEHOLDER -->/:warning: Achtung DB-Changes sind notwendig/" "$template_file";
-          else 
-            sed -i 's/<!-- DB_CHANGES_PLACEHOLDER -->/:white_check_mark: Keine DB-Changes/' "$template_file";
-          fi
+          sed -i 's/<!-- JAVA_VERSION_PLACEHOLDER -->/${{ steps.setup-java.outputs.version }}/' "$template_file";
           
           ## Dependencies
           echo "Dependencies setzen"
@@ -421,9 +324,8 @@ jobs:
       - name: Release erstellen
         uses: softprops/action-gh-release@v2
         with:
-          body_path: ".github/templates/release_template.md"
+          body_path: ".github/templates/release_template_javalib.md"
           files: |
-            ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.version-calculation.outputs.new_version }}.jar
             ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
@@ -431,141 +333,8 @@ jobs:
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
           token: ${{ env.TOKEN }}
 
-      - name: Upload API Doc
-        uses: ./mcbscore/github/actions/upload-api-doc-assets
-        with:
-          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
-          apiDocYmlPattern: ${{ env.API_DOC_YAML_PATTERN }}
-
-      - name: Login GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GH_R_PACKAGES }}
-
-      - name: Docker Image erzeugen
-        uses: ./mcbscore/github/actions/create-microservice-docker-image
-        with:
-          componentName: ms-${{ env.COMPONENT }}
-          componentVersion: ${{ steps.version-calculation.outputs.new_version }}
-          jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.version-calculation.outputs.new_version }}.jar
-          javaVersion: ${{ env.JAVA_VERSION }}
-
-      - name: Deployment Workflow starten
-        id: deployment
-        uses: benc-uk/workflow-dispatch@v1.2.3
-        with:
-          workflow: Deployment
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "environment": "dev",
-              "component": "${{ env.COMPONENT }}", 
-              "componentVersion": "${{ steps.version-calculation.outputs.new_version }}"
-            }
-
-      - name: Deployment Workflow Status prüfen
-        run: |
-          # Maximal 30 Checks, alle 30 Sekunden, also 15 Minuten maximal
-          MAX_CHECKS=30  # Number of checks before timeout, for 15 minutes total.
-          counter=0
-          INITIAL_SLEEP=60
-          RETRY_SLEEP=30
-          
-          echo "Starting the Check Deployment Workflow Status..."
-          sleep $INITIAL_SLEEP  # 1 Minute warten, damit der Workflow gestartet werden kann
-
-          # Workflow Läufe abrufen
-          echo "Fetching workflow runs for workflow ID: ${{ steps.deployment.outputs.workflowId }}"
-          WORKFLOW_RUNS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                          "https://api.github.com/repos/${{ github.repository }}/actions/workflows/${{ steps.deployment.outputs.workflowId }}/runs")
-          
-          # Letzten Workflow Run ermitteln
-          LATEST_RUN=$(echo "$WORKFLOW_RUNS" | jq '.workflow_runs[0]')  # Assuming the first run is the latest
-          RUN_ID=$(echo "$LATEST_RUN" | jq -r '.id')
-          RUN_NAME=$(echo "$LATEST_RUN" | jq -r '.name')
-          
-          echo "Checking run with ID: $RUN_ID and name: $RUN_NAME"
-          
-          # Status des letzten Workflow Runs prüfen
-          while true; do
-            # Zähler erhöhen
-            counter=$(( counter + 1 ))
-            remainingChecks=$(( MAX_CHECKS - counter ))
-            remainingTime=$(( remainingChecks * RETRY_SLEEP / 60 ))  # Convert to minutes
-          
-            echo "Check attempt $counter of $MAX_CHECKS. Remaining checks: $remainingChecks. Time left before timeout: ~$remainingTime minutes."
-          
-            # Details des Workflow Runs abrufen
-            RUN_DETAILS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                                "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN_ID")
-          
-            RUN_STATUS=$(echo "$RUN_DETAILS" | jq -r '.status')
-            CONCLUSION=$(echo "$RUN_DETAILS" | jq -r '.conclusion')
-          
-            echo "Run Status: $RUN_STATUS, Conclusion: $CONCLUSION"
-          
-            # Prüfe ob der Workflow noch läuft
-            if [[ "$RUN_STATUS" == "queued" || "$RUN_STATUS" == "in_progress" || "$RUN_STATUS" == "null" ]]; then
-              echo "Deployment Workflow is $RUN_STATUS..."
-          
-              if [[ "$counter" -ge "$MAX_CHECKS" ]]; then
-                echo "Timeout waiting for the Deployment Workflow."
-                exit 1
-              fi
-          
-              sleep $RETRY_SLEEP  # Wait for a specified duration before checking again
-            else
-              # Wenn nicht "in_progress" oder "queued", dann ist der Workflow abgeschlossen
-              break
-            fi
-          done
-          
-          # Prüfe ob der Workflow erfolgreich war
-          if [[ "$CONCLUSION" == "null" || "$CONCLUSION" != "success" ]]; then
-            echo "Deployment Workflow did not complete successfully. Conclusion: $CONCLUSION"
-            exit 1
-          else
-            echo "Deployment Workflow completed with Conclusion: $CONCLUSION"
-          fi
-
-      - name: dbChanges Workflow starten
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
-        uses: benc-uk/workflow-dispatch@v1.2.3
-        with:
-          workflow: DB Changes
-          token: ${{ env.TOKEN }}
-          inputs: >
-            {
-              "component": "${{ env.COMPONENT }}",
-              "componentVersion": "${{ steps.version-calculation.outputs.new_version }}",
-              "tagPrefix": "${{ env.TAG_PREFIX }}"
-            }
-
-      - name: Bambi Parameter setzen
-        env: 
-          RENOVATE: ${{ steps.update_release_template.outputs.renovate }}
-          RENOVATE_TITLE: ${{ steps.update_release_template.outputs.renovate_title }}
-          EPIC_DUEDATE: ${{ steps.update_release_template.outputs.epic_dueDate }}
-          MS_CONFIGURATION: ${{ steps.update_release_template.outputs.ms_configuration }}
-          MS_DEPLOYMENT: ${{ steps.update_release_template.outputs.ms_deployment }}
-          DB_CHANGES: ${{ steps.update_release_template.outputs.db_changes }}
-          DEPENDENCIES: ${{ steps.update_release_template.outputs.dependencies }}
-        run: |
-          BAMBI_ARGS="{ \
-            \"renovate\": \"$RENOVATE\", \
-            \"renovateInfo\": \"$RENOVATE_TITLE\", \
-            \"ibnDate\": \"$EPIC_DUEDATE\", \
-            \"changesInConfiguration\": \"$MS_CONFIGURATION\", \
-            \"changesInDeployment\": \"$MS_DEPLOYMENT\", \
-            \"dbChanges\": \"$DB_CHANGES\", \
-            \"dependencies\": \"$DEPENDENCIES\" \
-          }"
-          echo "BAMBI_ARGS=$(echo "$BAMBI_ARGS" | sed 's/"/\\"/g')" >> $GITHUB_ENV
-
       - name: postBuild Workflow starten
-        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: PostBuild
@@ -574,25 +343,20 @@ jobs:
             {
               "releaseVersion": "${{ steps.version-calculation.outputs.new_version }}",
               "issueList": "${{ steps.update_release_template.outputs.issue_list }}",
-              "bambiArgs": "${{ env.BAMBI_ARGS }}",
-              "hasSQL": "${{ steps.update_release_template.outputs.db_changes }}",
-              "hasConfiguration": "${{ steps.update_release_template.outputs.ms_configuration }}",
               "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}",
-              "hasDeployment": "${{ steps.update_release_template.outputs.ms_deployment }}"
+              "renovate": ${{ steps.update_release_template.outputs.renovate }}  
             }
 
-      - name: Tag/Release löschen und DB Changes Version reverten, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
+      - name: Setup Github CLI
+        if: failure() || cancelled()
+        uses: freenet-actions/setup-github-cli@v3
+
+      - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
           GH_TOKEN: ${{ env.TOKEN }}
         run: |
-          if [ "${{ steps.set-version-in-dbchanges.conclusion }}" == 'success' ] && [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
-            # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
-            git revert ${{ env.DB_CHANGES_VERSION_COMMIT_ID }}
-            git push
-          fi
-          
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
             if gh release list --json tagName --jq ".[] | select(.tagName == \"$NEW_VERSION\") | .tagName" | grep -q .; then
@@ -601,19 +365,4 @@ jobs:
               git tag -d "$NEW_VERSION"
               git push origin ":$NEW_VERSION"
             fi
-            # Wenn bereits eine Version für das Paket erstellt wurde, dann lösche diese.
-            resultJson=`
-            gh api \
-              -H "Accept: application/vnd.github+json" \
-              /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions`
-            # Package VersionIds in ein Array überführen
-            IFS=',' read -ra versionIdArray < <(jq -r '.[] | select(.name == \"$NEW_VERSION\") | .id' <<< "$resultJson")
-            for versionId in "${versionIdArray[@]}"; do
-              if [ -n "$versionId" ]; then
-                gh api \
-                  --method DELETE \
-                  -H "Accept: application/vnd.github+json" \
-                  /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions/${versionId}
-              fi
-            done
           fi
