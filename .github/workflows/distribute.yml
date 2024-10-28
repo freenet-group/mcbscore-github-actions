@@ -203,7 +203,6 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: ms-agreement, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, postBuild, setPRIssueDone" }
           - { name: ms-businessinteraction-router, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, postBuild, setPRIssueDone" }
           - { name: ms-customerproduct, branch: develop, group: ms, workflows: "../check, build, ../encoding" }
           - { name: ms-delegate, branch: develop, group: ms, workflows: "../check, build, deployment, ../developerPortal, ../developer-portal-internal, ../encoding, ../vulnerability-detection, postBuild, setPRIssueDone" }
@@ -513,7 +512,6 @@ jobs:
           - { name: ms-alteration, branch: main }
           - { name: ms-commondata, branch: main }
           - { name: ms-admin-dashboard, branch: main }
-          - { name: ms-agreement, branch: develop }
           - { name: ms-appcheck, branch: main }
           - { name: ms-authorities-information, branch: main }
           - { name: ms-billingaccount-frontend, branch: main }
