@@ -1,10 +1,9 @@
 name: Sonarqube
 
 on:
-  # vorserst deaktiviert, weil Sonar nicht mehr JAVA 8 kompatibel ist
   # Jeden Samstag um 0 UTC
-  #schedule:
-  #  - cron: 0 0 * * 6
+  schedule:
+    - cron: 0 0 * * 6
   workflow_dispatch:
     inputs:
       gradleOptions:
