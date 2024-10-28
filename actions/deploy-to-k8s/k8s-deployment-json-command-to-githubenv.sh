@@ -3,7 +3,7 @@
 # von Stdin und ermittelt die Kommandozeile für den java-Start und gibt es im $GITHUB_ENV-Format
 # nach Stdout aus.
 
-set -o errexit
+set -o errexit -o pipefail
 
 : ${GITHUB_CONTEXT_JSON:?} ${HELM_CHART_DIR:?}	# Pflichtvariablen prüfen
 

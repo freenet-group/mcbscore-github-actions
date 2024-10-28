@@ -3,7 +3,7 @@
 # von Stdin und gibt einige Werte daraus (die die Action braucht) im $GITHUB_ENV-Format nach Stdout
 # aus.
 
-set -o errexit
+set -o errexit -o pipefail
 
 json=$(cat)	#weil wir Stdin mehrfach lesen wollen, in Variable speichern
 

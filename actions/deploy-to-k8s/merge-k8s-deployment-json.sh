@@ -2,7 +2,7 @@
 # Kombiniert die kubernetes-deployment*.json Dateien für eine Applikation $COMPONENT, Umgebung
 # $ENVIRONMENT und optional Domain $DOMAIN und schreibt das Ergebnis nach Stdout.
 
-set -o errexit
+set -o errexit -o pipefail
 
 GLOBL_DIR=.
 
