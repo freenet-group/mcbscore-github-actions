@@ -14,8 +14,6 @@ jobs:
   sonarqube:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, vm]
-    env:
-      JAVA_VERSION: 11
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -45,12 +43,17 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER
 
+      - name: workflow.properties einlesen
+        id: read-properties
+        run: |
+          { cat .github/mcbs_workflow.properties; echo; } | tee -a -- "$GITHUB_OUTPUT"            
+
       # JAVA installieren
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: ${{ env.JAVA_VERSION }}
+          java-version: ${{ steps.read-properties.outputs.JAVA_VERSION }}
 
       # Gradle Build
       - name: Build with Gradle
