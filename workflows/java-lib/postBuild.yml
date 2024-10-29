@@ -127,7 +127,7 @@ jobs:
           componentVersion: ${{ github.event.inputs.releaseVersion }}
           issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
-          included_components: ${{ env.INCLUDED_COMPONENTS }}
+          included_components: ${{ env.JIRA_COMPONENT }}
 
       - name: Release Version als Kommentar im Ticket eintragen
         if: ${{ github.event.inputs['renovate'] == 'false' }}
