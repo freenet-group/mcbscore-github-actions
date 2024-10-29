@@ -1,10 +1,9 @@
 name: Sonarqube
 
 on:
-  # vorserst deaktiviert, weil Sonar nicht mehr JAVA 8 kompatibel ist
   # Jeden Samstag um 0 UTC
-  #schedule:
-  #  - cron: 0 0 * * 6
+  schedule:
+    - cron: 0 0 * * 6
   workflow_dispatch:
     inputs:
       gradleOptions:
@@ -15,8 +14,6 @@ jobs:
   sonarqube:
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, vm]
-    env:
-      JAVA_VERSION: 11
 
     steps:
       # Owner für alle Dateien des $GITHUB_WORKSPACE auf den Runner User setzen
@@ -46,16 +43,21 @@ jobs:
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbs_user = USER
 
+      - name: workflow.properties einlesen
+        id: read-properties
+        run: |
+          { cat .github/mcbs_workflow.properties; echo; } | tee -a -- "$GITHUB_OUTPUT"            
+
       # JAVA installieren
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: zulu
-          java-version: ${{ env.JAVA_VERSION }}
+          java-version: ${{ steps.read-properties.outputs.JAVA_VERSION }}
 
       # Gradle Build
       - name: Build with Gradle
-        run: sh ./gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build sonarqube -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} ${{ github.event.inputs.gradleOptions }}
+        run: sh ./gradlew -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build sonar -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} ${{ github.event.inputs.gradleOptions }}
 
       # JUnit Ergebnisse publizieren
       - name: Upload Unit Test Results
