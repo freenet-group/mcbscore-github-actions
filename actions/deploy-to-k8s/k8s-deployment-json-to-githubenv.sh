@@ -55,4 +55,6 @@ paramPairs=$(jq -r '
 	<<<"$json")
 
 # Als (mehrzeilige) Variable DYNAMIC_AWS_PARAM_PAIRS im $GITHUB_ENV-Format ausgeben:
-printf 'DYNAMIC_AWS_PARAM_PAIRS<<...snip...\n%s\n...snip...\n' "$paramPairs"
+if [ -n "$paramPairs" ]; then
+	printf 'DYNAMIC_AWS_PARAM_PAIRS<<...snip...\n%s\n...snip...\n' "$paramPairs"
+fi
