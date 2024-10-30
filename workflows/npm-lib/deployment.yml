@@ -140,3 +140,23 @@ jobs:
           project_prefix: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
           days_to_keep: '90'
           dry_run: 'false'
+
+      # Im Fehlerfall aufräumen
+      - name: Package(s) löschen, wenn das Deployment fehlgeschlagen ist oder abgebrochen wurde
+        if: failure() || cancelled()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          versionToDelete=${{ steps.determine-version.outputs.VERSION }}
+          if [ -n ${versionToDelete} ] && [ -n "${{ steps.read-properties.outputs.JIRA_COMPONENT }}" ]; then
+            echo "Lösche Version ${versionToDelete} aus den Package(s)..."            
+            npmPackage="/orgs/freenet-group/packages/npm/${{ steps.read-properties.outputs.JIRA_COMPONENT }}/versions/${versionToDelete}"
+            echo "Lösche ${npmPackage} ..."
+            curl -L -X DELETE -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GH_TOKEN}" https://api.github.com/${npmPackage}
+              
+            if [ -n "${{ steps.read-properties.outputs.JAVA_VERSION }}" ]; then
+              mavenPackage="/orgs/freenet-group/packages/maven/${{ steps.read-properties.outputs.JIRA_COMPONENT }}/versions/${versionToDelete}"
+              echo "Lösche ${mavenPackage} ..."
+              curl -L -X DELETE -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${GH_TOKEN}" https://api.github.com/${mavenPackage}
+            fi
+          fi
