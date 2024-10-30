@@ -13,8 +13,8 @@ on:
       threshold-days:
         description: 'Anzahl der Tage, um alte Stacks zu ermitteln'
         required: false
-        default: 4
-        type: number
+        default: '4'
+        type: string
 
 jobs:
   cleanup:
@@ -25,6 +25,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: dry-run setzen
+        id: set_dry_run
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "Setze dry-run auf false, da es sich um ein Schedule-Event handelt."
+            echo "dry-run=false" >> $GITHUB_OUTPUT
+          else
+            echo "Setze dry-run auf ${{ github.inputs.dry-run }}."
+            echo "dry-run=${{ github.inputs.dry-run }}" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/checkout@v4
 
       - name: AWS Credentials konfigurieren
@@ -123,7 +134,7 @@ jobs:
           fi
 
       - name: Alte Stacks entfernen (Dry-Run)
-        if: ${{ steps.filter_stacks.outputs.has_old_stacks == 'true' && github.event.inputs.dry-run == 'true' }}
+        if: ${{ steps.filter_stacks.outputs.has_old_stacks == 'true' && steps.set_dry_run.outputs.dry-run == 'true' }}
         env:
           SERVICE_NAME: ${{ steps.extract_service_name.outputs.result }}
           STACK_LIST: ${{ steps.filter_stacks.outputs.old_stacks }}
@@ -146,7 +157,7 @@ jobs:
           done
 
       - name: Alte Stacks entfernen
-        if: ${{ steps.filter_stacks.outputs.has_old_stacks == 'true' && github.event.inputs.dry-run == 'false' }}
+        if: ${{ steps.filter_stacks.outputs.has_old_stacks == 'true' && steps.set_dry_run.outputs.dry-run == 'false' }}
         env:
           SERVICE_NAME: ${{ steps.extract_service_name.outputs.result }}
           STACK_LIST: ${{ steps.filter_stacks.outputs.old_stacks }}
