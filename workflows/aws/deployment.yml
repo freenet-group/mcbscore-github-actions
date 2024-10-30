@@ -41,7 +41,7 @@ jobs:
             ENVIRONMENT=${{ github.event.inputs.env }}
           fi
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_OUTPUT
-          echo "ENVIRONMENT_LOWERCASE=$(tr '[:upper:]' '[:lower:]' <<<"$ENVIRONMENT")" >> $GITHUB_OUTPUT  
+          echo "ENVIRONMENT_LOWERCASE=$(tr '[:upper:]' '[:lower:]' <<<"$ENVIRONMENT")" >> $GITHUB_OUTPUT
 
       - name: Entweder die Übergebene Version oder die aktuelle Version auslesen
         id: determine-version

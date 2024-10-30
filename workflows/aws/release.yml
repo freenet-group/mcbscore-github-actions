@@ -102,7 +102,7 @@ jobs:
 
       - name: Semantic Version überschreiben, wenn eine spezifische Version angegeben wurde
         id: version-calculation
-        env: 
+        env:
           NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
           INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
