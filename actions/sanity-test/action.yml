@@ -91,7 +91,7 @@ runs:
 
     - name: Karate Tests ausführen
       if: steps.checkEnabled.outputs.enabled == 'true'
-      uses: freenet-group/karate-action@0.4.0
+      uses: freenet-group/karate-action@0.4.10
       with:
         karateVersion: '${{ inputs.karateVersion }}'
         baseUrl: '${{ env.SANITY_API_GATEWAY }}'
