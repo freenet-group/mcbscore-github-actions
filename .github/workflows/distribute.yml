@@ -525,7 +525,7 @@ jobs:
           - { name: ms-discovery, branch: main }
           - { name: ms-elasticupdate, branch: main }
           - { name: ms-event-relay, branch: main }
-          - { name: ms-find, branch: develop }
+          - { name: ms-find, branch: main }
           - { name: ms-freeprint-router, branch: develop }
           - { name: ms-gateway, branch: main }
           - { name: ms-homer, branch: main }
