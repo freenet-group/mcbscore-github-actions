@@ -148,6 +148,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
+          target_commitish: ${{ env.GIT_BRANCH }}
           files: |
             ${{ env.COMPONENT }}-md-${{ env.COMPONENT_VERSION }}.tar.gz
             ${{ env.COMPONENT }}-km-${{ env.COMPONENT_VERSION }}.tar.gz
