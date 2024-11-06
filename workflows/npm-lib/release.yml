@@ -332,7 +332,7 @@ jobs:
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
-          target_commitish: ${{ env.GIT_BRANCH }}
+          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
           token: ${{ env.TOKEN }} # secrets.GITHUB_TOKEN würde keine Folge-WF triggern
 
       # Jira Fix-Version setzen
