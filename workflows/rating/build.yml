@@ -163,7 +163,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.COMPONENT_VERSION }}
-          target_commitish: ${{ env.GIT_BRANCH }}
+          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
           files: ${{ env.APPLICATION_ZIP_PATH }}${{ env.APPLICATION_ZIP_NAME }}-${{ env.COMPONENT_VERSION }}.zip
           token: ${{ env.TOKEN }}
           name:  ${{ env.COMPONENT_VERSION }}
