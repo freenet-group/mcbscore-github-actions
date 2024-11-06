@@ -163,7 +163,7 @@ jobs:
           token: ${{ env.TOKEN }}
           name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
-          target_commitish: ${{ env.BRANCH_NAME }}
+          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
 
       # ##################################################################################
       # Re-Merge
