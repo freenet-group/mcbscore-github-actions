@@ -84,8 +84,9 @@ jobs:
         run: |
           # Aktuelles Datum im ISO 8601-Format abrufen
           CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "Aktuelles Datum: $CURRENT_DATE"
           # Datum vor x Tagen (aus der Eingabe) berechnen
-          THRESHOLD_DATE=$(date -u -d "$CURRENT_DATE -${{ github.event.inputs.threshold-days }} days" +"%Y-%m-%dT%H:%M:%SZ")
+          THRESHOLD_DATE=$(date -u -d "$CURRENT_DATE -${{ github.inputs.threshold-days }} days" +"%Y-%m-%dT%H:%M:%SZ")
           echo "Prüfdatum: $THRESHOLD_DATE"
 
           # Stacks auflisten
