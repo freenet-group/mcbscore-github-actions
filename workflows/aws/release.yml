@@ -315,7 +315,7 @@ jobs:
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
-          target_commitish: ${GITHUB_REF#refs/heads/}
+          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
           token: ${{ env.TOKEN }}
 
       # Jira Fix-Version setzen
