@@ -10,7 +10,7 @@ on:
     types: [opened, labeled, unlabeled, synchronize, reopened, ready_for_review]
 
 jobs:
-  # Syncronisiert die GitHub PR Labels mit den Jira Components
+  # Synchronisiert die GitHub PR Labels mit den Jira Components
   syncLabels:
     runs-on: ubuntu-latest
     steps:
@@ -106,3 +106,67 @@ jobs:
           label_list: 'ms-configuration:yes, ms-deployment:yes'
           user_name_list: '@freenet-group/abr-ms-gh-deployments'
           pull_request_number: ${{ github.event.pull_request.number }}
+
+  # Prüft die API-Version in den API-Doku-YAML-Dateien
+  checkApiVersion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        
+      - name: workflow.config einlesen
+        id: read-properties
+        run: |
+          { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
+      - name: Check API Version
+        if: ${{ env.API_DOC_YAML_PATTERN != ''}}
+        shell: bash
+        run: |
+          echo "API VERSION CHECK: $API_DOC_YAML_PATTERN"
+          echo -e "==================\n"
+          yamlFiles=$(find . -wholename "$API_DOC_YAML_PATTERN")
+          if [ -z "$yamlFiles" ]; then
+            echo "keine yaml-Dateien gefunden!"
+            exit 1
+          else
+              echo -e "yaml-Dateien gefunden :\n$yamlFiles\n"
+          fi
+
+          for yamlFile in $yamlFiles; do
+              echo "Teste yaml-Datei '$yamlFile' ..."
+              # Versionscheck
+              version=$(grep 'version:' $yamlFile)
+              if [ -z "$version" ]; then
+                  echo "No 'version:' found in $yamlFile"
+                  exit 1
+              else
+                  version=${version/  version: /}
+                  echo "version: $version"
+                  # check, ob version "{patchLevel}" enthält
+                  if [[ $version == *"{patchLevel}"* ]]; then
+                      echo -e "'version:' enthält '{patchlevel}'!\nBitte konkrete Version in master-yaml setzen, transform ausführen und yamls einchecken."
+                      exit 1
+                  fi
+                  # check, ob Version bei/nach Dateiänderung geändert wurde
+                  # Zeile mit version: suchen
+                  versionLine=$(grep -n 'version:' $yamlFile | cut -d: -f1)
+                  #echo "version line: $versionLine"
+                  # Datum der letzten Änderung an der Datei
+                  lastChange=$(git log -1 --pretty="format:%ct" $yamlFile)
+                  echo -e "Zeitpunkt letzte Dateiänderung:\t\t$lastChange ($(date -d @$lastChange))"
+                  # Commit-Hash der letzten Änderung an der Versionszeile
+                  commitHash=$(git log -n 1 -L "$versionLine,$versionLine:$yamlFile" | grep "commit")
+                  commitHash=${commitHash/commit /}
+                  #echo "commit hash: $commitHash"
+                  # Datum der letzten Änderung an der Versionszeile
+                  versionChange=$(git log -1 --pretty="format:%ct" $commitHash)
+                  echo -e "Zeitpunkt letzte Versionsänderung:\t$versionChange ($(date -d @$versionChange))\n"
+                  # check, ob bei der letzten Dateiänderung (auch) die Versionsänderung erfolgte
+                  if [ $lastChange -gt $versionChange ]; then
+                      echo -e "Letzte Änderung an der Version vor letzter Dateiänderung!\nBitte Version in master-yaml anpassen, transform ausführen und yamls einchecken."
+                      exit 1
+                  fi
+                  echo ""
+              fi
+          done
