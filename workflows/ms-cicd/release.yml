@@ -607,7 +607,7 @@ jobs:
               -H "Accept: application/vnd.github+json" \
               /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions`
             # Package VersionIds in ein Array überführen
-            IFS=',' read -ra versionIdArray < <(jq -r '.[] | select(.name == \"$NEW_VERSION\") | .id' <<< "$resultJson")
+            IFS=',' read -ra versionIdArray < <(jq -r ".[] | select(.name == \"$NEW_VERSION\") | .id" <<< "$resultJson")
             for versionId in "${versionIdArray[@]}"; do
               if [ -n "$versionId" ]; then
                 gh api \
