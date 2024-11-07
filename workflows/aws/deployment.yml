@@ -37,8 +37,8 @@ jobs:
         id: determine-environment
         run: |
           ENVIRONMENT=GIT
-          if [ "${{ github.event.inputs.env }}" != "" ]; then
-            ENVIRONMENT=${{ github.event.inputs.env }}
+          if [ "${{ inputs.env }}" != "" ]; then
+            ENVIRONMENT=${{ inputs.env }}
           fi
           echo "ENVIRONMENT=$ENVIRONMENT" >> $GITHUB_OUTPUT
           echo "ENVIRONMENT_LOWERCASE=$(tr '[:upper:]' '[:lower:]' <<<"$ENVIRONMENT")" >> $GITHUB_OUTPUT
@@ -49,7 +49,7 @@ jobs:
           if [ "${{ github.event_name }}" == "release" ]; then
             echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
           fi
 
       - name: AWS Credentials bestimmen

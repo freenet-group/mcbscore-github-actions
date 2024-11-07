@@ -104,7 +104,7 @@ jobs:
         id: version-calculation
         env:
           NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
-          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           # Setze die neue kalkulierte Version in die Outputs
           echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
@@ -132,7 +132,7 @@ jobs:
         id: update_release_template
         env:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
-          INPUT_TICKET: ${{ github.event.inputs.ticket }}
+          INPUT_TICKET: ${{ inputs.ticket }}
         run: |
           template_file=".github/templates/release_template_aws.md"
           issueList=""
