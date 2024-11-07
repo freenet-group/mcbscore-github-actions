@@ -137,7 +137,7 @@ jobs:
 
       - name: Release Version in DB Changes eintragen
         id: set-version-in-dbchanges
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         shell: bash
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
@@ -531,7 +531,7 @@ jobs:
           fi
 
       - name: dbChanges Workflow starten
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: DB Changes
@@ -565,7 +565,7 @@ jobs:
           echo "BAMBI_ARGS=$(echo "$BAMBI_ARGS" | sed 's/"/\\"/g')" >> $GITHUB_ENV
 
       - name: postBuild Workflow starten
-        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: PostBuild
