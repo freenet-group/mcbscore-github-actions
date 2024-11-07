@@ -331,6 +331,7 @@ jobs:
           name: ${{ steps.version-calculation.outputs.new_version }}
           prerelease: ${{ github.event.inputs.pre-release }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
+          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
           token: ${{ env.TOKEN }}
 
       - name: postBuild Workflow starten
