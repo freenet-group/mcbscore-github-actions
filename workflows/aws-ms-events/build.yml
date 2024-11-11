@@ -76,7 +76,6 @@ jobs:
       # ##################################################################################
 
       - name: Commit version
-        id: commit-version
         if: env.BUILD_TYPE == 'RELEASE'
         shell: bash
         run: |
