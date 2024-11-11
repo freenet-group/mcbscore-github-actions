@@ -122,51 +122,52 @@ jobs:
       - name: Check API Version
         if: ${{ env.API_DOC_YAML_PATTERN != ''}}
         shell: bash
-        run: |
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |        
           echo "API VERSION CHECK: $API_DOC_YAML_PATTERN"
-          echo -e "==================\n"
-          yamlFiles=$(find . -wholename "$API_DOC_YAML_PATTERN")
-          if [ -z "$yamlFiles" ]; then
-            echo "keine yaml-Dateien gefunden!"
-            exit 1
+          changedFiles=$(gh pr view ${{github.event.number}} --json files --jq '.files.[].path')
+          yamlRegex=${API_DOC_YAML_PATTERN/.\//}
+          yamlRegex=${yamlRegex/\*.yaml/}
+          changedYamlCount=$(echo $changedFiles | grep -c "$yamlRegex")
+          if [ $changedYamlCount -eq 0 ]; then
+            echo "keine yaml-Änderungen in Pullrequest #${{github.event.number}} gefunden!"
+            exit 0
           else
-              echo -e "yaml-Dateien gefunden :\n$yamlFiles\n"
+            echo -e "Änderungen an yaml-Dateien in Pullrequest #${{github.event.number}} gefunden!\n"
+            # alle PR-Commits holen
+            prCommits=$(gh pr view ${{github.event.number}} --json commits --jq '.commits.[].oid')
+            yamlFiles=$(find . -wholename "$API_DOC_YAML_PATTERN")
+  
+            for yamlFile in $yamlFiles; do
+                echo "Teste yaml-Datei '$yamlFile' ..."
+                # Versionscheck
+                version=$(grep 'version:' $yamlFile)
+                if [ -z "$version" ]; then
+                    echo "No 'version:' found in $yamlFile"
+                    exit 1
+                else
+                    version=${version/  version: /}
+                    echo "version: $version"
+                    # check, ob version "{patchLevel}" enthält
+                    if [[ $version == *"{patchLevel}"* ]]; then
+                        echo -e "'version:' enthält '{patchlevel}'!\nBitte konkrete Version in master-yaml setzen, transform ausführen und yamls einchecken."
+                        exit 1
+                    fi
+                    # check, ob Version bei/nach Dateiänderung geändert wurde
+                    # Zeile mit version: suchen
+                    versionLine=$(grep -n 'version:' $yamlFile | cut -d: -f1)
+                    # Commit-Hash der letzten Änderung an der Versionszeile
+                    commitHash=$(git log -n 1 -L "$versionLine,$versionLine:$yamlFile" | grep "commit")
+                    commitHash=${commitHash/commit /}
+                    echo "Commit '$commitHash' der letzten Versionsänderung in PR enthalten?"
+                    if [[ $prCommits == *"$commitHash"* ]]; then
+                        echo "Ja"
+                    else
+                        echo -e "Versionsänderung nicht in PR enthalten!\nBitte Version in master-yaml anpassen, transform ausführen und yamls einchecken."
+                        exit 1
+                    fi                    
+                    echo ""
+                fi
+            done
           fi
-
-          for yamlFile in $yamlFiles; do
-              echo "Teste yaml-Datei '$yamlFile' ..."
-              # Versionscheck
-              version=$(grep 'version:' $yamlFile)
-              if [ -z "$version" ]; then
-                  echo "No 'version:' found in $yamlFile"
-                  exit 1
-              else
-                  version=${version/  version: /}
-                  echo "version: $version"
-                  # check, ob version "{patchLevel}" enthält
-                  if [[ $version == *"{patchLevel}"* ]]; then
-                      echo -e "'version:' enthält '{patchlevel}'!\nBitte konkrete Version in master-yaml setzen, transform ausführen und yamls einchecken."
-                      exit 1
-                  fi
-                  # check, ob Version bei/nach Dateiänderung geändert wurde
-                  # Zeile mit version: suchen
-                  versionLine=$(grep -n 'version:' $yamlFile | cut -d: -f1)
-                  #echo "version line: $versionLine"
-                  # Datum der letzten Änderung an der Datei
-                  lastChange=$(git log -1 --pretty="format:%ct" $yamlFile)
-                  echo -e "Zeitpunkt letzte Dateiänderung:\t\t$lastChange ($(date -d @$lastChange))"
-                  # Commit-Hash der letzten Änderung an der Versionszeile
-                  commitHash=$(git log -n 1 -L "$versionLine,$versionLine:$yamlFile" | grep "commit")
-                  commitHash=${commitHash/commit /}
-                  #echo "commit hash: $commitHash"
-                  # Datum der letzten Änderung an der Versionszeile
-                  versionChange=$(git log -1 --pretty="format:%ct" $commitHash)
-                  echo -e "Zeitpunkt letzte Versionsänderung:\t$versionChange ($(date -d @$versionChange))\n"
-                  # check, ob bei der letzten Dateiänderung (auch) die Versionsänderung erfolgte
-                  if [ $lastChange -gt $versionChange ]; then
-                      echo -e "Letzte Änderung an der Version vor letzter Dateiänderung!\nBitte Version in master-yaml anpassen, transform ausführen und yamls einchecken."
-                      exit 1
-                  fi
-                  echo ""
-              fi
-          done
