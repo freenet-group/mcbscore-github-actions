@@ -129,8 +129,7 @@ jobs:
           changedFiles=$(gh pr view ${{github.event.number}} --json files --jq '.files.[].path')
           yamlRegex=${API_DOC_YAML_PATTERN/.\//}
           yamlRegex=${yamlRegex/\*.yaml/}
-          changedYamlCount=$(echo $changedFiles | grep -c "$yamlRegex")
-          if [ $changedYamlCount -eq 0 ]; then
+          if [[ $changedFiles != *"$yamlRegex"* ]]; then
             echo "keine yaml-Änderungen in Pullrequest #${{github.event.number}} gefunden!"
             exit 0
           else
