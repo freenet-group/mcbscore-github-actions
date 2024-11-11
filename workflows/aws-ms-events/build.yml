@@ -76,6 +76,7 @@ jobs:
       # ##################################################################################
 
       - name: Commit version
+        id: commit-version
         if: env.BUILD_TYPE == 'RELEASE'
         shell: bash
         run: |
@@ -99,13 +100,21 @@ jobs:
         run: |
           tar -czvf serverless-${{ env.COMPONENT_VERSION }}.tar.gz resources serverless.yaml
 
+      - id: determine-commit-to-tag
+        name: Ermittelt den Commit, an dem das Tag gesetzt werden soll
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        shell: bash
+        run: |
+          commit_sha=$(git rev-parse HEAD)
+          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
+
       # MD Release ZIP hinzufügen
       - name: Upload Archive
         uses: softprops/action-gh-release@v2
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         with:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
-          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
+          target_commitish: ${{ steps.determine-commit-to-tag.outputs.commit_sha }}
           files: serverless-${{ env.COMPONENT_VERSION }}.tar.gz
           token: ${{ env.TOKEN }}
           name:  ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}

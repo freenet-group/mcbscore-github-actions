@@ -320,7 +320,6 @@ jobs:
           ## Coverage
           echo "Coverage setzen"
           sed -i 's/<!-- COVERAGE_PLACEHOLDER -->/${{ steps.fetch-coverage.outputs.coverage }}/' "$template_file";
-          git push --tags -f
 
       - name: Release erstellen
         uses: softprops/action-gh-release@v2
@@ -332,7 +331,7 @@ jobs:
           name: ${{ steps.version-calculation.outputs.new_version }}
           prerelease: ${{ github.event.inputs.pre-release }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
-          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
+          target_commitish: ${{ steps.checkout-repository.outputs.commit }}
           token: ${{ env.TOKEN }}
 
       - name: postBuild Workflow starten

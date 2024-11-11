@@ -115,6 +115,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ env.TOKEN }}
 
+      - id: determine-commit-to-tag
+        name: Ermittelt den Commit, an dem das Tag gesetzt werden soll
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        shell: bash
+        run: |
+          commit_sha=$(git rev-parse HEAD)
+          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
+
       # Release JAR hinzufügen
       - name: Upload Release JAR
         id: upload-release-jar
@@ -122,7 +130,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.COMPONENT_VERSION }}
-          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
+          target_commitish: ${{ steps.determine-commit-to-tag.outputs.commit_sha }}
           files: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
           name:  ${{ env.COMPONENT_VERSION }}

@@ -323,6 +323,13 @@ jobs:
             sed -i 's/<!-- DEPENDENCIES_PLACEHOLDER -->/:white_check_mark: Keine Dependencies/' "$template_file";
           fi
 
+      - id: determine-commit-to-tag
+        name: Ermittelt den Commit, an dem das Tag gesetzt werden soll
+        shell: bash
+        run: |
+          commit_sha=$(git rev-parse HEAD)
+          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
+
       - name: Release erstellen
         uses: softprops/action-gh-release@v2.0.8
         with:
@@ -333,7 +340,7 @@ jobs:
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
-          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
+          target_commitish: ${{ steps.determine-commit-to-tag.outputs.commit_sha }}
           token: ${{ env.TOKEN }} # secrets.GITHUB_TOKEN würde keine Folge-WF triggern
 
       # Jira Fix-Version setzen

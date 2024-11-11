@@ -242,6 +242,14 @@ jobs:
           path: '**/test-results/**/*.xml'
           overwrite: true
 
+      - id: determine-commit-to-tag
+        name: Ermittelt den Commit, an dem das Tag gesetzt werden soll
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        shell: bash
+        run: |
+          commit_sha=$(git rev-parse HEAD)
+          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
+
       # PreRelease JAR hinzufügen
       - name: Upload PreRelease JAR
         id: upload-prerelease-jar
@@ -253,7 +261,7 @@ jobs:
           token: ${{ env.TOKEN }}
           name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: false
-          target_commitish: ${{ env.GIT_BRANCH }}
+          target_commitish: ${{ steps.determine-commit-to-tag.outputs.commit_sha }}
           prerelease: true
 
       # PreRelease ZIP hinzufügen
@@ -267,7 +275,7 @@ jobs:
           token: ${{ env.TOKEN }}
           name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: false
-          target_commitish: ${{ env.GIT_BRANCH }}
+          target_commitish: ${{ steps.determine-commit-to-tag.outputs.commit_sha }}
           prerelease: true
 
       # Vorhandene Open API Yamls als PreRelease Asset hinzufügen
@@ -306,7 +314,7 @@ jobs:
           token: ${{ env.TOKEN }}
           name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
-          target_commitish: ${{ env.GIT_BRANCH }}
+          target_commitish: ${{ steps.determine-commit-to-tag.outputs.commit_sha }}
 
       # Release ZIP hinzufügen
       - name: Upload Release ZIP
@@ -319,7 +327,7 @@ jobs:
           token: ${{ env.TOKEN }}
           name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
-          target_commitish: ${{ env.GIT_BRANCH }}
+          target_commitish: ${{ steps.determine-commit-to-tag.outputs.commit_sha }}
 
       # Vorhandene Open API Yamls als Asset hinzufügen
       - name: Upload API Doc Assets
