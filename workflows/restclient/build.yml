@@ -123,6 +123,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.COMPONENT_VERSION }}
+          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
           files: ./generated/${{ env.COMPONENT }}/build/libs/${{ env.COMPONENT }}-${{ env.COMPONENT_VERSION }}.jar
           token: ${{ env.TOKEN }}
           name:  ${{ env.COMPONENT_VERSION }}

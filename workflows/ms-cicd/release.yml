@@ -137,7 +137,7 @@ jobs:
 
       - name: Release Version in DB Changes eintragen
         id: set-version-in-dbchanges
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         shell: bash
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
@@ -187,6 +187,7 @@ jobs:
         env:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
           INPUT_TICKET: ${{ github.event.inputs.ticket }}
+        shell: bash
         run: |
           template_file=".github/templates/release_template.md"
           issueList=""
@@ -466,6 +467,7 @@ jobs:
             }
 
       - name: Deployment Workflow Status prüfen
+        shell: bash
         run: |
           # Maximal 30 Checks, alle 30 Sekunden, also 15 Minuten maximal
           MAX_CHECKS=30  # Number of checks before timeout, for 15 minutes total.
@@ -531,7 +533,7 @@ jobs:
           fi
 
       - name: dbChanges Workflow starten
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: DB Changes
@@ -565,7 +567,7 @@ jobs:
           echo "BAMBI_ARGS=$(echo "$BAMBI_ARGS" | sed 's/"/\\"/g')" >> $GITHUB_ENV
 
       - name: postBuild Workflow starten
-        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: PostBuild
@@ -586,6 +588,7 @@ jobs:
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
           GH_TOKEN: ${{ env.TOKEN }}
+        shell: bash
         run: |
           if [ "${{ steps.set-version-in-dbchanges.conclusion }}" == 'success' ] && [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
             # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
@@ -607,7 +610,7 @@ jobs:
               -H "Accept: application/vnd.github+json" \
               /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions`
             # Package VersionIds in ein Array überführen
-            IFS=',' read -ra versionIdArray < <(jq -r '.[] | select(.name == \"$NEW_VERSION\") | .id' <<< "$resultJson")
+            IFS=',' read -ra versionIdArray < <(jq -r ".[] | select(.name == \"$NEW_VERSION\") | .id" <<< "$resultJson")
             for versionId in "${versionIdArray[@]}"; do
               if [ -n "$versionId" ]; then
                 gh api \

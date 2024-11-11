@@ -124,6 +124,7 @@ jobs:
         env:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
           INPUT_TICKET: ${{ github.event.inputs.ticket }}
+        shell: bash
         run: |
           template_file=".github/templates/release_template_javalib.md"
           issueList=""
@@ -331,6 +332,7 @@ jobs:
           name: ${{ steps.version-calculation.outputs.new_version }}
           prerelease: ${{ github.event.inputs.pre-release }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
+          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
           token: ${{ env.TOKEN }}
 
       - name: postBuild Workflow starten
@@ -356,6 +358,7 @@ jobs:
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
           GH_TOKEN: ${{ env.TOKEN }}
+        shell: bash
         run: |
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
