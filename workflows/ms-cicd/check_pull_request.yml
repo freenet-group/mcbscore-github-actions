@@ -142,9 +142,8 @@ jobs:
             for yamlFile in $yamlFiles; do
                 echo "Teste yaml-Datei '$yamlFile' ..."
                 # Versionscheck
-                version=$(grep 'version:' $yamlFile)
-                if [ -z "$version" ]; then
-                    echo "No 'version:' found in $yamlFile"
+                if ! version=$(grep -P '^\s*version:' "$yamlFile"); then
+                    echo "Kein 'version:' gefunden in $yamlFile"
                     exit 1
                 else
                     version=${version/  version: /}
