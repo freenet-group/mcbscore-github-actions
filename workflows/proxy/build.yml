@@ -102,6 +102,19 @@ jobs:
           echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
           git push
 
+      - id: determine-commit-to-tag
+        name: Ermittelt den Commit, an dem das Tag gesetzt werden soll
+        if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
+        shell: bash
+        run: |
+          if [ "$BUILD_TYPE" == "RELEASE" ]; then
+            echo "commit_sha=${{ steps.commit-version.outputs.commit_sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "commit_sha=${{ steps.checkout-repository.outputs.commit }}" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          BUILD_TYPE: ${{ env.BUILD_TYPE }}
+
       - name: Run Build
         shell: bash
         run: |
@@ -165,7 +178,7 @@ jobs:
           token: ${{ env.TOKEN }}
           name: ${{ env.RELEASE_PREFIX }}${{ env.COMPONENT_VERSION }}
           draft: ${{ env.DRAFT }}
-          target_commitish: ${{ steps.commit-version.outputs.commit_sha }}
+          target_commitish: ${{ steps.determine-commit-to-tag.outputs.commit_sha }}
 
       # ##################################################################################
       # Re-Merge
