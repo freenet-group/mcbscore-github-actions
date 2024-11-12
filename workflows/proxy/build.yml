@@ -98,8 +98,6 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "<>"
           git commit -am "[tagging] ${{ env.COMPONENT_VERSION }}"
-          commit_sha=$(git rev-parse HEAD)
-          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
           git push
 
       - id: determine-commit-to-tag
@@ -107,13 +105,8 @@ jobs:
         if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
         shell: bash
         run: |
-          if [ "$BUILD_TYPE" == "RELEASE" ]; then
-            echo "commit_sha=${{ steps.commit-version.outputs.commit_sha }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "commit_sha=${{ steps.checkout-repository.outputs.commit }}" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          BUILD_TYPE: ${{ env.BUILD_TYPE }}
+          commit_sha=$(git rev-parse HEAD)
+          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
 
       - name: Run Build
         shell: bash
