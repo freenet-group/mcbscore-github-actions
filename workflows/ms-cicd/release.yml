@@ -50,10 +50,8 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_user = USER,
             /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
-            /github/common/sonar/api_url = SONAR_API_URL,
             /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
             /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
             /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
