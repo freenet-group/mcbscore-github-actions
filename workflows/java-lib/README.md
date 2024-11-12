@@ -2,9 +2,9 @@
 
 | Workflow | Beschreibung |
 | -------- | ------------ |
-| build.yml | Baut das Projekt und führt die Tests aus |
-| check_code.yml | Prüft den Code auf UTF und Markierungen. Bei Auffäligkeiten wird ein Kommentar erstellt. |
-| check_pull_request.yml | Synchronisiert die Labels mit unserem ABRMS/MCBS-Jira-Projekt. Danach wird auf Pflichtlabels geprüft und gegebenfalls Bambi (API) und DOGS (@freenet-group/abr-ms-gh-deployments) informiert. Auch hier wird bei Auffälligkeiten ein Kommentar erstellt. |
+| build.yml | Baut das Projekt und fÃ¼hrt die Tests aus |
+| check_code.yml | PrÃ¼ft den Code auf UTF und Markierungen. Bei AuffÃ¤ligkeiten wird ein Kommentar erstellt. |
+| check_pull_request.yml | Synchronisiert die Labels mit unserem ABRMS/MCBS-Jira-Projekt. Danach wird auf Pflichtlabels geprÃ¼ft und gegebenfalls Bambi (API) und DOGS (@freenet-group/abr-ms-gh-deployments) informiert. Auch hier wird bei AuffÃ¤lligkeiten ein Kommentar erstellt. |
 | release.yml | Erstellt ein Release mit Release-Notes und deployt das Release auf DEV |
 | postBuild.yml | Verteilt die Release-Information an Jira und Teams |
 
@@ -22,11 +22,11 @@
     * General
         * Default-Branch auf "main" setzen. Im neuen Ablauf wird nach jedem Merge eine neue Version gebaut, somit ist kein "develop"- oder "release"-Branch mehr notwendig
     * Labels
-        * Labels sind ein wenig versteckt, können aber unter Issues->Labels gefunden werden
+        * Labels sind ein wenig versteckt, kÃ¶nnen aber unter Issues->Labels gefunden werden
         * Folgende Labels anlegen oder Farben anpassen:
-            * release:major mit Color #B60205 ?
-            * release:minor mit Color #FBCA04 ?
-            * release:patch mit Color #0E8A16 ?
+            * release:major mit Color #B60205 ğŸ”´
+            * release:minor mit Color #FBCA04 ğŸŸ¡
+            * release:patch mit Color #0E8A16 ğŸŸ¢
             * renovate mit Color #1D76DB
 
 ### Anpassung der distribute.yml
@@ -35,10 +35,10 @@ Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigene
 
 * Hierzu das Repository in die "java-lib" Gruppe verschieben
     * Branch auf "main" setzen
-    * Die Gruppe unter "strategy.matrix.repository.group" muss auf "java-lib" geändert werden
-    * Die Workflows müssen gegen den env.DEFAULT_WORKFLOWS geprüft werden und können danach ebenfalls entfernt werden
+    * Die Gruppe unter "strategy.matrix.repository.group" muss auf "java-lib" geÃ¤ndert werden
+    * Die Workflows mÃ¼ssen gegen den env.DEFAULT_WORKFLOWS geprÃ¼ft werden und kÃ¶nnen danach ebenfalls entfernt werden
 * Im Anschluss den Workflow unter github->actions->workflows->distribute.yml mit dem Branch und der Gruppe java-lib verteilen
 
-* Unter der spotless Verteilung muss der Branch von "develop" auf "main" geändert werden.
+* Unter der spotless Verteilung muss der Branch von "develop" auf "main" geÃ¤ndert werden.
 
 * Nach Abschluss des Umbaus und Tests kann dieser PR ebenfalls gemerged werden.
