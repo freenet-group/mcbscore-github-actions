@@ -127,9 +127,9 @@ jobs:
         run: |        
           echo "API VERSION CHECK: $API_DOC_YAML_PATTERN"
           changedFiles=$(gh pr view ${{github.event.number}} --json files --jq '.files.[].path')
-          yamlRegex=${API_DOC_YAML_PATTERN/.\//}
-          yamlRegex=${yamlRegex/\*.yaml/}
-          if [[ $changedFiles != *"$yamlRegex"* ]]; then
+          yamlPattern=${API_DOC_YAML_PATTERN/.\//}
+          yamlPattern=${yamlPattern/\*.yaml/}
+          if [[ $changedFiles != *"$yamlPattern"* ]]; then
             echo "keine yaml-Änderungen in Pullrequest #${{github.event.number}} gefunden!"
             exit 0
           else
@@ -152,12 +152,11 @@ jobs:
                         echo -e "'version:' enthält '{patchlevel}'!\nBitte konkrete Version in master-yaml setzen, transform ausführen und yamls einchecken."
                         exit 1
                     fi
-                    # check, ob Version bei/nach Dateiänderung geändert wurde
+                    # check, ob Versionsänderung im PR
                     # Zeile mit version: suchen
                     versionLine=$(grep -n 'version:' $yamlFile | cut -d: -f1)
                     # Commit-Hash der letzten Änderung an der Versionszeile
-                    commitHash=$(git log -n 1 -L "$versionLine,$versionLine:$yamlFile" | grep "commit")
-                    commitHash=${commitHash/commit /}
+                    commitHash=$(git log -n 1 -L "$versionLine,$versionLine:$yamlFile" --pretty=format:%H -s)
                     echo "Commit '$commitHash' der letzten Versionsänderung in PR enthalten?"
                     if [[ $prCommits == *"$commitHash"* ]]; then
                         echo "Ja"
