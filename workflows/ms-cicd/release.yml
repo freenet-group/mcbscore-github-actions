@@ -166,14 +166,31 @@ jobs:
 
       - name: Sonar-Coverage abholen
         id: fetch-coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
-        uses: ./mcbscore/github/actions/sonar-check
+        if: ${{ (env.JAVA_VERSION != '8') && (env.JAVA_VERSION != '11') && (env.COVERAGE_APP != '') && (env.COVERAGE_PATH != '') }}
+        uses: actions/github-script@v7
         with:
-          sonarUrl: ${{ env.SONAR_API_URL }} 
-          sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          projectKeyPath: ${{ env.COVERAGE_PATH }}
-          projectKeyName: ${{ env.COVERAGE_APP }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          script: |
+            const response = await fetch('${{ secrets.SONARQUBE_HOST_URL }}/api/measures/component?component=${{ env.COVERAGE_PATH }}:${{ env.COVERAGE_APP }}&metricKeys=coverage', {            
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${{ secrets.SONARQUBE_TOKEN }}`
+              }
+            });
+            // check response
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Find the 'coverage' metric value
+            const coverageMetric = data.component.measures.find(measure => measure.metric === "coverage");
+            const coverageValue = coverageMetric ? coverageMetric.value : 'Metric not found';
+            
+            console.log(`Coverage Value: ${coverageValue}`);
+            
+            // Set coverageValue as an output
+            core.setOutput('coverage', coverageValue);
 
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
