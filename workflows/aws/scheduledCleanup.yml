@@ -32,8 +32,8 @@ jobs:
             echo "Setze dry-run auf false, da es sich um ein Schedule-Event handelt."
             echo "dry-run=false" >> $GITHUB_OUTPUT
           else
-            echo "Setze dry-run auf ${{ github.inputs.dry-run }}."
-            echo "dry-run=${{ github.inputs.dry-run }}" >> $GITHUB_OUTPUT
+            echo "Setze dry-run auf ${{ inputs.dry-run }}."
+            echo "dry-run=${{ inputs.dry-run }}" >> $GITHUB_OUTPUT
           fi
 
       - uses: actions/checkout@v4
@@ -84,8 +84,9 @@ jobs:
         run: |
           # Aktuelles Datum im ISO 8601-Format abrufen
           CURRENT_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "Aktuelles Datum: $CURRENT_DATE"
           # Datum vor x Tagen (aus der Eingabe) berechnen
-          THRESHOLD_DATE=$(date -u -d "$CURRENT_DATE -${{ github.event.inputs.threshold-days }} days" +"%Y-%m-%dT%H:%M:%SZ")
+          THRESHOLD_DATE=$(date -u -d "$CURRENT_DATE -${{ inputs.threshold-days }} days" +"%Y-%m-%dT%H:%M:%SZ")
           echo "Prüfdatum: $THRESHOLD_DATE"
 
           # Stacks auflisten

@@ -40,8 +40,8 @@ jobs:
       - name: Stage setzen
         id: set-stage
         run: |
-          if [ -n "${{ github.event.inputs.stage }}" ]; then
-            echo "STAGE=${{ github.event.inputs.stage }}" >> $GITHUB_ENV
+          if [ -n "${{ inputs.stage }}" ]; then
+            echo "STAGE=${{ inputs.stage }}" >> $GITHUB_ENV
           else
             PR_NUMBER=$(echo ${{ github.event.pull_request.number }})
             echo "STAGE=pr-${PR_NUMBER}" >> $GITHUB_ENV
