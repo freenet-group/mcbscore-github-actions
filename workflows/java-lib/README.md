@@ -42,3 +42,84 @@ Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigene
 * Unter der spotless Verteilung muss der Branch von "develop" auf "main" geändert werden.
 
 * Nach Abschluss des Umbaus und Tests kann dieser PR ebenfalls gemerged werden.
+
+### Anpassung im Repository
+In den workflow.properties muß die AtlassianTools Version >=4.0.18 sein.
+
+```properties
+ATLASSIAN_DEVELOPER_TOOLS_VERSION=4.0.18
+```
+
+Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
+
+* Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
+* workflow.properties erweitern
+
+    ```properties
+    #...
+    DEPENDENCYTRACK_BOM_PATH=./build/reports/
+    DEPENDENCYTRACK_BOM_NAME=bom.json
+    ```
+Das Property JAVA_VERSION ist aus workflow.properties in gradle.properties zu übertragen.
+Das Property JAVA_VERSION ist aus workflow.properties zu entfernen.
+
+* cyclonedx-gradle-plugin in der build.gradle hinzufügen
+
+    ```groovy
+    plugins {
+        //...
+        id 'org.cyclonedx.bom' version '1.8.2'
+    }
+
+    //...
+
+    cyclonedxBom {
+        // includeConfigs is the list of configuration names to include when generating the BOM (leave empty to include every configuration)
+        includeConfigs = ["runtimeClasspath"]
+        // skipConfigs is a list of configuration names to exclude when generating the BOM
+        skipConfigs = ["compileClasspath", "testCompileClasspath"]
+        // Specified the type of project being built. Defaults to 'library'
+        projectType = "application"
+        // Specified the version of the CycloneDX specification to use. Defaults to 1.4.
+        schemaVersion = "1.4"
+        // The file name for the generated BOMs (before the file format suffix).
+        outputName = "bom"
+        // The file format generated, can be xml, json or all for generating both
+        outputFormat = "json"
+        // Exclude BOM Serial Number
+        includeBomSerialNumber = false
+        // Override component version
+        componentVersion = "local"
+    }
+  
+    tasks.processResources.dependsOn(cyclonedxBom)
+    ```
+* "gradlew clean build" müsste ein sbom file nun erzeugen
+
+### Anpassung des GitHub Repo mit offenem Pull-Request
+
+* settings:
+    * Branches
+        * "Branch Protection Rules" für "main" anlegen und folgende Einträge setzen:
+            * Require pull request reviews before merging
+            * Require approvals 1
+            * Dismiss stale pull request approvals when new commits are pushed
+            * Require status checks to pass before merging
+            * Require branches to be up to date before merging
+            * Status checks that are required
+                * build, checkLabels
+                    * build -> Job in der build.yml
+                    * checkLabels -> Job in der check_pull_request.yml
+                        * Alle 4 checkLabels WF
+
+Der PR dürfte nun auf ein Approval und auf die erfolgreichen Checks bestehen
+
+Im PR muß nun das Label "release:patch" gesetzt werden.
+
+PR mergen. Release Workflow abwarten und dann Release Notes prüfen und ggf. von Hand korrigieren. (Bei Umstellung von alten auf CICD Workflows mit Aktualisierung des main-Branches können vermeintlich betroffene Tickets ermitteln werden, die zu löschen sind.)
+
+In den Releases das letzte SNAPSHOT-Release löschen
+
+### Renovate Assignee Verteilung überarbeiten
+
+Im [Renovate Assignee Repo](https://github.com/freenet-group/mcbscore-renovate/blob/main/renovate-assignees.json) muss der Branch von 'develop' auf 'main' geändert werden.
