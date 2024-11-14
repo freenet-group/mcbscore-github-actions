@@ -50,7 +50,7 @@ runs:
     - name: Add Sonarqube Gradle Task
       if: ${{ (inputs.enableSonarCheckOnAllBranches == 'true' || env.BUILD_TYPE == 'DEVELOP') && env.COVERAGE_APP != '' }}
       shell: bash
-      run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} sonarqube -Dsonar.token=${{ inputs.sonarqubeToken }} -Dsonar.host.url=${{ inputs.sonarqubeUrl }}" >> $GITHUB_ENV
+      run: echo "GRADLE_COMMAND=${{ inputs.gradleCommand }} sonar -Dsonar.token=${{ inputs.sonarqubeToken }} -Dsonar.host.url=${{ inputs.sonarqubeUrl }}" >> $GITHUB_ENV
 
     - name: Add Publish Gradle Task
       if: env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP'
