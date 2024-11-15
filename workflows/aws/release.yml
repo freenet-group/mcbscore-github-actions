@@ -132,7 +132,11 @@ jobs:
         id: update_release_template
         env:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
-          INPUT_TICKET: ${{ inputs.ticket }}
+          INPUT_TICKET: ${{ github.event.inputs.ticket }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          JIRA_CLOUD_URL: ${{ env.JIRA_CLOUD_URL }}
+          COVERAGE_OUTPUT: ${{ steps.fetch-coverage.outputs.coverage }}
         run: |
           template_file=".github/templates/release_template_aws.md"
           issueList=""
@@ -166,9 +170,9 @@ jobs:
           fi
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
-            apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
+            apiResponse=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
 
             # Prüfen ob es sich um ein Array oder einen String handelt
             if jq -e 'type == "array"' <<<"$apiResponse" > /dev/null; then
@@ -209,10 +213,10 @@ jobs:
 
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
-            API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
+            API_ENDPOINT="${JIRA_CLOUD_URL}issue/$issueNumber"
             BASIC_AUTH=$(printf %s "$MCBSTEST_JIRACLOUD_CREDENTIALS" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
-            issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
+            issue_info=$(curl -L -H "$AUTH_HEADER" -H "Accept: application/json" "$API_ENDPOINT")
 
             # Epic / Parent ermitteln
             echo "Epic name for $issueNumber is being extracted"
