@@ -48,7 +48,11 @@ jobs:
             /github/secrets/mcbs_user = USER,
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
+            /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
+            /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
+            /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
+            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
 
       - name: Release Label einlesen
         id: release-label
@@ -96,6 +100,13 @@ jobs:
           JAVA_VERSION=$(grep 'JAVA_VERSION' gradle.properties | cut -d'=' -f2 | xargs)
           echo "JAVA_VERSION=$JAVA_VERSION"
           echo "JAVA_VERSION=$JAVA_VERSION" >> $GITHUB_ENV
+
+      - name: JIRA Komponente aus workflow.properties auslesen
+        id: jira_component
+        run: |
+          JIRA_COMPONENT=$(grep 'JIRA_COMPONENT' ./.github/workflow.properties | cut -d'=' -f2 | xargs)
+          echo "JIRA_COMPONENT=$JIRA_COMPONENT"
+          echo "JIRA_COMPONENT=$JIRA_COMPONENT" >> $GITHUB_ENV
 
       - name: Set up JDK
         id: setup-java
@@ -330,8 +341,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body_path: ".github/templates/release_template_javalib.md"
-          files: |
-            ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           prerelease: ${{ github.event.inputs.pre-release }}
@@ -352,6 +361,29 @@ jobs:
               "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}",
               "renovate": ${{ steps.update_release_template.outputs.renovate }}  
             }
+
+      - name: SBOM an DependencyTrack übergeben
+        uses: freenet-group/gh-upload-sbom-with-tagging@0.1.0
+        with:
+          component: ${{ env.JIRA_COMPONENT }}
+          component_version: ${{ steps.version-calculation.outputs.new_version }}
+          stage_tag: prod
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          bomfilename: ./build/reports/bom.json
+
+      - name: Alte SBOMs löschen
+        uses: freenet-group/sbom-cleanup@1.1.0
+        with:
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          project_prefix: ${{ env.JIRA_COMPONENT }}
+          days_to_keep: '90'
+          dry_run: 'false'
 
       - name: Setup Github CLI
         if: failure() || cancelled()
