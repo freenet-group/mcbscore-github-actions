@@ -118,7 +118,8 @@ jobs:
       - name: Gradle Build mit CyclonedxBom (SBOM)
         shell: bash
         run: |
-          sh ./gradlew -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build publish ${{ github.event.inputs.gradleOptions }}
+          chmod +x ./gradlew
+          ./gradlew -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build publish ${{ github.event.inputs.gradleOptions }}
 
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
