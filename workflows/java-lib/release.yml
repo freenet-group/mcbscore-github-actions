@@ -26,9 +26,7 @@ on:
 jobs:
   release:
     if: ${{ github.event.pull_request.merged == true || github.event_name == 'workflow_dispatch' }}
-    runs-on: [ self-hosted, k8s ]
-    outputs:
-      deleteList: ${{ steps.create-delete-list.outputs.deleteList }}    
+    runs-on: [ self-hosted, k8s ] 
     env:
       TZ: Europe/Berlin
       LANG: de_DE.UTF-8
@@ -359,9 +357,8 @@ jobs:
         if: failure() || cancelled()
         uses: freenet-actions/setup-github-cli@v3
 
-      - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
+      - name: Tag/Release/Packages löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
-        id: create-delete-list
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
           GH_TOKEN: ${{ env.TOKEN }}
@@ -380,50 +377,19 @@ jobs:
             # Repo bestimmen
             repo=$(gh repo view --json name -q ".name")
             # Organisation bestimmen
-            org=$(gh repo view --json owner -q ".owner.login")            
+            org=$(gh repo view --json owner -q ".owner.login")  
             # Liste der zugehörigen Packages bestimmen
             packageList=$(gh api --paginate "/orgs/$org/packages?package_type=maven" -q '.[] | select(.repository.name == "'$repo'") | .name')
             echo -e "Version $version muss aus den folgenden Packages entfernt werden:\n$packageList\n" 
-            # Variable für Lösch-JSON
-            deleteList="{\"include\":["
             # Version in Packages suchen
             for package in $packageList; do
               id=$(gh api "/orgs/$org/packages/maven/$package/versions" -q '.[] | select(.name == "'$version'") | .id')
               if [ -z "$id" ]; then
                 echo "Keine Version '$version' des Packages '$package' gefunden!"
                 continue
+              else
+                echo "Lösche Version '$version' des Packages '$package' mit der ID $id"
+                gh api -X DELETE "/orgs/$org/packages/maven/$package/versions/$id" || true
               fi
-              echo "Trage Package '$package' mit der ID $id zum Löschen der Version '$version' in Liste ein."
-              deleteList+="{\"package\": \"$package\", \"id\": \"$id\"},"
             done
-            deleteList+="]}"
-            deleteList=${deleteList/,]/]}
-            if [[ "$deleteList" == *"[]"* ]]; then
-              echo "Keine Version '$version' in den Packages gefunden!"              
-            else
-              echo -e "\nLöschliste:"
-              echo "$deleteList" | jq
-              # JSON in Ausgabe schreiben
-              echo "deleteList=$deleteList" >> "$GITHUB_OUTPUT"
-            fi
           fi
-
-  # Löschmatrix für die Packages
-  failureCleanup:
-    runs-on: ubuntu-latest
-    needs: release
-    if:  ${{needs.release.outputs.deleteList}}
-    strategy:
-      matrix: ${{fromJson(needs.release.outputs.deleteList)}}
-    steps:
-        - name: Setup Github CLI
-          uses: freenet-actions/setup-github-cli@v3
-
-        - name: Lösche Versionen aus den Packages
-          env:
-            GH_TOKEN: ${{ env.TOKEN }}
-          run: |
-            package=${{ matrix.package }}
-            id=${{ matrix.id }}
-            echo "Lösche Package '$package' mit der ID $id"
-            gh api -X DELETE "/orgs/$org/packages/maven/$package/versions/$id"
