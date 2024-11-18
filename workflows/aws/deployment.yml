@@ -140,7 +140,7 @@ jobs:
 
       - name: SBOM an DependencyTrack übergeben
         if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
-        uses: freenet-group/gh-upload-sbom-with-tagging@0.1.0
+        uses: freenet-group/gh-upload-sbom-with-tagging@0.1.2
         with:
           component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
           component_version: ${{ steps.determine-version.outputs.VERSION }}
