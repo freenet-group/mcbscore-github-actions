@@ -314,7 +314,7 @@ jobs:
           bomfilename: ${{ env.DEPENDENCYTRACK_BOM_PATH }}${{ env.DEPENDENCYTRACK_BOM_NAME }}
       
       - name: Alte SBOMs löschen
-        uses: freenet-group/sbom-cleanup@1.1.0
+        uses: freenet-group/sbom-cleanup@1.1.3
         with:
           dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
           dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
