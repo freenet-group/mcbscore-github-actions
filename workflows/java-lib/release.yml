@@ -104,7 +104,7 @@ jobs:
       - name: JIRA Komponente aus workflow.properties auslesen
         id: jira_component
         run: |
-          JIRA_COMPONENT=$(grep 'JIRA_COMPONENT' ./github/workflow.properties | cut -d'=' -f2 | xargs)
+          JIRA_COMPONENT=$(grep 'JIRA_COMPONENT' ./.github/workflow.properties | cut -d'=' -f2 | xargs)
           echo "JIRA_COMPONENT=$JIRA_COMPONENT"
           echo "JIRA_COMPONENT=$JIRA_COMPONENT" >> $GITHUB_ENV
 
