@@ -390,19 +390,39 @@ jobs:
         if: failure() || cancelled()
         uses: freenet-actions/setup-github-cli@v3
 
-      - name: Tag/Release löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
+      - name: Tag/Release/Packages löschen, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
           GH_TOKEN: ${{ env.TOKEN }}
         shell: bash
         run: |
+          # nur ausführen, wenn neue Version bekannt ist
           if [ -n "${{ steps.version-calculation.outputs.new_version }}" ]; then
+            version="${{ steps.version-calculation.outputs.new_version }}"
             # Wenn bereits ein Release zur Version erstellt wurde, dann lösche dieses. Ansonsten wird nur der Tag gelöscht
-            if gh release list --json tagName --jq ".[] | select(.tagName == \"$NEW_VERSION\") | .tagName" | grep -q .; then
-              gh release delete "$NEW_VERSION" --cleanup-tag --yes
+            if gh release list --json tagName --jq ".[] | select(.tagName == \"$version\") | .tagName" | grep -q .; then
+              gh release delete "$version" --cleanup-tag --yes
             else
-              git tag -d "$NEW_VERSION"
-              git push origin ":$NEW_VERSION"
+              git tag -d "$version"
+              git push origin ":$version"
             fi
+            # Repo bestimmen
+            repo=$(gh repo view --json name -q ".name")
+            # Organisation bestimmen
+            org=$(gh repo view --json owner -q ".owner.login")  
+            # Liste der zugehörigen Packages bestimmen
+            packageList=$(gh api --paginate "/orgs/$org/packages?package_type=maven" -q '.[] | select(.repository.name == "'$repo'") | .name')
+            echo -e "Version $version muss aus den folgenden Packages entfernt werden:\n$packageList\n" 
+            # Version in Packages suchen
+            for package in $packageList; do
+              id=$(gh api "/orgs/$org/packages/maven/$package/versions" -q '.[] | select(.name == "'$version'") | .id')
+              if [ -z "$id" ]; then
+                echo "Keine Version '$version' des Packages '$package' gefunden!"
+                continue
+              else
+                echo "Lösche Version '$version' des Packages '$package' mit der ID $id"
+                gh api -X DELETE "/orgs/$org/packages/maven/$package/versions/$id" || true
+              fi
+            done
           fi
