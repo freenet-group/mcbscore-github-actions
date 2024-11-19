@@ -53,22 +53,17 @@ ATLASSIAN_DEVELOPER_TOOLS_VERSION=4.0.18
 Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird auch gleich ein Release erstellt.
 
 * Prüfen, ob das Distribute die korrekten Workflows verteilt hat oder im Branch die Workflows vorhanden sind
-* workflow.properties erweitern
-
-    ```properties
-    #...
-    DEPENDENCYTRACK_BOM_PATH=./build/reports/
-    DEPENDENCYTRACK_BOM_NAME=bom.json
-    ```
-Das Property JAVA_VERSION ist aus workflow.properties in gradle.properties zu übertragen.
-Das Property JAVA_VERSION ist aus workflow.properties zu entfernen.
+* workflow.properties prüfen
+  Das Property JAVA_VERSION ist aus workflow.properties in gradle.properties zu übertragen.
+  Das Property JAVA_VERSION ist aus workflow.properties zu entfernen.
+* Außer ATLASSIAN_DEVELOPER_TOOLS_VERSION und JIRA_COMPONENT sind keine weiteren workflow.properties mehr erforderlich
 
 * cyclonedx-gradle-plugin in der build.gradle hinzufügen
 
     ```groovy
     plugins {
         //...
-        id 'org.cyclonedx.bom' version '1.8.2'
+        id 'org.cyclonedx.bom' version '1.10.0'
     }
 
     //...
@@ -94,8 +89,42 @@ Das Property JAVA_VERSION ist aus workflow.properties zu entfernen.
   
     tasks.processResources.dependsOn(cyclonedxBom)
     ```
+* Sicherstellen, daß ein Build den cyclonedxBom Task ausführt
+  ```groovy
+  tasks.named("processResources") {
+    dependsOn(rootProject.tasks.named("cyclonedxBom"))
+  }
+  ```
+* Sicherstellen, daß Sonar eine Test Coverage enthält
+  ```groovy
+  tasks.named("sonar") {
+  dependsOn(rootProject.tasks.named("jacocoTestReport"))
+  }
+  ```
+* Sicherstellen, daß ein ein Publish nicht ohne Sonar Check möglich ist
+  ```groovy
+  tasks.named("publish") {
+  dependsOn(rootProject.tasks.named("sonar"))
+  }
+  ```
 * "gradlew clean build" müsste ein sbom file nun erzeugen
 
+#### Optionale Umstellung auf Toolchains
+Folgendes in settings.gradle eintragen:
+```groovy
+plugins {
+id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+}
+```
+Folgendes in build.gradle eintragen:
+```groovy
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(project.JAVA_VERSION)
+		vendor = JvmVendorSpec.AZUL
+	}
+}
+```
 ### Anpassung des GitHub Repo mit offenem Pull-Request
 
 * settings:
