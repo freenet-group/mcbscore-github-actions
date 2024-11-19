@@ -114,6 +114,7 @@ jobs:
       # API ins Portal hochladen
       - name: Publish API Spec
         if: env.API_PATH != ''
+        continue-on-error: true
         uses: freenet-group/developer-portal-actions/upload-api-spec@v2
         with:
           openAPIPath: ${{ env.API_PATH }}
