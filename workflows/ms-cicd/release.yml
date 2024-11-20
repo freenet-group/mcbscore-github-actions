@@ -76,6 +76,15 @@ jobs:
           installGithubCli: true
           installJq: true
 
+      - name: Ausgewählte gradle.properties einlesen
+        id: read-gradle-properties
+        shell: bash
+        run: |
+          ARTIFACT_NAME=$(grep --perl '^ARTIFACT_NAME\s*=' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "artifact_name=$ARTIFACT_NAME" | tee -a -- "$GITHUB_OUTPUT"
+          ARTIFACT_GROUP_ID=$(grep --perl '^ARTIFACT_GROUP_ID\s*=' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "artifact_group_id=$ARTIFACT_GROUP_ID" | tee -a -- "$GITHUB_OUTPUT"
+
       - name: keystore-files kopieren
         if: ${{ env.KEY_SERVER != '' }}
         shell: bash
@@ -636,7 +645,7 @@ jobs:
             resultJson=`
             gh api \
               -H "Accept: application/vnd.github+json" \
-              /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions`
+              /orgs/freenet-group/packages/maven/${{ steps.read-gradle-properties.outputs.artifact_group_id }}.${{ steps.read-gradle-properties.outputs.artifact_name }}/versions`
             # Package VersionIds in ein Array überführen
             IFS=',' read -ra versionIdArray < <(jq -r ".[] | select(.name == \"$NEW_VERSION\") | .id" <<< "$resultJson")
             for versionId in "${versionIdArray[@]}"; do
@@ -644,7 +653,7 @@ jobs:
                 gh api \
                   --method DELETE \
                   -H "Accept: application/vnd.github+json" \
-                  /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions/${versionId}
+                  /orgs/freenet-group/packages/maven/${{ steps.read-gradle-properties.outputs.artifact_group_id }}.${{ steps.read-gradle-properties.outputs.artifact_name }}/versions/${versionId}
               fi
             done
           fi
