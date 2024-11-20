@@ -261,6 +261,7 @@ jobs:
         # Bei Bedarf kann als "workflows" eine abweichende Liste von zu verteilenden Workflow-Dateien angegeben werden
         repository:
           - { name: mcbs-connector-api, branch: main, group: java-lib }
+          - { name: lib-amount, branch: main, group: java-lib }
           - { name: lib-annotation, branch: main, group: java-lib }
     steps:
       - name: Repository auschecken
@@ -433,7 +434,6 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: lib-amount, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-common, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-enterprise, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-io, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
@@ -488,7 +488,7 @@ jobs:
       fail-fast: false
       matrix:
         repository:
-          - { name: lib-amount, branch: develop }
+          - { name: lib-amount, branch: main }
           - { name: lib-annotation, branch: main }
           - { name: lib-common, branch: develop }
           - { name: lib-enterprise, branch: develop }
