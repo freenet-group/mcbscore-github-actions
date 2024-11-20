@@ -80,12 +80,10 @@ jobs:
         id: read-gradle-properties
         shell: bash
         run: |
-          ARTIFACT_NAME=$(grep 'ARTIFACT_NAME' gradle.properties | cut -d'=' -f2 | xargs)
-          echo "artifact_name=$ARTIFACT_NAME"
-          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
-          ARTIFACT_GROUP_ID=$(grep 'ARTIFACT_GROUP_ID' gradle.properties | cut -d'=' -f2 | xargs)
-          echo "artifact_group_id=$ARTIFACT_GROUP_ID"
-          echo "artifact_group_id=$ARTIFACT_GROUP_ID" >> $GITHUB_OUTPUT
+          ARTIFACT_NAME=$(grep --perl '^ARTIFACT_NAME\s*=' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "artifact_name=$ARTIFACT_NAME" | tee -a -- "$GITHUB_OUTPUT"
+          ARTIFACT_GROUP_ID=$(grep --perl '^ARTIFACT_GROUP_ID\s*=' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "artifact_group_id=$ARTIFACT_GROUP_ID" | tee -a -- "$GITHUB_OUTPUT"
 
       - name: keystore-files kopieren
         if: ${{ env.KEY_SERVER != '' }}
