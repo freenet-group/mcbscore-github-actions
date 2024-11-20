@@ -234,7 +234,6 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mslib-aws, branch: develop, group: mslib, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: mslib-rest, branch: develop, group: mslib, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
     steps:
       - uses: actions/checkout@v4
@@ -263,6 +262,7 @@ jobs:
           - { name: mcbs-connector-api, branch: main, group: java-lib }
           - { name: lib-amount, branch: main, group: java-lib }
           - { name: lib-annotation, branch: main, group: java-lib }
+          - { name: mslib-aws, branch: main, group: java-lib }
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -538,7 +538,7 @@ jobs:
           - { name: ms-rating, branch: main }
           - { name: ms-user, branch: develop }
           - { name: ms-user-cleanup, branch: main }
-          - { name: mslib-aws, branch: develop }
+          - { name: mslib-aws, branch: main }
           - { name: mslib-rest, branch: develop }
           - { name: scaffold-clean-architecture-gradle-plugin, branch: develop }
 
