@@ -56,7 +56,7 @@ Hierzu sollte ein Branch mit PR für den SBOM-Einbau gemacht werden. Dann wird a
 * workflow.properties prüfen
   Das Property JAVA_VERSION ist aus workflow.properties in gradle.properties zu übertragen.
   Das Property JAVA_VERSION ist aus workflow.properties zu entfernen.
-* Außer ATLASSIAN_DEVELOPER_TOOLS_VERSION und JIRA_COMPONENT sind keine weiteren workflow.properties mehr erforderlich
+* Außer ATLASSIAN_DEVELOPER_TOOLS_VERSION, JIRA_COMPONENT und allen COVERAGE_ sind keine weiteren workflow.properties mehr erforderlich
 
 * cyclonedx-gradle-plugin in der build.gradle hinzufügen
 
