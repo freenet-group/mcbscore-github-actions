@@ -263,6 +263,7 @@ jobs:
           - { name: mcbs-connector-api, branch: main, group: java-lib }
           - { name: lib-amount, branch: main, group: java-lib }
           - { name: lib-annotation, branch: main, group: java-lib }
+          - { name: lib-common, branch: main, group: java-lib }
     steps:
       - name: Repository auschecken
         uses: actions/checkout@v4
@@ -434,7 +435,6 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: lib-common, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-enterprise, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-io, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-persistence, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
@@ -490,7 +490,7 @@ jobs:
         repository:
           - { name: lib-amount, branch: main }
           - { name: lib-annotation, branch: main }
-          - { name: lib-common, branch: develop }
+          - { name: lib-common, branch: main }
           - { name: lib-enterprise, branch: develop }
           - { name: lib-io, branch: develop }
           - { name: lib-persistence, branch: develop }
