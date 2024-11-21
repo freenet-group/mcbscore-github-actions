@@ -210,7 +210,7 @@ jobs:
             # Renovate Ticket überspringen, Rest aber prüfen
             if [ "$issueNumber" = "ABRMS-5265" ]; then
               title="${{ github.event.pull_request.title }}"
-              issueListLines+="| ABRMS-5265 | $title | Renovate | Renovate |\n"
+              issueListLines+="| ABRMS-5265 | $title | Renovate | Renovate |"$'\n'
               echo "renovate=true" >> "$GITHUB_OUTPUT"
               echo "renovate_title=$title" >> "$GITHUB_OUTPUT"
               continue  # Rest überspringen
@@ -252,14 +252,14 @@ jobs:
             # Dependencies extrahieren
             echo "Dependencies zu $issueNumber extrahieren"
             if custom_field_value=$(jq -r -e '.fields.customfield_10686' <<<"$issue_info"); then
-              dependencyList+="\t * :warning: $issueNumber: $custom_field_value\n"
+              dependencyList+=$'\t'" * :warning: $issueNumber: $custom_field_value"$'\n'
             else
               echo "No dependencies found for issue $issueNumber"
             fi
 
             # Ticket Tabelle ausfüllen
             echo "Tabelleneintrag zum Ticket $issueNumber wird erstellt"
-            issueListLines+="| $issueNumber | $title | $jiraLabels | $componentList |\n"
+            issueListLines+="| $issueNumber | $title | $jiraLabels | $componentList |"$'\n'
           
             # Verknüpfte Tickets
             echo "Verknüpfte Tickets zu $issueNumber einlesen und Tabelle befüllen"
@@ -278,7 +278,7 @@ jobs:
                 linkedStatus=$(jq -r '.inwardIssue.fields.status.name' <<<"$linkedIssue")
               fi
 
-              linkedIssuesListLines+="| $linkedIssueNumber | $linkedSummary | $linkedStatus | $linkedRelation |\n"
+              linkedIssuesListLines+="| $linkedIssueNumber | $linkedSummary | $linkedStatus | $linkedRelation |"$'\n'
               echo "Verknüpftes Ticket erkannt: $linkedIssueNumber - $linkedSummary"
             done
           done
@@ -316,7 +316,7 @@ jobs:
           echo "Dependencies setzen"
           if [ -n "$dependencyList" ]; then
             echo "dependencies=true" >> "$GITHUB_OUTPUT"
-            dependencyList="\n$dependencyList"
+            dependencyList=$'\n'"$dependencyList"
             sed -i "s/<!-- DEPENDENCIES_PLACEHOLDER -->/$dependencyList/" "$template_file";
           else 
             sed -i 's/<!-- DEPENDENCIES_PLACEHOLDER -->/:white_check_mark: Keine Dependencies/' "$template_file";
