@@ -46,96 +46,23 @@ runs:
           DOMAIN: ${{ inputs.domain }}
           ENVIRONMENT: ${{ inputs.environment }}
           DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
+          ACTION_PATH: ${{ github.action_path }}
         shell: bash
         run: |
-          { # Start Pipe nach jq add
-
-            # Default "secrets" hier beimischen ist bequemer als nachher immer auch den Fall ohne "secrets" zu berücksichtigen.
-            printf '{ "secrets": [] }\n'
-
-            # Array von möglichen JSON-Dateien initialisieren; sortiert von niedriger zu hoher Prio.
-            # (Das letzte JSON-Objekt gewinnt in jq add.)
-            if [ "$DOMAIN" = '-' ]; then
-              files=(
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
-              )
-            else
-              files=(
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${DOMAIN}.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${ENVIRONMENT}.json"
-                "./${DEPLOYMENT_PATH}/properties/${COMPONENT}/kubernetes-deployment-${DOMAIN}-${ENVIRONMENT}.json"
-              )
-            fi
-
-            for f in "${files[@]}"; do
-              if [ -e "$f" ]; then
-                printf '%s existiert.\n' "$f" >&2
-                cat -- "$f"
-              else
-                printf '%s existiert nicht.\n' "$f" >&2
-              fi
-            done
-          } | jq -s add | tee kubernetes-deployment.generated.json
+          script=$(realpath -- "$ACTION_PATH/merge-k8s-deployment-json.sh")
+          chmod a+x -- "$script"
+          (cd -- "$DEPLOYMENT_PATH" && "$script") | tee kubernetes-deployment.generated.json
 
       # kubernetes-deployment JSON auswerten
       - name: Process kubernetes-deployment.generated.json
         env:
           COMPONENT: ${{ inputs.component }}
+          ACTION_PATH: ${{ github.action_path }}
         shell: bash
         run: |
-          # Umgebungsvariablen setzen
-          jq --raw-output '
-              "K8S_CLUSTER="        + (.cluster       // ("cluster fehlt"       | halt_error)) + "\n" +
-              "K8S_ENVIRONMENT="    + (.environment   // ("environment fehlt"   | halt_error)) + "\n" +
-              "K8S_NAMESPACE="      + (.namespace     // ("namespace fehlt"     | halt_error)) + "\n" +
-              "K8S_COMPONENT_NAME=" + (.componentName // ("ms-" + env["COMPONENT"]))           + "\n" +
-              "K8S_VS_HOSTNAME="    + (.virtualService.hostname // "")                         + "\n" +
-              "K8S_VS_GATEWAY="     + (.virtualService.gateway  // "")                         + "\n" +
-              "HELM_CHART="         + (.helmChart     // "ms")                                 + "\n" +
-              ""' \
-            < kubernetes-deployment.generated.json \
-          | tee -a -- "$GITHUB_ENV"
-
-          # awsParameterPairs für aws-ssm-getparameters-action ermitteln aus .secrets in kubernetes-deployment.generated.json
-          # Beispiel:
-          # kubernetes-deployment.generated.json enthält:
-          # {
-          # 	...
-          # 	"secrets": [
-          # 		{
-          # 			"sourceType": "AWS_PARAMETER",
-          # 			"source": "/config/ms/homer/homer.prince.license",
-          # 			"targetType": "FILE",
-          # 			"target": "/usr/lib/prince/license/license.dat"
-          # 		},
-          # 		{
-          # 			"sourceType": "AWS_PARAMETER",
-          # 			"source": "/config/ms/application/test",
-          # 			"targetType": "ENV",
-          # 			"target": "TEST_VAR",
-          # 			"conversion": "b64enc"
-          # 		},
-          # 		{
-          # 			"sourceType": "SOMETHING_UNSUPPORTED",
-          # 			"source": "...",
-          # 			"targetType": "...",
-          # 			"target": "..."
-          # 		}
-          # 	]
-          # }
-          # => jq Ergebnis:
-          #   /config/ms/homer/homer.prince.license=AWS_DYNAMIC_PARAM_NAME1,
-          #   /config/ms/application/test=AWS_DYNAMIC_PARAM_NAME2,
-          paramPairs=$(jq -r '
-              [ .secrets[] | select(.sourceType == "AWS_PARAMETER") ]
-              | foreach .[] as $x (0; . + 1; "\($x.source)=AWS_DYNAMIC_PARAM_NAME\(.),")' \
-            < kubernetes-deployment.generated.json)
-
-          # Als (mehrzeilige) Umgebungsvariable DYNAMIC_AWS_PARAM_PAIRS setzen:
-          printf 'DYNAMIC_AWS_PARAM_PAIRS<<...snip...\n%s\n...snip...\n' "$paramPairs" \
-          | tee -a -- "$GITHUB_ENV"
+          script=$ACTION_PATH/k8s-deployment-json-to-githubenv.sh
+          chmod a+x -- "$script"
+          "$script" <kubernetes-deployment.generated.json | tee -a -- "$GITHUB_ENV"
 
       # Secrets für K8S Deployment aus AWS auslesen
       - name: Read AWS Parameters for K8S Deployment
@@ -148,6 +75,33 @@ runs:
             /kubernetes/${{ env.K8S_ENVIRONMENT }}/namespace/${{ env.K8S_NAMESPACE }}/k8s-token = K8S_TOKEN,
             /kubernetes/github-packages/token = K8S_REGISTRY,
             /github/secrets/jasypt_encryptor_password = JASYPT_ENCRYPTOR_PASSWORD
+
+      # Kubernetes Setup & Login
+      - name: 'helm installation, k8s login'
+        uses: freenet-actions/prepare-k8s-env@v2
+        with:
+         k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
+         k8s-token: ${{ env.K8S_TOKEN }}
+         # Teamskanal Container & Cloud / 1st Level Support 2024-05-21:
+         # "Bitte nutze mal Helm 3.9. Lt. Doku ist K8s 1.21 mit neueren Helm Versionen nicht mehr supported."
+         # Aber 3.9.4 kennt --set-json nicht. Deshalb circa die Version 3.14.2 aus prepare-k8s-env@v1,
+         # die wir per Default benutzt hatten:
+         helm-version: "3.14.4"
+
+      # kubernetes-deployment JSON: javaOptions und javaArgs konvertieren und das resultierende
+      # komplette java-Kommando in Umgebungsvariable JAVA_COMMAND setzen
+      - name: 'Process kubernetes-deployment.generated.json: javaOptions, javaArgs'
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          ACTION_PATH: ${{ github.action_path }}
+          DEPLOYMENT_PATH: ${{ inputs.deploymentPath }}
+          GITHUB_CONTEXT_JSON: ${{ toJSON(github) }}
+        shell: bash
+        run: |
+          script=$ACTION_PATH/k8s-deployment-json-command-to-githubenv.sh
+          chmod a+x -- "$script"
+          export HELM_CHART_DIR="${DEPLOYMENT_PATH}/helm/${HELM_CHART}"
+          "$script" <kubernetes-deployment.generated.json | tee -a -- "$GITHUB_ENV"
 
       # AWS Secrets aus Umgebungsvariablen in JSON für Helm umwandeln
       - name: AWS Parameters to Helm JSON
@@ -259,18 +213,6 @@ runs:
           # ↑ tee >(jq …): Debug-Ausgabe mit maskierten .secrets.value, aber aussagekräftiger als
           # ganz maskiert durch add-mask
 
-      # Kubernetes Login
-      - name: 'Login k8s/helm'
-        uses: freenet-actions/prepare-k8s-env@v2
-        with:
-         k8s-host-url: 'https://${{ env.K8S_CLUSTER }}'
-         k8s-token: ${{ env.K8S_TOKEN }}
-         # Teamskanal Container & Cloud / 1st Level Support 2024-05-21:
-         # "Bitte nutze mal Helm 3.9. Lt. Doku ist K8s 1.21 mit neueren Helm Versionen nicht mehr supported."
-         # Aber 3.9.4 kennt --set-json nicht. Deshalb circa die Version 3.14.2 aus prepare-k8s-env@v1,
-         # die wir per Default benutzt hatten:
-         helm-version: "3.14.4"
-
       - name: Helm Deployment
         env:
           COMPONENT: ${{ inputs.component }}
@@ -322,13 +264,19 @@ runs:
             fi
           done
 
-          # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" 
+          printf 'javaCommandJsonArray == ' >&2
+          javaCommandJsonArray=$(jq --null-input --compact-output --arg cmd "$JAVA_COMMAND" '
+            [ "bash", "-x", "-c", $cmd ]
+          ' | tee /dev/stderr)
+
+          # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME"
           # in einer Schleife (10s warten, insgesamt max. maxWaitForDeployment) prüfen
           maxWait='${{ inputs.maxWaitForDeployment }}'
           maxWait=${maxWait//h/hour}; maxWait=${maxWait//m/min}; maxWait=${maxWait//s/sec}
           maxWaitTimestamp=$(date -d "now +$maxWait" +%s)
           helmExit=0
-          if helm list --namespace="$K8S_NAMESPACE" | cut -d ' ' -f 1 | grep -Fxq -- "$K8S_COMPONENT_NAME"; then
+          helmList=$(helm list --namespace="$K8S_NAMESPACE" --selector="name=$K8S_COMPONENT_NAME" --no-headers)
+          if grep . <<<"$helmList"; then
               while [ "$(date +%s)" -lt "$maxWaitTimestamp" ]; do
                   helmStatus=$(helm status --output=json --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME" | jq -r .info.status)
                   if  [[ "${helmStatus#pending}" != "$helmStatus" ]]; then
@@ -361,9 +309,10 @@ runs:
             "${helmOpts[@]}" \
             --set="environment=$ENVIRONMENT" \
             --set="appName=$K8S_COMPONENT_NAME" \
+            --set="version=$COMPONENT_VERSION" \
+            --set="runId='$RUN_ID'" \
             --set="docker_config_base64=$K8S_REGISTRY" \
             --set="aws_access_key_id=$AWS_ACCESS_KEY_ID" \
             --set="aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
-            --set="version=$COMPONENT_VERSION" \
-            --set="runId='$RUN_ID'"
+            --set-json="command=$javaCommandJsonArray"

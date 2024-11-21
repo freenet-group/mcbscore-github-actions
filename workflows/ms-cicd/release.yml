@@ -50,10 +50,8 @@ jobs:
           awsParameterPairs: |
             /github/secrets/mcbs_user = USER,
             /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
-            /github/common/sonar/api_url = SONAR_API_URL,
             /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
             /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
             /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
@@ -77,6 +75,15 @@ jobs:
           installJava: true
           installGithubCli: true
           installJq: true
+
+      - name: Ausgewählte gradle.properties einlesen
+        id: read-gradle-properties
+        shell: bash
+        run: |
+          ARTIFACT_NAME=$(grep --perl '^ARTIFACT_NAME\s*=' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "artifact_name=$ARTIFACT_NAME" | tee -a -- "$GITHUB_OUTPUT"
+          ARTIFACT_GROUP_ID=$(grep --perl '^ARTIFACT_GROUP_ID\s*=' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "artifact_group_id=$ARTIFACT_GROUP_ID" | tee -a -- "$GITHUB_OUTPUT"
 
       - name: keystore-files kopieren
         if: ${{ env.KEY_SERVER != '' }}
@@ -137,7 +144,7 @@ jobs:
 
       - name: Release Version in DB Changes eintragen
         id: set-version-in-dbchanges
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         shell: bash
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
@@ -166,14 +173,31 @@ jobs:
 
       - name: Sonar-Coverage abholen
         id: fetch-coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
-        uses: ./mcbscore/github/actions/sonar-check
+        if: ${{ (env.JAVA_VERSION != '8') && (env.JAVA_VERSION != '11') && (env.COVERAGE_APP != '') && (env.COVERAGE_PATH != '') }}
+        uses: actions/github-script@v7
         with:
-          sonarUrl: ${{ env.SONAR_API_URL }} 
-          sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
-          projectKeyPath: ${{ env.COVERAGE_PATH }}
-          projectKeyName: ${{ env.COVERAGE_APP }}
-          atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
+          script: |
+            const response = await fetch('${{ secrets.SONARQUBE_HOST_URL }}/api/measures/component?component=${{ env.COVERAGE_PATH }}:${{ env.COVERAGE_APP }}&metricKeys=coverage', {            
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${{ secrets.SONARQUBE_TOKEN }}`
+              }
+            });
+            // check response
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Find the 'coverage' metric value
+            const coverageMetric = data.component.measures.find(measure => measure.metric === "coverage");
+            const coverageValue = coverageMetric ? coverageMetric.value : 'Metric not found';
+            
+            console.log(`Coverage Value: ${coverageValue}`);
+            
+            // Set coverageValue as an output
+            core.setOutput('coverage', coverageValue);
 
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
@@ -187,6 +211,12 @@ jobs:
         env:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
           INPUT_TICKET: ${{ github.event.inputs.ticket }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          JIRA_CLOUD_URL: ${{ env.JIRA_CLOUD_URL }}
+          COVERAGE_OUTPUT: ${{ steps.fetch-coverage.outputs.coverage }}
+        shell: bash
         run: |
           template_file=".github/templates/release_template.md"
           issueList=""
@@ -223,9 +253,9 @@ jobs:
           fi
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
-            apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
+            apiResponse=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
 
             # Prüfen ob es sich um ein Array oder einen String handelt
             if jq -e 'type == "array"' <<<"$apiResponse" > /dev/null; then
@@ -266,10 +296,10 @@ jobs:
           
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
-            API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
+            API_ENDPOINT="${JIRA_CLOUD_URL}issue/$issueNumber"
             BASIC_AUTH=$(printf %s "$MCBSTEST_JIRACLOUD_CREDENTIALS" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
-            issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
+            issue_info=$(curl -L -H "$AUTH_HEADER" -H "Accept: application/json" "$API_ENDPOINT")
           
             # Extracting the epic name and dueDate
             echo "Epic name for $issueNumber is being extracted"
@@ -364,7 +394,7 @@ jobs:
           echo "MS-Configuration Flag setzen"
           if echo "$allComponentList" | grep -iq "ms-configuration"; then
             echo "ms_configuration=true" >> "$GITHUB_OUTPUT"
-            url="${{ github.SERVER_URL }}/ms-configuration"
+            url="${GITHUB_SERVER_URL}/freenet-group/ms-configuration"
             escaped_url=$(sed 's/[\/&]/\\&/g' <<< "$url")
             sed -i "s/<!-- MS_CONFIGURATION_PLACEHOLDER -->/:warning: Achtung [MS-Configuration]($escaped_url) wurde geändert/" "$template_file";
           else
@@ -403,7 +433,7 @@ jobs:
           
           ## JUnit
           echo "JUnit setzen"
-          url="${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/"
+          url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/"
           escaped_url=$(sed 's/[\/&]/\\&/g' <<< "$url")
           sed -i "s/<!-- JUNIT_RESULT_PLACEHOLDER -->/$escaped_url/" "$template_file"
           
@@ -415,8 +445,15 @@ jobs:
           
           ## Coverage
           echo "Coverage setzen"
-          sed -i 's/<!-- COVERAGE_PLACEHOLDER -->/${{ steps.fetch-coverage.outputs.coverage }}/' "$template_file";
+          sed -i "s/<!-- COVERAGE_PLACEHOLDER -->/$COVERAGE_OUTPUT/" "$template_file"
           git push --tags -f
+
+      - id: determine-commit-to-tag
+        name: Ermittelt den Commit, an dem das Tag gesetzt werden soll
+        shell: bash
+        run: |
+          commit_sha=$(git rev-parse HEAD)
+          echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
 
       - name: Release erstellen
         uses: softprops/action-gh-release@v2
@@ -467,6 +504,7 @@ jobs:
             }
 
       - name: Deployment Workflow Status prüfen
+        shell: bash
         run: |
           # Maximal 30 Checks, alle 30 Sekunden, also 15 Minuten maximal
           MAX_CHECKS=30  # Number of checks before timeout, for 15 minutes total.
@@ -532,7 +570,7 @@ jobs:
           fi
 
       - name: dbChanges Workflow starten
-        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: DB Changes
@@ -566,7 +604,7 @@ jobs:
           echo "BAMBI_ARGS=$(echo "$BAMBI_ARGS" | sed 's/"/\\"/g')" >> $GITHUB_ENV
 
       - name: postBuild Workflow starten
-        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && github.event.inputs['pre-release'] == false }}
+        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: PostBuild
@@ -587,6 +625,7 @@ jobs:
         env:
           NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
           GH_TOKEN: ${{ env.TOKEN }}
+        shell: bash
         run: |
           if [ "${{ steps.set-version-in-dbchanges.conclusion }}" == 'success' ] && [ -n "${{ env.DB_CHANGES_VERSION_COMMIT_ID }}" ]; then
             # Wenn ein commit für die Versionierung von DB Changes vorhanden ist, diesen reverten
@@ -606,15 +645,15 @@ jobs:
             resultJson=`
             gh api \
               -H "Accept: application/vnd.github+json" \
-              /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions`
+              /orgs/freenet-group/packages/maven/${{ steps.read-gradle-properties.outputs.artifact_group_id }}.${{ steps.read-gradle-properties.outputs.artifact_name }}/versions`
             # Package VersionIds in ein Array überführen
-            IFS=',' read -ra versionIdArray < <(jq -r '.[] | select(.name == \"$NEW_VERSION\") | .id' <<< "$resultJson")
+            IFS=',' read -ra versionIdArray < <(jq -r ".[] | select(.name == \"$NEW_VERSION\") | .id" <<< "$resultJson")
             for versionId in "${versionIdArray[@]}"; do
               if [ -n "$versionId" ]; then
                 gh api \
                   --method DELETE \
                   -H "Accept: application/vnd.github+json" \
-                  /orgs/freenet-group/packages/maven/${{ env.COVERAGE_PATH }}.${{ env.COVERAGE_APP }}/versions/${versionId}
+                  /orgs/freenet-group/packages/maven/${{ steps.read-gradle-properties.outputs.artifact_group_id }}.${{ steps.read-gradle-properties.outputs.artifact_name }}/versions/${versionId}
               fi
             done
           fi

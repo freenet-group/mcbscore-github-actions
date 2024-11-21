@@ -104,7 +104,7 @@ jobs:
         id: version-calculation
         env:
           NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
-          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           # Setze die neue kalkulierte Version in die Outputs
           echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
@@ -133,6 +133,10 @@ jobs:
         env:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
           INPUT_TICKET: ${{ github.event.inputs.ticket }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          JIRA_CLOUD_URL: ${{ env.JIRA_CLOUD_URL }}
+          COVERAGE_OUTPUT: ${{ steps.fetch-coverage.outputs.coverage }}
         run: |
           template_file=".github/templates/release_template_aws.md"
           issueList=""
@@ -166,9 +170,9 @@ jobs:
           fi
 
           # Prüfen ob das label "renovate" im PR gesetzt wurde
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             prNumber=$(jq -r ".pull_request.number" "$GITHUB_EVENT_PATH")
-            apiResponse=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
+            apiResponse=$(curl -s -H "Authorization: token $GITHUB_TOKEN" "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${prNumber}/labels")
 
             # Prüfen ob es sich um ein Array oder einen String handelt
             if jq -e 'type == "array"' <<<"$apiResponse" > /dev/null; then
@@ -209,10 +213,10 @@ jobs:
 
             # Jira Ticket einlesen
             echo "Jira API wird zu $issueNumber befragt"
-            API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$issueNumber"
+            API_ENDPOINT="${JIRA_CLOUD_URL}issue/$issueNumber"
             BASIC_AUTH=$(printf %s "$MCBSTEST_JIRACLOUD_CREDENTIALS" | base64 -w0)
             AUTH_HEADER="Authorization: Basic $BASIC_AUTH"
-            issue_info=$(curl -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}")
+            issue_info=$(curl -L -H "$AUTH_HEADER" -H "Accept: application/json" "$API_ENDPOINT")
 
             # Epic / Parent ermitteln
             echo "Epic name for $issueNumber is being extracted"
@@ -315,6 +319,7 @@ jobs:
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
+          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
           token: ${{ env.TOKEN }}
 
       # Jira Fix-Version setzen
