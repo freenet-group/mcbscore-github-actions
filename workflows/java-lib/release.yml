@@ -288,16 +288,12 @@ jobs:
           
           ## Tabellen
           echo "IssueList setzen"
-          echo "$issueListLines"
-          echo "$issueListLines" > issueListLines.txt
-          awk '/<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->/{while((getline line < "issueListLines.txt") > 0) print line; next} 1' "$template_file" > temporary_file
-          mv temporary_file "$template_file"
+          printf '%s\n' "$issueListLines"
+          perl -i -pl -e 'BEGIN{$il = shift @ARGV} s{<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->}{$il}g' -- "$issueListLines" "$template_file"
 
           echo "Verlinkte Tickets setzen"
-          echo "$linkedIssuesListLines"
-          echo "$linkedIssuesListLines" > linkedIssueListLines.txt
-          awk '/<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->/{while((getline line < "linkedIssueListLines.txt") > 0) print line; next} 1' "$template_file" > temporary_file
-          mv temporary_file "$template_file"
+          printf '%s\n' "$linkedIssuesListLines"
+          perl -i -pl -e 'BEGIN{$il = shift @ARGV} s{<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->}{$il}g' -- "$linkedIssuesListLines" "$template_file"
 
           ## EPIC
           echo "EPIC setzen"
