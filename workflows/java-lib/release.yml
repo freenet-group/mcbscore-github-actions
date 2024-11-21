@@ -287,17 +287,17 @@ jobs:
           echo "Platzhalter im Template austauschen"
           
           ## Tabellen
-          # Spezielle Sonderzeichen austauschen
-          cleanedIssueListLines=$(printf '%s' "$issueListLines" | sed 's/[&/\#]/\\&/g')
-          cleanedLinkedIssuesListLines=$(printf '%s' "$linkedIssuesListLines" | sed 's/[&/\#]/\\&/g')
-
           echo "IssueList setzen"
-          echo "$cleanedIssueListLines"
-          sed -i "/^$/N;/\n<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->/s#.*#$cleanedIssueListLines#" "$template_file"
+          echo "$issueListLines"
+          echo "$issueListLines" > issueListLines.txt
+          awk '/<!-- IMPLEMENTED_ISSUES_PLACEHOLDER -->/{while((getline line < "issueListLines.txt") > 0) print line; next} 1' "$template_file" > temporary_file
+          mv temporary_file "$template_file"
 
           echo "Verlinkte Tickets setzen"
-          echo "$cleanedLinkedIssuesListLines"
-          sed -i "/^$/N;/\n<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->/s#.*#$cleanedLinkedIssuesListLines#" "$template_file"
+          echo "$linkedIssuesListLines"
+          echo "$linkedIssuesListLines" > linkedIssueListLines.txt
+          awk '/<!-- IMPLEMENTED_LINKED_ISSUES_PLACEHOLDER -->/{while((getline line < "linkedIssueListLines.txt") > 0) print line; next} 1' "$template_file" > temporary_file
+          mv temporary_file "$template_file"
 
           ## EPIC
           echo "EPIC setzen"
