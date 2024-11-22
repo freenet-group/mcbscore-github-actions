@@ -44,6 +44,11 @@ Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigene
 * Nach Abschluss des Umbaus und Tests kann dieser PR ebenfalls gemerged werden.
 
 ### Anpassung im Repository
+In der Renovate Konfiguration ist statt freenet-group/mcbscore-renovate:java nun freenet-group/mcbscore-renovate:java-lib zu erweitern.
+```.github/renovate.json
+"local>freenet-group/mcbscore-renovate:java-lib"
+```
+
 In den workflow.properties muß die AtlassianTools Version >=4.0.18 sein.
 
 ```properties
