@@ -18,7 +18,7 @@ jobs:
         id: get-stages
         run: |
           if [[ "${{ inputs.stages }}" != "" ]]; then
-            echo "RESPONSE=${{ inputs.stages }}" >> "$GITHUB_OUTPUT"
+            echo 'RESPONSE=${{ inputs.stages }}' >> "$GITHUB_OUTPUT"
           else
             echo 'RESPONSE=["dev"]' >> "$GITHUB_OUTPUT"
           fi
