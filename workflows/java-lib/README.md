@@ -28,6 +28,7 @@
             * release:minor mit Color #FBCA04 🟡
             * release:patch mit Color #0E8A16 🟢
             * renovate mit Color #1D76DB
+        * Alle anderen Label sind zu entfernen
 
 ### Anpassung der distribute.yml
 
