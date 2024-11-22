@@ -234,7 +234,6 @@ jobs:
     strategy:
       matrix:
         repository:
-          - { name: mslib-aws, branch: develop, group: mslib, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
     steps:
       - uses: actions/checkout@v4
         with:
@@ -263,6 +262,7 @@ jobs:
           - { name: lib-annotation, branch: main, group: java-lib }
           - { name: lib-common, branch: main, group: java-lib }
           - { name: mcbs-connector-api, branch: main, group: java-lib }
+          - { name: mslib-aws, branch: main, group: java-lib }
           - { name: mslib-rest, branch: main, group: java-lib }
     steps:
       - name: Repository auschecken
@@ -435,6 +435,7 @@ jobs:
     strategy:
       matrix:
         repository:
+          - { name: lib-common, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-enterprise, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-io, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-persistence, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
@@ -490,7 +491,7 @@ jobs:
         repository:
           - { name: lib-amount, branch: main }
           - { name: lib-annotation, branch: main }
-          - { name: lib-common, branch: main }
+          - { name: lib-common, branch: develop }
           - { name: lib-enterprise, branch: develop }
           - { name: lib-io, branch: develop }
           - { name: lib-persistence, branch: develop }
@@ -539,7 +540,7 @@ jobs:
           - { name: ms-user, branch: develop }
           - { name: ms-user-cleanup, branch: main }
           - { name: mslib-aws, branch: develop }
-          - { name: mslib-rest, branch: main }
+          - { name: mslib-rest, branch: develop }
           - { name: scaffold-clean-architecture-gradle-plugin, branch: develop }
 
     steps:
