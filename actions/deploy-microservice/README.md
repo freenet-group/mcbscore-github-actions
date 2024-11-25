@@ -59,7 +59,7 @@ Das Release JAR muß im Verzeichnis ./release liegen bzw. - bei Docker-Benutzung
         uses: ./actions/deploy-microservice-action
         with:
           component: contentprovider
-          stage: ${{ github.event.inputs.environment }}
+          stage: ${{ inputs.environment }}
           checkMkUser: ${{ secrets.GH_CHECKMK_USER }}
           checkMkSecret: ${{ secrets.GH_CHECKMK_SECRET }}
           deploymentUser: ${{ secrets.GH_DEPLOYMENT_USER }}

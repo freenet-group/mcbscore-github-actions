@@ -75,7 +75,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -129,7 +129,7 @@ jobs:
 
       - name: Scripte prüfen
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') }}
-        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} createReleaseScripts ${{ github.event.inputs.gradleOptions }}
+        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }} -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} createReleaseScripts ${{ inputs.gradleOptions }}
 
       - id: gradle-build
         name: Gradle Build
@@ -139,7 +139,7 @@ jobs:
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ inputs.gradleOptions }}
           enableSonarCheckOnAllBranches: true
 
       # JUnit Ergebnisse publizieren
@@ -205,4 +205,4 @@ jobs:
         with:
           workflow: PostBuild
           token: ${{ env.TOKEN }}
-          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}", "issueList": "${{ env.ISSUE_LIST }}", "epic": "${{ github.event.inputs.epic }}" }'
+          inputs: '{ "releaseVersion": "${{ env.COMPONENT_VERSION }}", "issueList": "${{ env.ISSUE_LIST }}", "epic": "${{ inputs.epic }}" }'

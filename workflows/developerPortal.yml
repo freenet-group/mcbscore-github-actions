@@ -1,5 +1,5 @@
 name: DeveloperPortal Upload
-run-name: DeveloperPortal Upload von  ${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }} für ${{ github.event.inputs.environment }}
+run-name: DeveloperPortal Upload von  ${{ inputs.component }}:${{ inputs.componentVersion }} für ${{ inputs.environment }}
 
 on:
   workflow_call:
@@ -58,7 +58,7 @@ jobs:
           then
             echo "DEPLOYMENT_REF=${{ github.ref }}" >> $GITHUB_ENV
           else
-            echo "DEPLOYMENT_REF=${{ github.event.inputs.tagPrefix }}${{ inputs.componentVersion }}" >> $GITHUB_ENV
+            echo "DEPLOYMENT_REF=${{ inputs.tagPrefix }}${{ inputs.componentVersion }}" >> $GITHUB_ENV
           fi
 
       - name: Checkout Repository

@@ -64,7 +64,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -96,7 +96,7 @@ jobs:
 
       # Gradle generate
       - name: Generate with Gradle
-        run: sh ./gradlew -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean generateClient ${{ github.event.inputs.gradleOptions }}
+        run: sh ./gradlew -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean generateClient ${{ inputs.gradleOptions }}
 
       - id: gradle-build
         name: Gradle Build
@@ -106,7 +106,7 @@ jobs:
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ inputs.gradleOptions }}
           gradleDirectory: generated/${{ env.COMPONENT }}
 
       # Existierende Draft Releases löschen

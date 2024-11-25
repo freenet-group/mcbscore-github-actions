@@ -1,6 +1,6 @@
 name: GIT FM EXTERN Deployment
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: GIT FM EXTERN Deployment ${{ github.event.inputs.componentVersion }}
+run-name: GIT FM EXTERN Deployment ${{ inputs.componentVersion }}
 
 on:
   workflow_dispatch:
@@ -18,11 +18,11 @@ jobs:
     uses: ./.github/workflows/deployment.yml
     secrets: inherit
     with:
-      componentVersion: ${{ github.event.inputs.componentVersion }}
+      componentVersion: ${{ inputs.componentVersion }}
       stage: git
       company: fm
       externalProxy: true
       deploymentTarget: apigw-g1.mobilcom.de
       additionalDeploymentTarget: apigw-g2.mobilcom.de
       bambiNotification: true
-      actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+      actionsRepositoryBranch: ${{ inputs.actionsRepositoryBranch }}

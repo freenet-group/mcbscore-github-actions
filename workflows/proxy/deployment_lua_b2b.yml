@@ -23,8 +23,8 @@ jobs:
     uses: ./.github/workflows/deployment_lua.yml
     secrets: inherit
     with:
-      componentVersion: ${{ github.event.inputs.componentVersion }}
+      componentVersion: ${{ inputs.componentVersion }}
       stage: b2b
       deploymentTarget: apigw-t11.mobilcom.de
-      actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
-      assetPattern: ${{ github.event.inputs.assetPattern }}
+      actionsRepositoryBranch: ${{ inputs.actionsRepositoryBranch }}
+      assetPattern: ${{ inputs.assetPattern }}

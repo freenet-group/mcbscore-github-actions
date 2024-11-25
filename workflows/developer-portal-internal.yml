@@ -69,7 +69,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -84,7 +84,7 @@ jobs:
         if: ${{ matrix.type == 'open-api' }}
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
+          version: ${{ inputs.tagPrefix }}${{ inputs.componentVersion }}
           assetPattern: '${{ matrix.component }}_client_${{ matrix.version }}_${{ inputs.environment }}.yaml'
           targetPath: './apiDoc'
           token: ${{ env.TOKEN }}
@@ -93,7 +93,7 @@ jobs:
         if: ${{ matrix.type == 'system-api' }}
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
+          version: ${{ inputs.tagPrefix }}${{ inputs.componentVersion }}
           assetPattern: '${{ matrix.component }}_system_${{ matrix.version }}_${{ inputs.environment }}.yaml'
           targetPath: './apiDoc'
           token: ${{ env.TOKEN }}
@@ -119,8 +119,8 @@ jobs:
         with:
           openAPIPath: ${{ env.API_PATH }}
           apiId: ${{ env.API_ID }}
-          tag: ${{ github.event.inputs.componentVersion }}
+          tag: ${{ inputs.componentVersion }}
           clientId: ${{ env.CLIENT_ID_STS }}
           clientSecret: ${{ env.CLIENT_SECRET_STS }}
-          environment: ${{ github.event.inputs.environment }}
+          environment: ${{ inputs.environment }}
           maturityLevel: ${{ matrix.type }}

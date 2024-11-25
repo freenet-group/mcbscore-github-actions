@@ -1,6 +1,6 @@
 name: B2B Deployment
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: B2B Deployment ${{ github.event.inputs.componentVersion }}
+run-name: B2B Deployment ${{ inputs.componentVersion }}
 
 on:
   workflow_dispatch:
@@ -37,7 +37,7 @@ jobs:
         with:
           workflow: B2B MD Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'
 
       # Starte KM Deployment auf B2B
       - name: Invoke deployment workflow B2B KM
@@ -46,7 +46,7 @@ jobs:
         with:
           workflow: B2B KM Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'
 
       # Starte FM Deployment auf B2B
       - name: Invoke deployment workflow B2B FM
@@ -55,4 +55,4 @@ jobs:
         with:
           workflow: B2B FM Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'
