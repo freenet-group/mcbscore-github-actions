@@ -73,7 +73,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       - name: Checkout freenet-group/metis Repository
         uses: actions/checkout@v4
@@ -120,7 +120,7 @@ jobs:
       # Backend Service Testen
       - name: Start Backend Test
         shell: bash
-        if: ${{ github.event.inputs.serviceToTest == 'backend' || github.event.inputs.serviceToTest == 'all' }}
+        if: ${{ inputs.serviceToTest == 'backend' || inputs.serviceToTest == 'all' }}
         env:
           LOAD_TEST_DATA: true
           REPOSITORY_PATH: ${{ env.METIS_REPOSITORY_PATH }}
@@ -133,7 +133,7 @@ jobs:
 
       # Frontend Test starten und Ergebnisse ins XML und HTML- Format konvertieren
       - name: Frontend Test vorbereiten
-        if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
+        if: ${{ inputs.serviceToTest == 'frontend' || inputs.serviceToTest == 'all' }}
         shell: bash
         env:
           LOAD_TEST_DATA: true
@@ -156,11 +156,11 @@ jobs:
           sudo apt-get update && sudo apt-get install --no-install-recommends -y libnss3 libgtk2.0-0 libgtk-3-0 libgbm-dev libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
  
       - name: Chrome installieren
-        if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
+        if: ${{ inputs.serviceToTest == 'frontend' || inputs.serviceToTest == 'all' }}
         uses: browser-actions/setup-chrome@latest
       
       - name: Start Frontend Test
-        if: ${{ github.event.inputs.serviceToTest == 'frontend' || github.event.inputs.serviceToTest == 'all' }}
+        if: ${{ inputs.serviceToTest == 'frontend' || inputs.serviceToTest == 'all' }}
         shell: bash
         run: |
           node_modules/gulp/bin/gulp.js testFrontend --browserPath=$(which chrome)

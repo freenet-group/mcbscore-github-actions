@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew -PARTIFACT_VERSION=0.0.0 -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build ${{ github.event.inputs.gradleOptions }}
+          ./gradlew -PARTIFACT_VERSION=0.0.0 -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} clean build ${{ inputs.gradleOptions }}
 
       - name: Unit Test Ergebnisse hochladen
         uses: EnricoMi/publish-unit-test-result-action@v2

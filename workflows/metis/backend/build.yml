@@ -77,7 +77,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -132,7 +132,7 @@ jobs:
 
       - name: Scripte prüfen
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') }}
-        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password='${{ env.LIQUIBASE_PASSWORD }}' -PLI_contexts=production -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN='${{ env.TOKEN }}' createDatabaseChangeScripts ${{ github.event.inputs.gradleOptions }}
+        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password='${{ env.LIQUIBASE_PASSWORD }}' -PLI_contexts=production -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN='${{ env.TOKEN }}' createDatabaseChangeScripts ${{ inputs.gradleOptions }}
 
       - id: gradle-build
         name: Gradle Build
@@ -144,7 +144,7 @@ jobs:
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
           # TODO smokeTest wieder an, wenn Testdatenbank an neue BusinessTransactions angepasst
           # gradleCommand: clean build smokeTest
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ inputs.gradleOptions }}
           enableSonarCheckOnAllBranches: true
 
       # JUnit Ergebnisse publizieren
@@ -313,8 +313,8 @@ jobs:
             {
               "releaseVersion": "${{ env.COMPONENT_VERSION }}",
               "issueList": "${{ env.ISSUE_LIST }}",
-              "epic": "${{ github.event.inputs.epic }}",
-              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
+              "epic": "${{ inputs.epic }}",
+              "actionsRepositoryBranch": "${{ inputs.actionsRepositoryBranch }}"
             }
 
       # metis-test auschecken

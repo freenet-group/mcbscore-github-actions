@@ -37,7 +37,7 @@ jobs:
       - name: Repository auschecken
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ inputs.branch }}
 
       - name: AWS Secrets auslesen und in ENV schreiben
         uses: ./.github/actions/read-aws-secrets
@@ -78,7 +78,7 @@ jobs:
         id: version-calculation
         env:
           NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
-          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           # Setze die neue kalkulierte Version in die Outputs
           echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
@@ -119,7 +119,7 @@ jobs:
         shell: bash
         run: |
           chmod +x ./gradlew
-          ./gradlew -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} clean build publish ${{ github.event.inputs.gradleOptions }}
+          ./gradlew -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} clean build publish ${{ inputs.gradleOptions }}
 
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
@@ -135,7 +135,7 @@ jobs:
         id: update_release_template
         env:
           ISSUE_KEYS: ${{ steps.jira_keys.outputs.issue-keys }}
-          INPUT_TICKET: ${{ github.event.inputs.ticket }}
+          INPUT_TICKET: ${{ inputs.ticket }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -340,13 +340,13 @@ jobs:
           body_path: ".github/templates/release_template_javalib.md"
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
-          prerelease: ${{ github.event.inputs.pre-release }}
+          prerelease: ${{ inputs.pre-release }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
           target_commitish: ${{ steps.checkout-repository.outputs.commit }}
           token: ${{ env.TOKEN }}
 
       - name: postBuild Workflow starten
-        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && (github.event.inputs['pre-release'] == 'false' || github.event.inputs['pre-release'] == false) }}
+        if: ${{ hashFiles('.github/**/postBuild.yml') != '' && (inputs['pre-release'] == 'false' || inputs['pre-release'] == false) }}
         uses: benc-uk/workflow-dispatch@v1.2.3
         with:
           workflow: PostBuild

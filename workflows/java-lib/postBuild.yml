@@ -68,7 +68,7 @@ jobs:
           repository: freenet-group/mcbscore-github-actions
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       - name: Set up JDK
         uses: actions/setup-java@v3
@@ -88,7 +88,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ABRMS
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           componentList: ${{ env.JIRA_COMPONENT }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -99,14 +99,14 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: MCBS
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           componentList: ${{ env.JIRA_COMPONENT }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Issuelist von "," auf " " umwandeln
         id: issueListNoComma
         run: |
-          OUTPUT=$(echo "${{ github.event.inputs.issueList }}" | tr -s ',' ' ')
+          OUTPUT=$(echo "${{ inputs.issueList }}" | tr -s ',' ' ')
           echo "issueListNoComma=$(echo $OUTPUT)" >> $GITHUB_OUTPUT
 
       - name: Weitere Infos zur IssueList holen
@@ -118,51 +118,51 @@ jobs:
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: FixVersion bei Jira eintragen
-        if: ${{ github.event.inputs['renovate'] == 'false' }}
+        if: ${{ inputs['renovate'] == 'false' }}
         uses: ./mcbscore/github/actions/set-fix-version-jc
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           included_components: ${{ env.JIRA_COMPONENT }}
 
       - name: Release Version als Kommentar im Ticket eintragen
-        if: ${{ github.event.inputs['renovate'] == 'false' }}
+        if: ${{ inputs['renovate'] == 'false' }}
         uses: ./mcbscore/github/actions/set-issue-comment
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
+          comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ inputs.releaseVersion }}'
           issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: IBN Datum ermitteln
         id: determine-going-live-date
-        if: ${{ github.event.inputs['renovate'] == 'false' }}
+        if: ${{ inputs['renovate'] == 'false' }}
         uses: ./mcbscore/github/actions/determine-going-live-date
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Info an Teams Kanal senden
-        if: ${{ github.event.inputs['renovate'] == 'false' }}
+        if: ${{ inputs['renovate'] == 'false' }}
         uses: ./mcbscore/github/actions/mail-notification
         with:
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           issueList: issue_info.csv
           hasSql: false
           hasConfiguration: false
-          hasDependencies: ${{ github.event.inputs.hasDependencies }}
+          hasDependencies: ${{ inputs.hasDependencies }}
           hasDeployment: false
           additionalText: "extra"
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}
           mailAddress: ${{ env.TEAMS_MAIL }}
           purpose: InternalBuild
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}

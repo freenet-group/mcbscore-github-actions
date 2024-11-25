@@ -174,19 +174,19 @@ jobs:
 
       # component_Version ggf. manuell übersteuern, sofern eine Eingabe vorliegt
       - name: manualVersion
-        if: ${{ github.event.inputs.manualVersion != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
+        if: ${{ inputs.manualVersion != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
         shell: bash
         run: |
-          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}"
-          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}" >> $GITHUB_ENV
+          echo "COMPONENT_VERSION=${{ inputs.manualVersion }}"
+          echo "COMPONENT_VERSION=${{ inputs.manualVersion }}" >> $GITHUB_ENV
 
       # issueList ggf. manuell übersteuern, sofern eine Eingabe vorliegt
       - name: manualIssues
-        if: ${{ github.event.inputs.manualIssues != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
+        if: ${{ inputs.manualIssues != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
         shell: bash
         run: |
-          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}"
-          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}" >> $GITHUB_ENV 
+          echo "ISSUE_LIST=${{ inputs.manualIssues }}"
+          echo "ISSUE_LIST=${{ inputs.manualIssues }}" >> $GITHUB_ENV 
 
       - name: Set release version in db changes
         if: ${{ env.BUILD_TYPE == 'RELEASE' && env.DB_CHANGES_DIRECTORY != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
@@ -212,14 +212,14 @@ jobs:
 
       - name: Scripte prüfen
         if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP') && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'mcbs' }}
-        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }} -PLI_contexts=PROD -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PINCLUDED_MODULES=${{ env.GRADLE_MODULES }} createReleaseScripts ${{ github.event.inputs.gradleOptions }}
+        run: sh ./gradlew -PLI_username=${{ env.LIQUIBASE_USERNAME }} -PLI_password=${{ env.LIQUIBASE_PASSWORD }} -PLI_contexts=PROD -PARTIFACT_VERSION=${{ env.COMPONENT_VERSION }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -PINCLUDED_MODULES=${{ env.GRADLE_MODULES }} createReleaseScripts ${{ inputs.gradleOptions }}
 
       - name: build connector
         if: ${{ (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.id == 'ms-mcbsservices' }}
         uses: ./mcbscore/github/actions/gradle-build
         with:
           gradleDirectory: './mcbs-connector-java8'
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ inputs.gradleOptions }}
 
       - id: gradle-build
         name: Gradle Build
@@ -230,7 +230,7 @@ jobs:
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
           gradleCommand: ${{ env.GRADLE_COMMAND }}
           gradlePublishCommand: ${{ env.GRADLE_PUBLISH_COMMAND }}
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ inputs.gradleOptions }}
           gradleProperties: '-PINCLUDED_MODULES=${{ env.INCLUDED_MODULES }}'
 
       # JUnit Ergebnisse publizieren
@@ -253,7 +253,7 @@ jobs:
       # PreRelease JAR hinzufügen
       - name: Upload PreRelease JAR
         id: upload-prerelease-jar
-        if: ${{ github.event.inputs.manualVersion != '' && github.event.inputs.prerelease == 'true' && (env.PRODUCT == matrix.product.id) }}
+        if: ${{ inputs.manualVersion != '' && inputs.prerelease == 'true' && (env.PRODUCT == matrix.product.id) }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
@@ -267,7 +267,7 @@ jobs:
       # PreRelease ZIP hinzufügen
       - name: Upload PreRelease ZIP
         id: upload-prerelease-zip
-        if: ${{ github.event.inputs.manualVersion != '' && github.event.inputs.prerelease == 'true' && (env.PRODUCT == matrix.product.id) }}
+        if: ${{ inputs.manualVersion != '' && inputs.prerelease == 'true' && (env.PRODUCT == matrix.product.id) }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
@@ -281,7 +281,7 @@ jobs:
       # Vorhandene Open API Yamls als PreRelease Asset hinzufügen
       - name: Upload PreRelease API Doc Assets
         id: uploadPreReleaseApiDocs
-        if: ${{ github.event.inputs.manualVersion != '' && github.event.inputs.prerelease == 'true' && (env.PRODUCT == matrix.product.id) }}
+        if: ${{ inputs.manualVersion != '' && inputs.prerelease == 'true' && (env.PRODUCT == matrix.product.id) }}
         uses: ./mcbscore/github/actions/upload-api-doc-assets
         with:
           componentVersion: ${{ env.TAG_PREFIX }}${{ env.COMPONENT_VERSION }}
@@ -341,7 +341,7 @@ jobs:
       # Docker Image erzeugen
       - name: Docker Image erzeugen
         id: createDockerImage
-        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP' || (github.event.inputs.manualVersion != '' && github.event.inputs.prerelease == 'true')) && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.group == 'ms' }}
+        if: ${{ (env.BUILD_TYPE == 'RELEASE' || env.BUILD_TYPE == 'DEVELOP' || (inputs.manualVersion != '' && inputs.prerelease == 'true')) && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') && matrix.product.group == 'ms' }}
         uses: ./mcbscore/github/actions/create-microservice-docker-image
         with:
           componentName: ms-${{ env.COMPONENT }}

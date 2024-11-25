@@ -1,6 +1,6 @@
 name: K8s Deployment
 #Name fuer den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu koennen.
-run-name: K8s ${{ github.event.inputs.environment }} Deployment ${{ github.event.inputs.componentVersion }} dry=${{ github.event.inputs.dryRun }}
+run-name: K8s ${{ inputs.environment }} Deployment ${{ inputs.componentVersion }} dry=${{ inputs.dryRun }}
 
 on:
   workflow_dispatch:
@@ -72,7 +72,7 @@ jobs:
           repository: freenet-group/ms-deployment
           token: ${{ env.GITHUB_TOKEN }}
           path: ${{ env.DEPLOYMENT_PATH }}
-          ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+          ref: ${{ inputs.deploymentRepositoryBranch }}
 
       # jq installieren
       - name: Setup jq

@@ -1,6 +1,6 @@
 name: Deployment
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: Deployment ${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }} auf ${{ github.event.inputs.environment }}
+run-name: Deployment ${{ inputs.component }}:${{ inputs.componentVersion }} auf ${{ inputs.environment }}
 
 on:
   workflow_dispatch:
@@ -118,11 +118,11 @@ jobs:
       - name: Determine deployment ref
         shell: bash
         run: |
-          if  [[ ${{ github.event.inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
+          if  [[ ${{ inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
           then
             echo "DEPLOYMENT_REF=develop" >> $GITHUB_ENV
           else
-            echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
+            echo "DEPLOYMENT_REF=${{ inputs.componentVersion }}" >> $GITHUB_ENV
           fi
 
       - name: Create GitHub deployment
@@ -195,7 +195,7 @@ jobs:
           repository: freenet-group/ms-deployment
           token: ${{ env.TOKEN }}
           path: ${{ env.DEPLOYMENT_PATH }}
-          ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+          ref: ${{ inputs.deploymentRepositoryBranch }}
 
       - name: Initialize Workflow
         uses: ./mcbscore/github/actions/init-workflow
@@ -208,20 +208,20 @@ jobs:
         id: downloadRelease
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ github.event.inputs.componentVersion }}
-          assetPattern: '-${{ github.event.inputs.componentVersion }}.jar'
+          version: ${{ inputs.componentVersion }}
+          assetPattern: '-${{ inputs.componentVersion }}.jar'
           targetPath: './${{ env.DEPLOYMENT_PATH }}/release'
           token: ${{ env.TOKEN }}
 
       - name: Standard Deployment
         id: deployRelease
-        if: ${{ github.event.inputs.additionalDeploymentComponent == '' }}
+        if: ${{ inputs.additionalDeploymentComponent == '' }}
         uses: ./mcbscore/github/actions/deploy-microservice
         with:
-          component: ${{ github.event.inputs.component }}
-          stage: ${{ github.event.inputs.environment }}
+          component: ${{ inputs.component }}
+          stage: ${{ inputs.environment }}
           componentConfigPath: ${{ env.DEPLOYMENT_PATH }}
-          dockerImage: ghcr.io/freenet-group/mcbs-core/ms-${{ github.event.inputs.component }}:${{ github.event.inputs.componentVersion }}
+          dockerImage: ghcr.io/freenet-group/mcbs-core/ms-${{ inputs.component }}:${{ inputs.componentVersion }}
           checkMkUser: ${{ env.CHECKMK_USER }}
           checkMkSecret: ${{ env.CHECKMK_PW }}
           deploymentUser: ${{ env.DEPLOYMENT_USER }}
@@ -230,11 +230,11 @@ jobs:
 
       - name: Custom Deployment
         id: additionalDeployment
-        if: ${{ github.event.inputs.additionalDeploymentComponent != '' }}
+        if: ${{ inputs.additionalDeploymentComponent != '' }}
         uses: ./mcbscore/github/actions/deploy-microservice
         with:
-          component: ${{ github.event.inputs.additionalDeploymentComponent }}
-          stage: ${{ github.event.inputs.environment }}
+          component: ${{ inputs.additionalDeploymentComponent }}
+          stage: ${{ inputs.environment }}
           componentConfigPath: ${{ env.DEPLOYMENT_PATH }}
           checkMkUser: ${{ env.CHECKMK_USER }}
           checkMkSecret: ${{ env.CHECKMK_PW }}
@@ -251,11 +251,11 @@ jobs:
     uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@2
     secrets: inherit
     with:
-      component: ${{ github.event.inputs.component }}
-      componentVersion: ${{ github.event.inputs.componentVersion }}
-      environment: ${{ github.event.inputs.environment }}
-      actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
-      deploymentRepositoryBranch: ${{ github.event.inputs.deploymentRepositoryBranch }}
+      component: ${{ inputs.component }}
+      componentVersion: ${{ inputs.componentVersion }}
+      environment: ${{ inputs.environment }}
+      actionsRepositoryBranch: ${{ inputs.actionsRepositoryBranch }}
+      deploymentRepositoryBranch: ${{ inputs.deploymentRepositoryBranch }}
 
   deployment_status:
     needs: [create-deployment, deploy, deploy_k8s]
@@ -302,7 +302,7 @@ jobs:
 
   sanity_test:
     needs: [deploy, deploy_k8s]
-    if: ${{ github.event.inputs.sanityTestsEnabled == 'true' }}
+    if: ${{ inputs.sanityTestsEnabled == 'true' }}
     # self-hosted Runner für die Steps benutzen, um Zugriff auf MD Systeme zu haben
     runs-on: [self-hosted, k8s]
     steps:
@@ -367,7 +367,7 @@ jobs:
   bambi-notification:
     runs-on: [self-hosted, k8s]
     needs: [deploy, deploy_k8s, developer-portal-upload]
-    if: ${{ always() && (github.event.inputs.environment == 'git' || github.event.inputs.environment == 'b2b' || github.event.inputs.environment == 'prod') }}
+    if: ${{ always() && (inputs.environment == 'git' || inputs.environment == 'b2b' || inputs.environment == 'prod') }}
     steps:
       - name: Ermitteln des Gesamtstatus
         run: |
@@ -405,11 +405,11 @@ jobs:
           curlResult=$(curl -sw %{http_code} --location --request POST 'https://bambi-api-prod.md-abr-prod.k8s.freenet-group.de/v2/bambi/deployment/environmentversion' \
           --header 'Content-Type: application/json' \
           --data-raw '{
-            "version": "${{ github.event.inputs.componentVersion }}",
+            "version": "${{ inputs.componentVersion }}",
             "componentName": "${{ needs.deploy.outputs.componentName }}",
-            "originComponentName": "${{ github.event.inputs.component }}",
+            "originComponentName": "${{ inputs.component }}",
             "workflowName": "${{ github.workflow }}",
-            "environment": "${{ github.event.inputs.environment }}",
+            "environment": "${{ inputs.environment }}",
             "extern": false,
             "workflowRunId": ${{ github.run_id }},
             "deployState": "${{ env.DEPLOY_STATE }}",

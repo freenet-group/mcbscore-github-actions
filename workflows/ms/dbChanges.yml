@@ -1,6 +1,6 @@
 name: DB Changes
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: DB Changes ${{ github.event.inputs.componentVersion }}
+run-name: DB Changes ${{ inputs.componentVersion }}
 
 on:
   workflow_dispatch:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: source
-          ref: sql-${{ github.event.inputs.tagPrefix }}${{ github.event.inputs.componentVersion }}
+          ref: sql-${{ inputs.tagPrefix }}${{ inputs.componentVersion }}
 
       - name: Read AWS Secrets
         uses: ./source/.github/actions/read-aws-secrets
@@ -44,7 +44,7 @@ jobs:
           repository: freenet-group/mcbscore_db-changes
           token: ${{ env.TOKEN }}
           path: target
-          ref: ${{ github.event.inputs.dbChangesRepositoryBranch }}
+          ref: ${{ inputs.dbChangesRepositoryBranch }}
 
       - name: Read workflow.properties
         shell: bash

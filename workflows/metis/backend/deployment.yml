@@ -62,7 +62,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -77,32 +77,32 @@ jobs:
       - name: Download Release (pirun)
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
-          assetPattern: metis-pirun-${{ github.event.inputs.componentVersion }}.jar
+          version: ${{ env.TAG_PREFIX }}${{ inputs.componentVersion }}
+          assetPattern: metis-pirun-${{ inputs.componentVersion }}.jar
           targetPath: ./release
           token: ${{ env.TOKEN }}
 
       - name: Download Release (masterdata)
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
-          assetPattern: metis-masterdata-${{ github.event.inputs.componentVersion }}.jar
+          version: ${{ env.TAG_PREFIX }}${{ inputs.componentVersion }}
+          assetPattern: metis-masterdata-${{ inputs.componentVersion }}.jar
           targetPath: ./release
           token: ${{ env.TOKEN }}
 
       - name: Download Release (hofactoring)
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
-          assetPattern: metis-hofactoring-${{ github.event.inputs.componentVersion }}.jar
+          version: ${{ env.TAG_PREFIX }}${{ inputs.componentVersion }}
+          assetPattern: metis-hofactoring-${{ inputs.componentVersion }}.jar
           targetPath: ./release
           token: ${{ env.TOKEN }}
 
       - name: Download Release (shell)
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
-          assetPattern: metis-shell-${{ github.event.inputs.componentVersion }}.jar
+          version: ${{ env.TAG_PREFIX }}${{ inputs.componentVersion }}
+          assetPattern: metis-shell-${{ inputs.componentVersion }}.jar
           targetPath: ./release
           token: ${{ env.TOKEN }}
 
@@ -118,8 +118,8 @@ jobs:
       - name: Copy release
         shell: bash
         run: |
-          version='${{ github.event.inputs.componentVersion }}'
-          hostDescription='${{ github.event.inputs.host }}'
+          version='${{ inputs.componentVersion }}'
+          hostDescription='${{ inputs.host }}'
           host="${hostDescription##*\(}" # bis zur "(" abschneiden
           host="${host%\)*}" # ab der ")" abschneiden
           case "${hostDescription^^}" in

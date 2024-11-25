@@ -65,7 +65,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -81,8 +81,8 @@ jobs:
         id: downloadRelease
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ github.event.inputs.componentVersion }}
-          assetPattern: metis-ui-${{ github.event.inputs.componentVersion }}.tar.gz
+          version: ${{ inputs.componentVersion }}
+          assetPattern: metis-ui-${{ inputs.componentVersion }}.tar.gz
           targetPath: ./release
           token: ${{ env.TOKEN }}
 
@@ -92,30 +92,30 @@ jobs:
         run: |
           echo "${{ env.DEPLOYMENT_USER_SSH_KEY }}" > id_rsa
           chmod 600 ./id_rsa
-          scp -r -i ./id_rsa ./release/metis-ui-${{ github.event.inputs.componentVersion }}.tar.gz ${{ env.DEPLOYMENT_USER }}@${{ github.event.inputs.host }}:/tmp/metis-ui-${{ github.event.inputs.componentVersion }}.tar.gz
+          scp -r -i ./id_rsa ./release/metis-ui-${{ inputs.componentVersion }}.tar.gz ${{ env.DEPLOYMENT_USER }}@${{ inputs.host }}:/tmp/metis-ui-${{ inputs.componentVersion }}.tar.gz
 
       - name: Extract release
         shell: bash
         run: |
-          ssh -i ./id_rsa ${{ env.DEPLOYMENT_USER }}@${{ github.event.inputs.host }} "\
+          ssh -i ./id_rsa ${{ env.DEPLOYMENT_USER }}@${{ inputs.host }} "\
           set -e && \
-          tar xfvz /tmp/metis-ui-${{ github.event.inputs.componentVersion }}.tar.gz --directory /home/www/default/htdocs"
+          tar xfvz /tmp/metis-ui-${{ inputs.componentVersion }}.tar.gz --directory /home/www/default/htdocs"
 
       # config.json anlegen
       - name: Create and deploy config.json
         shell: bash
         run: |
           echo "{" > config.json
-          echo -e "    \"API_URL\": \"${{ github.event.inputs.apiUrl }}\"," >> config.json
+          echo -e "    \"API_URL\": \"${{ inputs.apiUrl }}\"," >> config.json
           echo -e "    \"DEBUG_INFO\" : false" >> config.json
           echo "}" >> config.json
-          scp -r -i ./id_rsa ./config.json ${{ env.DEPLOYMENT_USER }}@${{ github.event.inputs.host }}:/home/www/default/htdocs/config.json
+          scp -r -i ./id_rsa ./config.json ${{ env.DEPLOYMENT_USER }}@${{ inputs.host }}:/home/www/default/htdocs/config.json
 
       # Apache restart
       - name: Apache restart
         shell: bash
         run: |
-          ssh -i ./id_rsa ${{ env.DEPLOYMENT_USER }}@${{ github.event.inputs.host }} "\
+          ssh -i ./id_rsa ${{ env.DEPLOYMENT_USER }}@${{ inputs.host }} "\
           set -e && \
           sudo /etc/init.d/apache2 start"
           rm -f ./id_rsa

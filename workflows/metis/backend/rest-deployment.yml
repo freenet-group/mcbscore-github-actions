@@ -67,7 +67,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -82,8 +82,8 @@ jobs:
       - name: Download Release
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: ${{ env.TAG_PREFIX }}${{ github.event.inputs.componentVersion }}
-          assetPattern: metis-rest-${{ github.event.inputs.componentVersion }}.jar
+          version: ${{ env.TAG_PREFIX }}${{ inputs.componentVersion }}
+          assetPattern: metis-rest-${{ inputs.componentVersion }}.jar
           targetPath: ./release
           token: ${{ env.TOKEN }}
 
@@ -99,7 +99,7 @@ jobs:
       - name: Setup variables
         shell: bash
         run: |
-          envDescription='${{ github.event.inputs.environment }}'
+          envDescription='${{ inputs.environment }}'
           if ! [[ "$envDescription" =~ ^([^[:space:]]+)[[:space:]]*\((.+)\@(.+)\)$ ]]; then
             printf 'Unerwartetes Format in Umgebung "%s"\n' "$envDescription" >&2
             exit 1

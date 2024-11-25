@@ -76,7 +76,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -119,19 +119,19 @@ jobs:
 
       # component_Version ggf. manuell übersteuern, sofern eine Eingabe vorliegt
       - name: manualVersion
-        if: ${{ github.event.inputs.manualVersion != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
+        if: ${{ inputs.manualVersion != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
         shell: bash
         run: |
-          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}"
-          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}" >> $GITHUB_ENV
+          echo "COMPONENT_VERSION=${{ inputs.manualVersion }}"
+          echo "COMPONENT_VERSION=${{ inputs.manualVersion }}" >> $GITHUB_ENV
 
       # issueList ggf. manuell übersteuern, sofern eine Eingabe vorliegt
       - name: manualIssues
-        if: ${{ github.event.inputs.manualIssues != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
+        if: ${{ inputs.manualIssues != '' && (env.PRODUCT == matrix.product.id || env.PRODUCT == 'ALL') }}
         shell: bash
         run: |
-          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}"
-          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}" >> $GITHUB_ENV 
+          echo "ISSUE_LIST=${{ inputs.manualIssues }}"
+          echo "ISSUE_LIST=${{ inputs.manualIssues }}" >> $GITHUB_ENV 
 
       # ##################################################################################
       # Release bauen
@@ -166,7 +166,7 @@ jobs:
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ inputs.gradleOptions }}
 
       # JUnit Ergebnisse publizieren
       - name: Publish Unit Test Results
@@ -245,7 +245,7 @@ jobs:
               "component": "${{ env.COMPONENT }}",
               "componentVersion": "${{ env.COMPONENT_VERSION }}", 
               "environment": "dev",
-              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
+              "actionsRepositoryBranch": "${{ inputs.actionsRepositoryBranch }}"
             }
 
       # Starte Deployment auf DEV (neuer Weg)
@@ -261,7 +261,7 @@ jobs:
               "componentVersion": "${{ env.COMPONENT_VERSION }}", 
               "environment": "dev",
               "additionalDeploymentComponent": "${{ env.ADDITIONAL_DEPLOYMENT_COMPONENT }}",
-              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
+              "actionsRepositoryBranch": "${{ inputs.actionsRepositoryBranch }}"
             }
 
       # Starte DB changes Workflow
@@ -289,6 +289,6 @@ jobs:
             {
               "releaseVersion": "${{ env.COMPONENT_VERSION }}",
               "issueList": "${{ env.ISSUE_LIST }}",
-              "epic": "${{ github.event.inputs.epic }}",
-              "actionsRepositoryBranch": "${{ github.event.inputs.actionsRepositoryBranch }}"
+              "epic": "${{ inputs.epic }}",
+              "actionsRepositoryBranch": "${{ inputs.actionsRepositoryBranch }}"
             }
