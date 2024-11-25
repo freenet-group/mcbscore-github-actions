@@ -432,9 +432,9 @@ jobs:
           echo "Dependencies setzen"
           if [ -n "$dependencyList" ]; then
             echo "dependencies=true" >> "$GITHUB_OUTPUT"
-            escaped_dependencyList=$(sed 's/$/\\n/g' <<< "$dependencyList")
-            dependencyList=$'\n'"$escaped_dependencyList"
-            sed -i "s/<!-- DEPENDENCIES_PLACEHOLDER -->/$dependencyList/" "$template_file";
+            dependency_list=$(echo "dependencyList" | sed 's/$/\\n/g' | tr -d '\n')
+            dependency_list=$'\n'"$dependency_list"
+            sed -i "s/<!-- DEPENDENCIES_PLACEHOLDER -->/$dependency_list/" "$template_file";          
           else 
             sed -i 's/<!-- DEPENDENCIES_PLACEHOLDER -->/:white_check_mark: Keine Dependencies/' "$template_file";
           fi
