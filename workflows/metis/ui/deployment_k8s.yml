@@ -19,6 +19,10 @@ on:
         description: Branch von Repository ms-deployment, der benutzt werden soll
         required: false
         default: main
+      actionsRepositoryBranch:
+        description: Branch von Repository mcbscore-github-actions, der benutzt werden soll
+        required: false
+        default: main
       dryRun:
         type: boolean
         description: Nicht deployen, nur Helm Chart Ergebnis anzeigen (helm --dry-run)
@@ -29,6 +33,8 @@ jobs:
   helm-deployment:
     runs-on: [self-hosted, k8s]
     env:
+      ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
+      ACTIONS_PATH: mcbscore/github
       COMPONENT: metis-ui
       DEPLOYMENT_PATH: mcbscore/deployment
 
@@ -78,9 +84,18 @@ jobs:
       - name: Setup jq
         uses: freenet-actions/setup-jq@v3
 
+      # Die internen Actions auschecken
+      - name: checkout mcbscore-github-actions
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ACTIONS_REPOSITORY }}
+          token: ${{ env.GITHUB_TOKEN }}
+          path: ${{ env.ACTIONS_PATH }}
+          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+
       # Haupt-Deployment-Action
       - name: Deploy to K8s
-        uses: ./.github/actions/deploy-to-k8s
+        uses: ./mcbscore/github/actions/deploy-to-k8s
         with:
           component: ${{ env.COMPONENT }}
           componentVersion: ${{ inputs.componentVersion }}

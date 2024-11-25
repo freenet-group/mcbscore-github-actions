@@ -158,6 +158,7 @@ jobs:
             {
               "componentVersion": "${{ env.COMPONENT_VERSION }}",
               "environment": "dev",
+              "actionsRepositoryBranch": "${{ inputs.actionsRepositoryBranch }}",
               "deploymentRepositoryBranch": "${{ inputs.deploymentRepositoryBranch }}"
             }
 
