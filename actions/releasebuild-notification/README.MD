@@ -10,9 +10,9 @@ GitHub-Action zum Versand von Releasebuild-Notifications im E-Mail-Format an ein
         uses: ./mcbscore/github/actions/releasebuild-notification
         with:
           component:  ${{ steps.read_jira_component.outputs.value }} 
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           goingLiveDate: "unbestimmt"
-          issueList: ${{ github.event.inputs.issueList }} 
+          issueList: ${{ inputs.issueList }} 
           hasSql: ${{ steps.cR.outputs.sql }}
           hasConfiguration: ${{ steps.cR.outputs.config }}
           hasDependencies: ${{ steps.cR.outputs.dependency }}

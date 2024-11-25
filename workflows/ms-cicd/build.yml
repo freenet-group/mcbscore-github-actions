@@ -55,7 +55,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       - name: Workflow initialisieren
         uses: ./mcbscore/github/actions/init-workflow
@@ -72,7 +72,7 @@ jobs:
       - name: Microservice per Gradle bauen
         uses: ./mcbscore/github/actions/gradle-build
         with:
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ inputs.gradleOptions }}
 
       - name: Unit Test Ergebnisse hochladen
         uses: EnricoMi/publish-unit-test-result-action@v2

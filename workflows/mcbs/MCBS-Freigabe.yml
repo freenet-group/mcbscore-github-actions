@@ -1,7 +1,7 @@
 name: MCBS-Freigabe
 
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: MCBS-Freigabe-${{ github.event.inputs.releaseVersion }}
+run-name: MCBS-Freigabe-${{ inputs.releaseVersion }}
 
 on:
   workflow_dispatch:
@@ -73,7 +73,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -94,7 +94,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -109,7 +109,7 @@ jobs:
             release.QueryIssueInfosForReleaseKt \
             "${{ env.JIRA_CLOUD_URL }}" \
             "${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}" \
-            "${{ github.event.inputs.iterations }}"
+            "${{ inputs.iterations }}"
           cat issueList.txt
           issues=$(cat issueList.txt)
           echo "issues=$issues" >> $GITHUB_ENV          
@@ -123,7 +123,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          # issueList: ${{ github.event.inputs.issueList }}
+          # issueList: ${{ inputs.issueList }}
           issueList: ${{ env.issues }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -134,7 +134,7 @@ jobs:
         uses: ./mcbscore/github/actions/mail-notification
         with:
           component:  ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           # issueList: issue_info.csv
           issueList: "releaseIssues.csv"
@@ -142,8 +142,8 @@ jobs:
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
           hasDeployment: ${{ env.DEPLOYMENT }}
-          additionalText: "${{ github.event.inputs.iterations }}"
-          epic: ${{ github.event.inputs.epic }}
+          additionalText: "${{ inputs.iterations }}"
+          epic: ${{ inputs.epic }}
           mailAddress: "${{ env.TEAMS_MAIL }}"
           purpose: MCBSFreigabe
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -164,9 +164,9 @@ jobs:
         run: |
           
           cd markdown
-          echo "## Produktionsfreigabe:  " >> MCBS_${{ github.event.inputs.releaseVersion }}.md
-          echo "Freigabe für PROD zum ${{ steps.determine-going-live-date.outputs.goingLiveDate }} am "$(date "+%d.%m.%y")  >> MCBS_${{ github.event.inputs.releaseVersion }}.md
-          git add MCBS_${{ github.event.inputs.releaseVersion }}.md
+          echo "## Produktionsfreigabe:  " >> MCBS_${{ inputs.releaseVersion }}.md
+          echo "Freigabe für PROD zum ${{ steps.determine-going-live-date.outputs.goingLiveDate }} am "$(date "+%d.%m.%y")  >> MCBS_${{ inputs.releaseVersion }}.md
+          git add MCBS_${{ inputs.releaseVersion }}.md
           git diff-index --quiet HEAD || git commit -m "Freigabe"
           git push
 
@@ -179,7 +179,7 @@ jobs:
         with:
           jiraURL: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          version: ${{ github.event.inputs.releaseVersion }}
-          issue: ${{ github.event.inputs.epic }}
+          version: ${{ inputs.releaseVersion }}
+          issue: ${{ inputs.epic }}
           atlassianDeveloperTools: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           loglevel: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_LOGLEVEL }}          

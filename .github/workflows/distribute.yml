@@ -33,7 +33,7 @@ on:
 
 jobs:
   aws-ms-events:
-    if: ${{ github.event.inputs.group == 'aws-ms-events' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'aws-ms-events' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -55,7 +55,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   aws:
-    if: ${{ github.event.inputs.group == 'aws' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'aws' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       DEFAULT_WORKFLOWS: "deployment, pullRequestCheck, pullRequestClosed, pullRequestTests, release, scheduledCleanup"
@@ -82,7 +82,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   mandel:
-    if: ${{ github.event.inputs.group == 'mandel' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'mandel' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -104,7 +104,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   mcbs:
-    if: ${{ github.event.inputs.group == 'mcbs' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'mcbs' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -126,7 +126,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   metis:
-    if: ${{ github.event.inputs.group == 'metis' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'metis' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -150,7 +150,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   ms-cicd:
-    if: ${{ github.event.inputs.group == 'ms-cicd' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'ms-cicd' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       DEFAULT_WORKFLOWS: "../encoding, ../developerPortal, ../developer-portal-internal, ../vulnerability-detection, build, check_code, check_pull_request, postBuild, release, deployment"
@@ -198,7 +198,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   ms:
-    if: ${{ github.event.inputs.group == 'ms' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'ms' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -228,7 +228,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   java-lib:
-    if: ${{ github.event.inputs.group == 'java-lib' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'java-lib' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       DEFAULT_WORKFLOWS: "../encoding, ../vulnerability_detection_with_toolchains, build, check_code, check_pull_request, postBuild, release"
@@ -259,7 +259,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   npm-lib:
-    if: ${{ github.event.inputs.group == 'npm-lib' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'npm-lib' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     env:
       DEFAULT_WORKFLOWS: "deployment, pullRequestCheck, pullRequestTests, release"
@@ -287,7 +287,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   proxy:
-    if: ${{ github.event.inputs.group == 'proxy' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'proxy' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -334,7 +334,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   rating:
-    if: ${{ github.event.inputs.group == 'rating' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'rating' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -356,7 +356,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   simple:
-    if: ${{ github.event.inputs.group == 'simple' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'simple' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -381,7 +381,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   standard:
-    if: ${{ github.event.inputs.group == 'standard' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'standard' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -408,7 +408,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   framework:
-    if: ${{ github.event.inputs.group == 'framework' || github.event.inputs.group == 'ALL' || github.event_name == 'schedule' }}
+    if: ${{ inputs.group == 'framework' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -438,7 +438,7 @@ jobs:
 
   test:
     # nur bei Input "test". Auch bei "ALL" wäre üblicherweise redundant, weil hier eine Teilmenge der obigen Repos konfiguriert wird.
-    if: ${{ github.event.inputs.group == 'test' }}
+    if: ${{ inputs.group == 'test' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -460,7 +460,7 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   spotless:
-    if: ${{ github.event.inputs.group == 'spotless' }}
+    if: ${{ inputs.group == 'spotless' }}
     runs-on: ubuntu-latest
     continue-on-error: true
     strategy:

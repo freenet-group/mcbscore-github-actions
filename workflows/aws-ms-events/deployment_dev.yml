@@ -20,4 +20,4 @@ jobs:
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "stage": "dev", "aws_key_name": "AWS_KEY_NON_PROD", "aws_secret_name": "AWS_SECRET_NON_PROD", "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "stage": "dev", "aws_key_name": "AWS_KEY_NON_PROD", "aws_secret_name": "AWS_SECRET_NON_PROD", "componentVersion": "${{ inputs.componentVersion }}" }'

@@ -65,7 +65,7 @@ Coverage der Komponente wurde zuvor ermittelt
           jiraCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           coverageLimit: ${{ env.COVERAGE_LIMIT }}
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}

@@ -57,7 +57,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -72,8 +72,8 @@ jobs:
       - name: Download Release
         uses: ./mcbscore/github/actions/download-release-assets
         with:
-          version: 'mcbs.${{ github.event.inputs.componentVersion }}'
-          assetPattern: '-${{ github.event.inputs.componentVersion }}.zip'
+          version: 'mcbs.${{ inputs.componentVersion }}'
+          assetPattern: '-${{ inputs.componentVersion }}.zip'
           targetPath: '.'
           token: ${{ env.TOKEN }}
       
@@ -83,8 +83,8 @@ jobs:
           host: ${{ env.HOST }}
           username: ${{ env.USERNAME }}
           key: ${{ env.ID_RSA }}
-          source: '*${{ github.event.inputs.componentVersion }}.zip'
-          target: '/var/QS/MCBS/${{ github.event.inputs.componentVersion }}'
+          source: '*${{ inputs.componentVersion }}.zip'
+          target: '/var/QS/MCBS/${{ inputs.componentVersion }}'
 
       - name: executing remote ssh commands (unzip release)
         uses: appleboy/ssh-action@master
@@ -93,6 +93,6 @@ jobs:
           username: ${{ env.USERNAME }}
           key: ${{ env.ID_RSA }}
           script: |
-            cd /var/QS/MCBS/${{ github.event.inputs.componentVersion }}
-            unzip mcbs-${{ github.event.inputs.componentVersion }}.zip
+            cd /var/QS/MCBS/${{ inputs.componentVersion }}
+            unzip mcbs-${{ inputs.componentVersion }}.zip
             

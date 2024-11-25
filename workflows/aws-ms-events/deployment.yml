@@ -42,7 +42,7 @@ jobs:
           ref: ${{ inputs.actionsRepositoryBranch }}
 
       - name: Set serverless.yml for release
-        if: ${{ github.event.inputs.componentVersion != null }}
+        if: ${{ inputs.componentVersion != null }}
         shell: bash
         run: |
           echo "SERVERLESS_YML=/release/serverless.yaml" >> $GITHUB_ENV
@@ -51,17 +51,17 @@ jobs:
         uses: ./mcbscore/github/actions/download-release-assets
         with:
           version: ${{ inputs.componentVersion }}
-          assetPattern: 'serverless-${{ github.event.inputs.componentVersion }}.tar.gz'
+          assetPattern: 'serverless-${{ inputs.componentVersion }}.tar.gz'
           targetPath: './release'
           token: ${{ env.TOKEN }}
 
       - name: Unzip release
         id: unzipRelease
-        if: ${{ github.event.inputs.componentVersion != null }}
+        if: ${{ inputs.componentVersion != null }}
         shell: bash
         run: |
           cd release
-          tar -xvzf serverless-${{ github.event.inputs.componentVersion }}.tar.gz
+          tar -xvzf serverless-${{ inputs.componentVersion }}.tar.gz
 
       - id: init-workflow
         name: Initialize Workflow
@@ -74,17 +74,17 @@ jobs:
         run: npm install -g serverless
 
       - name: Serverless AWS authentication
-        run: sls config credentials --provider aws --key ${{ secrets[github.event.inputs.aws_key_name] }} --secret ${{ secrets[github.event.inputs.aws_secret_name] }}
+        run: sls config credentials --provider aws --key ${{ secrets[inputs.aws_key_name] }} --secret ${{ secrets[inputs.aws_secret_name] }}
 
       - name: Install NPM dependencies
         run: npm install
 
       - name: Deploy Lambda functions from Release
-        if: ${{ github.event.inputs.componentVersion != null }}
+        if: ${{ inputs.componentVersion != null }}
         run: |
-          export COMPONENT_VERSION=${{ github.event.inputs.componentVersion }}
-          sls deploy --config release/serverless.yaml --stage ${{ github.event.inputs.stage }}
+          export COMPONENT_VERSION=${{ inputs.componentVersion }}
+          sls deploy --config release/serverless.yaml --stage ${{ inputs.stage }}
 
       - name: Deploy Lambda functions from Branch
-        if: ${{ github.event.inputs.componentVersion == null }}
-        run: sls deploy --stage ${{ github.event.inputs.stage }}
+        if: ${{ inputs.componentVersion == null }}
+        run: sls deploy --stage ${{ inputs.stage }}

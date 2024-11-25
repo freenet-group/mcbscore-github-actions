@@ -81,7 +81,7 @@ on:
 
 #Nur ein k8s Workflow darf gleichzeitg gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.inputs.component }}-${{ github.event.inputs.dryRun }}
+  group: ${{ github.workflow }}-${{ inputs.component }}-${{ inputs.dryRun }}
   cancel-in-progress: false
 env:
   DEPLOYMENT_PATH: mcbscore/deployment
@@ -131,7 +131,7 @@ jobs:
         repository: ${{ env.DEPLOYMENT_REPO }}
         token: ${{ env.GITHUB_TOKEN }}
         path: ${{ env.DEPLOYMENT_PATH }}
-        ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+        ref: ${{ inputs.deploymentRepositoryBranch }}
 
     # jq installieren
     - name: Setup jq
@@ -142,7 +142,7 @@ jobs:
       id: component-check
       shell: bash
       run: |
-        component='${{ github.event.inputs.component }}'
+        component='${{ inputs.component }}'
         if [ ! -d "./${DEPLOYMENT_PATH}/properties/${component}" ]; then
             printf 'Der Name der Komponente "%s" existiert nicht\n' "${DEPLOYMENT_REPO}/properties/${component}" >&2
             exit 1
@@ -153,8 +153,8 @@ jobs:
       id: set-matrix
       shell: bash
       run: |
-        component='${{ github.event.inputs.component }}'
-        environment='${{ github.event.inputs.environment }}'
+        component='${{ inputs.component }}'
+        environment='${{ inputs.environment }}'
         domains=
 
         for f in \
@@ -179,8 +179,8 @@ jobs:
       id: deployment-check
       shell: bash
       run: |
-        component='${{ github.event.inputs.component }}'
-        environment='${{ github.event.inputs.environment }}'
+        component='${{ inputs.component }}'
+        environment='${{ inputs.environment }}'
 
         enabled=$(
           for f in \
@@ -258,7 +258,7 @@ jobs:
         repository: ${{ env.DEPLOYMENT_REPO }}
         token: ${{ env.GITHUB_TOKEN }}
         path: ${{ env.DEPLOYMENT_PATH }}
-        ref: ${{ github.event.inputs.deploymentRepositoryBranch }}
+        ref: ${{ inputs.deploymentRepositoryBranch }}
 
     # jq installieren
     - name: Setup jq

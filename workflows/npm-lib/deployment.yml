@@ -24,7 +24,7 @@ jobs:
           if [ "${{ github.event_name }}" == "release" ]; then
             echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           else
-            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            echo "VERSION=${{ inputs.version }}" >> $GITHUB_OUTPUT
           fi
 
       # Setup

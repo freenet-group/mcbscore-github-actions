@@ -1,6 +1,6 @@
 name: GIT Deployment
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: GIT Deployment ${{ github.event.inputs.componentVersion }}
+run-name: GIT Deployment ${{ inputs.componentVersion }}
 
 on:
   workflow_dispatch:
@@ -37,7 +37,7 @@ jobs:
         with:
           workflow: GIT MD Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'
 
       # Starte MD Extern Deployment auf GIT
       - name: Invoke deployment workflow GIT MD Extern
@@ -46,7 +46,7 @@ jobs:
         with:
           workflow: GIT MD Deployment Extern
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'
 
       # Starte KM Deployment auf GIT
       - name: Invoke deployment workflow GIT KM
@@ -55,7 +55,7 @@ jobs:
         with:
           workflow: GIT KM Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'
 
       # Starte KM Extern Deployment auf GIT
       - name: Invoke deployment workflow GIT KM Extern
@@ -64,7 +64,7 @@ jobs:
         with:
           workflow: GIT KM Deployment Extern
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'
 
       # Starte FM Deployment auf GIT
       - name: Invoke deployment workflow GIT FM
@@ -73,7 +73,7 @@ jobs:
         with:
           workflow: GIT FM Deployment
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'
 
       # Starte FM Extern Deployment auf GIT
       - name: Invoke deployment workflow GIT FM Extern
@@ -82,4 +82,4 @@ jobs:
         with:
           workflow: GIT FM Deployment Extern
           token: ${{ env.TOKEN }}
-          inputs: '{ "componentVersion": "${{ github.event.inputs.componentVersion }}" }'
+          inputs: '{ "componentVersion": "${{ inputs.componentVersion }}" }'

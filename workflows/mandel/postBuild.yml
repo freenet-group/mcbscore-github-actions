@@ -71,7 +71,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -92,7 +92,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           componentList: '${{ env.JIRA_COMPONENT }},Microservices'
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -104,7 +104,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -116,8 +116,8 @@ jobs:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
-          issueList: ${{ github.event.inputs.issueList }}
+          componentVersion: ${{ inputs.releaseVersion }}
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           included_components: ${{ env.INCLUDED_COMPONENTS }}
 
@@ -129,7 +129,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -140,8 +140,8 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
-          issueList: ${{ github.event.inputs.issueList }}
+          comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ inputs.releaseVersion }}'
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ###################################################################################
@@ -166,7 +166,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           coverageLimit: ${{ env.COVERAGE_LIMIT }}
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -180,7 +180,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -197,7 +197,7 @@ jobs:
         uses: ./mcbscore/github/actions/create-release-note
         with:
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           jiraWebUrl: ${{ env.JIRA_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
@@ -205,8 +205,8 @@ jobs:
           hasDependencies: "NEIN"
           dependentIssues: "keine"
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
-          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.JIRA_COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
+          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ inputs.releaseVersion }}/${{ env.JIRA_COMPONENT }}-${{ inputs.releaseVersion }}.jar"
           junitResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
           cucumberResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
           javaVersion: ${{ env.RELEASENOTES_JAVA_RELEASE }}
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}

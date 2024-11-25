@@ -67,11 +67,11 @@ jobs:
       # DEPLOYMENT_REF Umgebungsvariable setzen
       shell: bash
       run: |
-        if  [[ ${{ github.event.inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
+        if  [[ ${{ inputs.componentVersion }} =~ '-SNAPSHOT' ]] ;
         then
           echo "DEPLOYMENT_REF=develop" >> $GITHUB_ENV
         else
-          echo "DEPLOYMENT_REF=${{ github.event.inputs.componentVersion }}" >> $GITHUB_ENV
+          echo "DEPLOYMENT_REF=${{ inputs.componentVersion }}" >> $GITHUB_ENV
         fi
 
     - name: Create GitHub deployment

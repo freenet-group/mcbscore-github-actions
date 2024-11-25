@@ -76,7 +76,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -107,19 +107,19 @@ jobs:
       
       # component_Version ggf. manuell übersteuern, sofern eine Eingabe vorliegt
       - name: manualVersion
-        if: ${{ github.event.inputs.manualVersion != '' }}
+        if: ${{ inputs.manualVersion != '' }}
         shell: bash
         run: |
-          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}"
-          echo "COMPONENT_VERSION=${{github.event.inputs.manualVersion}}" >> $GITHUB_ENV
+          echo "COMPONENT_VERSION=${{ inputs.manualVersion }}"
+          echo "COMPONENT_VERSION=${{ inputs.manualVersion }}" >> $GITHUB_ENV
                     
       # issueList ggf. manuell übersteuern, sofern eine Eingabe vorliegt
       - name: manualIssues
-        if: ${{ github.event.inputs.manualIssues != '' }}
+        if: ${{ inputs.manualIssues != '' }}
         shell: bash
         run: |
-          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}"
-          echo "ISSUE_LIST=${{github.event.inputs.manualIssues}}" >> $GITHUB_ENV
+          echo "ISSUE_LIST=${{ inputs.manualIssues }}"
+          echo "ISSUE_LIST=${{ inputs.manualIssues }}" >> $GITHUB_ENV
       
       # ##################################################################################
       # Release bauen
@@ -133,7 +133,7 @@ jobs:
           artifactoryPassword: ${{ secrets.MD_ARTIFACTORY_PW }}
           sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
           sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
-          gradleOptions: ${{ github.event.inputs.gradleOptions }}
+          gradleOptions: ${{ inputs.gradleOptions }}
 
       # Existierende Draft Releases löschen
       - name: Delete draft releases

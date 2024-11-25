@@ -74,7 +74,7 @@ jobs:
           repository: ${{ env.ACTIONS_REPOSITORY }}
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       # ##################################################################################
       # Initialize Workflow
@@ -97,7 +97,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: MCBS
           component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           componentList: ${{ env.COMPONENT }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -109,7 +109,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ABRMS
           component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           componentList: ${{ env.COMPONENT }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -121,7 +121,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -133,8 +133,8 @@ jobs:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
-          issueList: ${{ github.event.inputs.issueList }}
+          componentVersion: ${{ inputs.releaseVersion }}
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           included_components: ${{ env.INCLUDED_COMPONENTS }}
 
@@ -146,7 +146,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ inputs.issueList }}
           atlassianDeveloperTools: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -157,8 +157,8 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
-          issueList: ${{ github.event.inputs.issueList }}
+          comment: 'Releasebuild : ${{ env.COMPONENT }}_${{ inputs.releaseVersion }}'
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ###################################################################################
@@ -183,7 +183,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ${{ env.JIRA_PROJECT }}
           component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           coverageLimit: ${{ env.COVERAGE_LIMIT }}
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
@@ -197,7 +197,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          issueList: ${{ github.event.inputs.issueList }}
+          issueList: ${{ inputs.issueList }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ##################################################################################
@@ -214,7 +214,7 @@ jobs:
         uses: ./mcbscore/github/actions/create-release-note
         with:
           component: ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           jiraWebUrl: ${{ env.JIRA_WEB_URL }}
           hasConfiguration: ${{ steps.fetch-additional-information.outputs.config }}
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
@@ -222,11 +222,11 @@ jobs:
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
           dependentIssues: ${{ steps.fetch-additional-information.outputs.dependentIssues }}
           coverage: ${{ steps.fetch-coverage.outputs.coverage }}
-          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ github.event.inputs.releaseVersion }}/${{ env.COMPONENT }}-${{ github.event.inputs.releaseVersion }}.jar"
+          releaseUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases/tag/${{ inputs.releaseVersion }}/${{ env.COMPONENT }}-${{ inputs.releaseVersion }}.jar"
           junitResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
           cucumberResultUrl: "${{ github.SERVER_URL }}/${{ github.REPOSITORY }}/releases"
           javaVersion: ${{ env.RELEASENOTES_JAVA_RELEASE }}
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}
 
       # ###################################################################################
       # EPIC / IBN auswerten
@@ -237,7 +237,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       # ###################################################################################
@@ -247,7 +247,7 @@ jobs:
         uses: ./mcbscore/github/actions/mail-notification
         with:
           component:  ${{ env.COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           issueList: issue_info.csv
           hasSql: ${{ steps.fetch-additional-information.outputs.sql }}
@@ -255,7 +255,7 @@ jobs:
           hasDependencies: ${{ steps.fetch-additional-information.outputs.dependency }}
           hasDeployment: ${{ env.DEPLOYMENT }}
           additionalText: "extra"
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}
           mailAddress: ${{ env.TEAMS_MAIL }}
           purpose: InternalBuild
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}

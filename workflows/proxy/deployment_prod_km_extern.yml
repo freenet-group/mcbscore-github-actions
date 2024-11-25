@@ -1,6 +1,6 @@
 name: PROD KM EXTERN Deployment
 #Name für den workflow. Wichtig bei mehreren workflows im selben Repository um die workflows im actions-tab unterscheiden zu können.
-run-name: PROD KM EXTERN Deployment ${{ github.event.inputs.componentVersion }}
+run-name: PROD KM EXTERN Deployment ${{ inputs.componentVersion }}
 
 on:
   workflow_dispatch:
@@ -18,11 +18,11 @@ jobs:
     uses: ./.github/workflows/deployment.yml
     secrets: inherit
     with:
-      componentVersion: ${{ github.event.inputs.componentVersion }}
+      componentVersion: ${{ inputs.componentVersion }}
       stage: prod
       company: km
       externalProxy: true
       deploymentTarget: apigw-p1.mobilcom.de
       additionalDeploymentTarget: apigw-p2.mobilcom.de
       bambiNotification: true
-      actionsRepositoryBranch: ${{ github.event.inputs.actionsRepositoryBranch }}
+      actionsRepositoryBranch: ${{ inputs.actionsRepositoryBranch }}

@@ -37,7 +37,7 @@ jobs:
           token: ${{ env.TOKEN }}
           inputs: >
             {
-              "componentVersion": "${{ github.event.inputs.componentVersion }}",
+              "componentVersion": "${{ inputs.componentVersion }}",
               "host": "metis-fe-t11.mobilcom.de",
               "apiUrl": "http://metis-ws-t11:8090/metis-rest/"
             }

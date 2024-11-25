@@ -84,7 +84,7 @@ jobs:
           repository: freenet-group/mcbscore-github-actions
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
-          ref: ${{ github.event.inputs.actionsRepositoryBranch }}
+          ref: ${{ inputs.actionsRepositoryBranch }}
 
       - name: Workflow initialisieren
         uses: ./mcbscore/github/actions/init-workflow
@@ -98,7 +98,7 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: ABRMS
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           componentList: '${{ env.JIRA_COMPONENT }},ABRMS (unspez.)'
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
@@ -109,14 +109,14 @@ jobs:
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           jiraProject: MCBS
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           componentList: '${{ env.JIRA_COMPONENT }},Microservices'
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Issuelist von "," auf " " umwandeln
         id: issueListNoComma
         run: |
-          OUTPUT=$(echo "${{ github.event.inputs.issueList }}" | tr -s ',' ' ')
+          OUTPUT=$(echo "${{ inputs.issueList }}" | tr -s ',' ' ')
           echo "issueListNoComma=$(echo $OUTPUT)" >> $GITHUB_OUTPUT
 
       - name: Weitere Infos zur IssueList holen
@@ -130,7 +130,7 @@ jobs:
       - name: Bambi Args auslesen
         id: parse-bambi-args
         run: |
-          bambiArgs='${{ github.event.inputs.bambiArgs }}'
+          bambiArgs='${{ inputs.bambiArgs }}'
           echo "bambiArgs: $bambiArgs"
           
           changesInConfiguration=$(echo "$bambiArgs" | jq -r '.changesInConfiguration')
@@ -160,7 +160,7 @@ jobs:
           DEPENDENCIES: ${{ steps.parse-bambi-args.outputs.dependencies }}
           RENOVATE_INFO: ${{ steps.parse-bambi-args.outputs.renovateInfo }}
           RENOVATE: ${{ steps.parse-bambi-args.outputs.renovate }}
-          INPUT_RELEASE_VERSION: ${{ github.event.inputs.releaseVersion }}
+          INPUT_RELEASE_VERSION: ${{ inputs.releaseVersion }}
         run: |
           issueListWithDelimiter=$(echo "$ISSUE_LIST" | tr -s ' ' ',')
           echo "Create BAMBI-Entry for IssueList: $issueListWithDelimiter"
@@ -198,7 +198,7 @@ jobs:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
           included_components: ${{ env.INCLUDED_COMPONENTS }}
@@ -209,7 +209,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ github.event.inputs.releaseVersion }}'
+          comment: 'Releasebuild : ${{ env.JIRA_COMPONENT }}_${{ inputs.releaseVersion }}'
           issueList: ${{ steps.issueListNoComma.outputs.issueListNoComma }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
      
@@ -220,7 +220,7 @@ jobs:
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
 
       - name: Info an Teams Kanal senden
@@ -228,15 +228,15 @@ jobs:
         uses: ./mcbscore/github/actions/mail-notification
         with:
           component: ${{ env.JIRA_COMPONENT }}
-          componentVersion: ${{ github.event.inputs.releaseVersion }}
+          componentVersion: ${{ inputs.releaseVersion }}
           goingLiveDate: ${{ steps.determine-going-live-date.outputs.goingLiveDate }}
           issueList: issue_info.csv
-          hasSql: ${{ github.event.inputs.hasSQL }}
-          hasConfiguration: ${{ github.event.inputs.hasConfiguration }}
-          hasDependencies: ${{ github.event.inputs.hasDependencies }}
-          hasDeployment: ${{ github.event.inputs.hasDeployment }}
+          hasSql: ${{ inputs.hasSQL }}
+          hasConfiguration: ${{ inputs.hasConfiguration }}
+          hasDependencies: ${{ inputs.hasDependencies }}
+          hasDeployment: ${{ inputs.hasDeployment }}
           additionalText: "extra"
-          epic: ${{ github.event.inputs.epic }}
+          epic: ${{ inputs.epic }}
           mailAddress: ${{ env.TEAMS_MAIL }}
           purpose: ${{ env.MAIL_PURPOSE }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}

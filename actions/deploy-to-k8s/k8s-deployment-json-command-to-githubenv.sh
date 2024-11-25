@@ -18,7 +18,7 @@ json=$(cat)	#weil wir Stdin mehrfach lesen wollen, in Variable speichern
 # Als JSON-String sollte eigentlich reichen, aber für Eintrag
 #	"-Dspring.profiles.active=": {
 #		"type": "JQ",
-#		"value": "[.github.event.inputs.environment, \"kube\", \"kube\" + .github.event.inputs.environment] | join(\",\")"
+#		"value": "[.inputs.environment, \"kube\", \"kube\" + .inputs.environment] | join(\",\")"
 #	},
 # tat es das irgendwie nicht. Deshalb zusätzlich Base64.
 substitutions=$(jq --raw-output '
