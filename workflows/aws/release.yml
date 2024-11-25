@@ -31,7 +31,10 @@ jobs:
 
     steps:
       # Setup
-      - uses: actions/checkout@v4
+      - id: checkout-repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
 
       - name: AWS Credentials konfigurieren
         uses: aws-actions/configure-aws-credentials@v4
@@ -315,7 +318,7 @@ jobs:
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}
-          target_commitish: ${{ GITHUB_REF#refs/heads/ }}
+          target_commitish: ${{ steps.checkout-repository.outputs.commit }}
           token: ${{ env.TOKEN }}
 
       # Jira Fix-Version setzen

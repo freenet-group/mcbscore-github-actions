@@ -35,6 +35,7 @@ jobs:
         run: sudo locale-gen "$LANG" && sudo update-locale LANG="$LANG"
 
       - name: Repository auschecken
+        id: checkout-repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.branch }}
