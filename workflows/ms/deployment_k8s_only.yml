@@ -107,7 +107,11 @@ jobs:
 
   deploy_k8s:
     needs: [create-deployment]
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@2
+    # Pro Stage darf nur ein k8s Workflow gleichzeitig gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
+    concurrency:
+      group: ${{ github.workflow }}-${{ inputs.component }}-${{ inputs.environment }}-${{ inputs.dryRun }}
+      cancel-in-progress: false
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@3
     secrets: inherit
     with:
       component: ${{ inputs.component }}
