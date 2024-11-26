@@ -78,10 +78,6 @@ on:
         required: false
         default: false
 
-# Pro Stage darf nur ein k8s Workflow gleichzeitig gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
-concurrency:
-  group: ${{ github.workflow }}-${{ inputs.component }}-${{ inputs.environment }}-${{ inputs.dryRun }}
-  cancel-in-progress: false
 env:
   DEPLOYMENT_PATH: mcbscore/deployment
   ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
