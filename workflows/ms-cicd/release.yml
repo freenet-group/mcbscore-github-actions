@@ -311,7 +311,7 @@ jobs:
             if epicKey=$(jq -r -e '.fields.parent.key' <<<"$issue_info"); then  
               if [ -z "$epicList" ]; then epicList="$epicKey"; else epicList="$epicList,$epicKey"; fi  
               echo "Jira API wird zum Epic: $epicKey befragt"  
-              API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$epic_name"
+              API_ENDPOINT="${{ env.JIRA_CLOUD_URL }}issue/$epicKey"
               result=$(curl -s --write-out "%{http_code}" -L -H "${AUTH_HEADER}" -H "Accept: application/json" "${API_ENDPOINT}") 
               http_code="${result: -3}"
               if [ "$http_code" != "200" ]; then
