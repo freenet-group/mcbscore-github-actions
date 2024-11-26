@@ -248,7 +248,11 @@ jobs:
     needs: [create-deployment]
     # if: platforms enthält "k8s" ", "-separiert (wie in choice Input) || ","-separiert (evtl in string Input)
     if: contains(format(', {0}, ', inputs.platforms), ', k8s, ') || contains(format(',{0},', inputs.platforms), ',k8s,')
-    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@2
+    # Pro Stage darf nur ein k8s Workflow gleichzeitig gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
+    concurrency:
+      group: ${{ github.workflow }}-${{ inputs.component }}-${{ inputs.environment }}-false
+      cancel-in-progress: false
+    uses: freenet-group/mcbscore-reusable-workflows/.github/workflows/deployment_k8s.yml@3
     secrets: inherit
     with:
       component: ${{ inputs.component }}

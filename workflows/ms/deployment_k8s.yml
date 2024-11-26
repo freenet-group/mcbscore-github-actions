@@ -78,17 +78,13 @@ on:
         required: false
         default: false
 
-
-#Nur ein k8s Workflow darf gleichzeitg gestartet werden. Alle weitere k8s bleiben in pending bis der vorherige Workflow abgeschlossen sind.
-concurrency:
-  group: ${{ github.workflow }}-${{ inputs.component }}-${{ inputs.dryRun }}
-  cancel-in-progress: false
 env:
   DEPLOYMENT_PATH: mcbscore/deployment
   ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
   DEPLOYMENT_REPO: freenet-group/ms-deployment
   JAVA_VERSION: 11
   GENERATED_SSH_KEY_FILE: id_rsa
+  KEY_SERVER: ${{ secrets.CERT_SERVER }}
 
 jobs:
   ################################################################################
