@@ -243,7 +243,7 @@ jobs:
             echo "Epic zu $issueNumber extrahieren"
             if epicKey=$(jq -r -e '.fields.parent.key' <<<"$issue_info"); then  
               if [ -z "$epicList" ]; then epicList="$epicKey"; else epicList="$epicList,$epicKey"; fi  
-              echo "Extrahierter epicKey: $epicKey"   
+              echo "Extrahierter epicKey: $epicKey"
             fi
 
             # Titel einlesen
