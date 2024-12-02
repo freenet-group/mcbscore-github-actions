@@ -27,7 +27,7 @@ jobs:
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
       - name: Sync GitHub PR Labels with Jira Components
-        uses: freenet-group/github-pr-label-sync-with-jira@0.2.5
+        uses: freenet-group/github-pr-label-sync-with-jira@0.2.11
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           github-labels: ms-deployment:yes, ms-configuration:yes, aws-parameterstore:yes
