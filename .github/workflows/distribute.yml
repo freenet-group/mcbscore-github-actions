@@ -239,6 +239,7 @@ jobs:
           - { name: lib-amount, branch: main, group: java-lib }
           - { name: lib-annotation, branch: main, group: java-lib }
           - { name: lib-common, branch: main, group: java-lib }
+          - { name: lib-io, branch: main, group: java-lib }
           - { name: mcbs-connector-api, branch: main, group: java-lib }
           - { name: mslib-aws, branch: main, group: java-lib }
           - { name: mslib-rest, branch: main, group: java-lib }
@@ -414,7 +415,6 @@ jobs:
       matrix:
         repository:
           - { name: lib-enterprise, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
-          - { name: lib-io, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-persistence, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-process, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-relation, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
@@ -468,9 +468,9 @@ jobs:
         repository:
           - { name: lib-amount, branch: main }
           - { name: lib-annotation, branch: main }
-          - { name: lib-common, branch: develop }
+          - { name: lib-common, branch: main }
           - { name: lib-enterprise, branch: develop }
-          - { name: lib-io, branch: develop }
+          - { name: lib-io, branch: main }
           - { name: lib-persistence, branch: develop }
           - { name: lib-process, branch: develop }
           - { name: lib-relation, branch: develop }
