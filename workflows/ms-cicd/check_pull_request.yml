@@ -100,7 +100,7 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     steps:
       - name: DOGS Benachrichtigung
-        uses: freenet-group/notify-on-label@1.0.10
+        uses: freenet-group/notify-on-label@1.0.14
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           label_list: 'ms-configuration:yes, ms-deployment:yes'
