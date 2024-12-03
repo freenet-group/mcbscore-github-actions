@@ -62,7 +62,6 @@ jobs:
             /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
             /github/common/jira/api_url = JIRA_API_URL, 
             /github/common/jira/jira_cloud_web_url = JIRA_CLOUD_WEB_URL,
-            /github/common/sonar/api_url = SONAR_API_URL, 
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
@@ -154,8 +153,8 @@ jobs:
         if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
         uses: ./mcbscore/github/actions/sonar-check
         with:
-          sonarUrl: ${{ env.SONAR_API_URL }}
-          sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          sonarUrl: "${{ secrets.SONARQUBE_HOST_URL }}/api/measures/component"
+          sonarCredentials: ${{ secrets.SONARQUBE_TOKEN }}
           projectKeyPath: ${{ env.COVERAGE_PATH }}
           projectKeyName: ${{ env.COVERAGE_APP }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}

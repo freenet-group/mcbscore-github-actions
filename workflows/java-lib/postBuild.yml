@@ -55,10 +55,6 @@ jobs:
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           awsParameterPairs: |
             /github/secrets/mcbs_token = TOKEN,
-            /github/secrets/mcbstest_credentials = MCBSTEST_CREDENTIALS,
-            /github/common/jira/api_url = JIRA_API_URL, 
-            /github/common/jira/jira_cloud_web_url = JIRA_CLOUD_WEB_URL,
-            /github/common/sonar/api_url = SONAR_API_URL,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
             /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
