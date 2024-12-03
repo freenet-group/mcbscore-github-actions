@@ -241,6 +241,7 @@ jobs:
           - { name: lib-common, branch: main, group: java-lib }
           - { name: lib-enterprise, branch: main, group: java-lib }
           - { name: lib-io, branch: main, group: java-lib }
+          - { name: lib-relation, branch: main, group: java-lib }
           - { name: mcbs-connector-api, branch: main, group: java-lib }
           - { name: mslib-aws, branch: main, group: java-lib }
           - { name: mslib-rest, branch: main, group: java-lib }
@@ -417,7 +418,6 @@ jobs:
         repository:
           - { name: lib-persistence, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-process, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
-          - { name: lib-relation, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-security, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
           - { name: lib-service, branch: develop, group: framework, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
     steps:
@@ -473,7 +473,7 @@ jobs:
           - { name: lib-io, branch: main }
           - { name: lib-persistence, branch: develop }
           - { name: lib-process, branch: develop }
-          - { name: lib-relation, branch: develop }
+          - { name: lib-relation, branch: main }
           - { name: lib-security, branch: develop }
           - { name: lib-service, branch: develop }
           - { name: mcbs-master, branch: develop }
@@ -516,8 +516,8 @@ jobs:
           - { name: ms-rating, branch: main }
           - { name: ms-user, branch: develop }
           - { name: ms-user-cleanup, branch: main }
-          - { name: mslib-aws, branch: develop }
-          - { name: mslib-rest, branch: develop }
+          - { name: mslib-aws, branch: main }
+          - { name: mslib-rest, branch: main }
           - { name: scaffold-clean-architecture-gradle-plugin, branch: develop }
 
     steps:
