@@ -151,8 +151,8 @@ jobs:
         if: ${{ (env.JAVA_VERSION != '8') && (env.COVERAGE_APP != '') }}
         uses: ./mcbscore/github/actions/sonar-check
         with:
-          sonarUrl: ${{ env.SONAR_API_URL }}
-          sonarCredentials: ${{ env.MCBSTEST_CREDENTIALS }}
+          sonarUrl: "${{ secrets.SONARQUBE_HOST_URL }}/api/measures/component"
+          sonarCredentials: ${{ secrets.SONARQUBE_TOKEN }}
           projectKeyPath: ${{ env.COVERAGE_PATH }}
           projectKeyName: ${{ env.COVERAGE_APP }}
           atlassianToolsVersion: ${{ env.ATLASSIAN_DEVELOPER_TOOLS_VERSION }}
