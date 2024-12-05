@@ -134,7 +134,7 @@ jobs:
       # Eintrag der fixVersion
       # ##################################################################################
       - name: setFixVersions
-        uses: ./mcbscore/github/actions/set-fix-version-v2
+        uses: ./mcbscore/github/actions/set-fix-version-jc
         with:
           jiraUrl: ${{ env.JIRA_CLOUD_URL }}
           jiraCredentials: ${{ env.MCBSTEST_JIRACLOUD_CREDENTIALS }}
