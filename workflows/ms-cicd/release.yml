@@ -11,7 +11,7 @@ on:
       branch:
         description: 'Von welchem Branch soll ein Release gebaut werden z.B. "feature/ABRMS-*" "oder bugfix/MCBS-*"?'
         required: false
-      ticket: 
+      ticket:
         description: 'Welches Ticket (MCBS-1234 / ABRMS-1234) soll für das Release verwendet werden?'
         required: true
       version:
@@ -38,6 +38,7 @@ jobs:
         run: sudo locale-gen "$LANG" && sudo update-locale LANG="$LANG"
 
       - name: Repository auschecken
+        id: checkout-repository
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.branch }}
@@ -51,11 +52,7 @@ jobs:
             /github/secrets/mcbs_user = USER,
             /github/secrets/mcbs_token = TOKEN,
             /github/secrets/mcbstest_jiracloud_credentials = MCBSTEST_JIRACLOUD_CREDENTIALS,
-            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL,
-            /github/secrets/dependencytrack_protocol = DEPENDENCYTRACK_PROTOCOL,
-            /github/secrets/dependencytrack_hostname = DEPENDENCYTRACK_HOSTNAME,
-            /github/secrets/dependencytrack_port = DEPENDENCYTRACK_PORT,
-            /github/secrets/dependencytrack_api_key = DEPENDENCYTRACK_API_KEY
+            /github/common/jira/jira_cloud_url = JIRA_CLOUD_URL
 
       - name: workflow.config einlesen
         id: read-properties
@@ -69,13 +66,6 @@ jobs:
           token: ${{ env.TOKEN }}
           path: ${{ env.ACTIONS_PATH }}
 
-      - name: Workflow initialisieren
-        uses: ./mcbscore/github/actions/init-workflow
-        with:
-          installJava: true
-          installGithubCli: true
-          installJq: true
-
       - name: Ausgewählte gradle.properties einlesen
         id: read-gradle-properties
         shell: bash
@@ -84,6 +74,8 @@ jobs:
           echo "artifact_name=$ARTIFACT_NAME" | tee -a -- "$GITHUB_OUTPUT"
           ARTIFACT_GROUP_ID=$(grep --perl '^ARTIFACT_GROUP_ID\s*=' gradle.properties | cut -d'=' -f2 | xargs)
           echo "artifact_group_id=$ARTIFACT_GROUP_ID" | tee -a -- "$GITHUB_OUTPUT"
+          JAVA_VERSION=$(grep --perl '^JAVA_VERSION\s*=' gradle.properties | cut -d'=' -f2 | xargs)
+          echo "java_version=$JAVA_VERSION" | tee -a -- "$GITHUB_OUTPUT"
 
       - name: keystore-files kopieren
         if: ${{ env.KEY_SERVER != '' }}
@@ -115,7 +107,7 @@ jobs:
 
       - name: Semantic Version überschreiben, wenn eine spezifische Version angegeben wurde
         id: version-calculation
-        env: 
+        env:
           NEW_VERSION: ${{ steps.bump-semver.outputs.new_version }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
@@ -126,15 +118,6 @@ jobs:
           if [ -n "${INPUT_VERSION}" ]; then
             echo "new_version=${INPUT_VERSION}" >> $GITHUB_OUTPUT
           fi
-
-      - name: Component Version setzen (legacy - Für die Kompatibilität mit alten Actions)
-        shell: bash
-        env:
-          NEW_VERSION: ${{ steps.version-calculation.outputs.new_version }}
-        run: |
-          echo "COMPONENT_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "RAW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-          echo "BUILD_TYPE=RELEASE" >> $GITHUB_ENV
 
       - name: Neuen Versions-Tag einchecken
         uses: actions-ecosystem/action-push-tag@v1
@@ -163,17 +146,29 @@ jobs:
             git push
           fi
 
-      - name: Gradle Build mit Sonar Upload und CyclonedxBom (SBOM)
-        uses: ./mcbscore/github/actions/gradle-build
+      - name: Set up JDK
+        id: setup-java
+        uses: actions/setup-java@v3
         with:
-          sonarqubeToken: ${{ secrets.SONARQUBE_TOKEN }}
-          sonarqubeUrl: ${{ secrets.SONARQUBE_HOST_URL }}
-          enableSonarCheckOnAllBranches: true
-          gradleOptions: ${{ inputs.gradleOptions }}
+          java-version: ${{ steps.read-gradle-properties.outputs.java_version }}
+          distribution: 'zulu'
+
+      - name: Gradle Build mit Sonar Upload und CyclonedxBom (SBOM)
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+
+          if [[ -n "$COVERAGE_APP" ]]; then
+            command="clean build publish sonar"
+          else
+            command="clean build publish"
+          fi
+
+          ./gradlew -PARTIFACT_VERSION=${{ steps.version-calculation.outputs.new_version }} -PGITHUB_USER=${{ env.USER }} -PGITHUB_TOKEN=${{ env.TOKEN }} -Dsonar.token=${{ secrets.SONARQUBE_TOKEN }} -Dsonar.host.url=${{ secrets.SONARQUBE_HOST_URL }} $command ${{ inputs.gradleOptions }}
 
       - name: Sonar-Coverage abholen
         id: fetch-coverage
-        if: ${{ (env.JAVA_VERSION != '8') && (env.JAVA_VERSION != '11') && (env.COVERAGE_APP != '') && (env.COVERAGE_PATH != '') }}
+        if: ${{ (steps.read-gradle-properties.outputs.java_version != '8') && (steps.read-gradle-properties.outputs.java_version != '11') && (env.COVERAGE_APP != '') && (env.COVERAGE_PATH != '') }}
         uses: actions/github-script@v7
         with:
           script: |
@@ -205,6 +200,9 @@ jobs:
         with:
           token: ${{ env.TOKEN }}
           head-tag: ${{ steps.version-calculation.outputs.new_version }}
+
+      - name: Setup jq
+        uses: freenet-actions/setup-jq@v3
 
       - name: Release-Template einlesen und ausfüllen
         id: update_release_template
@@ -395,7 +393,7 @@ jobs:
           
           ## Java
           echo "Java setzen"
-          sed -i 's/<!-- JAVA_VERSION_PLACEHOLDER -->/${{ env.RELEASENOTES_JAVA_RELEASE }}/' "$template_file";
+          sed -i 's/<!-- JAVA_VERSION_PLACEHOLDER -->/${{ steps.setup-java.outputs.version }}/' "$template_file";
           
           ## MS-Configuration
           echo "MS-Configuration Flag setzen"
@@ -494,7 +492,7 @@ jobs:
           componentName: ms-${{ env.COMPONENT }}
           componentVersion: ${{ steps.version-calculation.outputs.new_version }}
           jar: ${{ env.APPLICATION_JAR_PATH }}${{ env.APPLICATION_JAR_NAME }}-${{ steps.version-calculation.outputs.new_version }}.jar
-          javaVersion: ${{ env.JAVA_VERSION }}
+          javaVersion: ${{ steps.read-gradle-properties.outputs.java_version }}
 
       - name: Deployment Workflow starten
         id: deployment
@@ -625,6 +623,10 @@ jobs:
               "hasDependencies": "${{ steps.update_release_template.outputs.dependencies }}",
               "hasDeployment": "${{ steps.update_release_template.outputs.ms_deployment }}"
             }
+
+      - name: Setup Github CLI
+        if: failure() || cancelled()
+        uses: freenet-actions/setup-github-cli@v3
 
       - name: Tag/Release löschen und DB Changes Version reverten, wenn der Build fehlgeschlagen ist oder abgebrochen wurde
         if: failure() || cancelled()
