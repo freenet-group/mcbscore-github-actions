@@ -496,7 +496,7 @@ jobs:
 
       - name: Deployment Workflow starten
         id: deployment
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1.2.4
         with:
           workflow: Deployment
           token: ${{ env.TOKEN }}
@@ -575,7 +575,7 @@ jobs:
 
       - name: dbChanges Workflow starten
         if: ${{ hashFiles('.github/**/dbChanges.yml') != '' && (inputs['pre-release'] == 'false' || inputs['pre-release'] == false) }}
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1.2.4
         with:
           workflow: DB Changes
           token: ${{ env.TOKEN }}
@@ -609,7 +609,7 @@ jobs:
 
       - name: postBuild Workflow starten
         if: ${{ hashFiles('.github/**/postBuild.yml') != '' && (inputs['pre-release'] == 'false' || inputs['pre-release'] == false) }}
-        uses: benc-uk/workflow-dispatch@v1.2.3
+        uses: benc-uk/workflow-dispatch@v1.2.4
         with:
           workflow: PostBuild
           token: ${{ env.TOKEN }}
