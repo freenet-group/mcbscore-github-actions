@@ -46,7 +46,7 @@ jobs:
 
       - name: Service-Name aus serverless.yml extrahieren
         id: extract_service_name
-        uses: mikefarah/yq@v4.44.3
+        uses: mikefarah/yq@v4.44.6
         with:
           cmd: yq '.service' 'serverless.yml'
 
