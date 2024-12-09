@@ -115,22 +115,30 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0        
+
       - name: workflow.config einlesen
         id: read-properties
         run: |
           { cat .github/workflow.properties; echo; } | tee -a -- "$GITHUB_ENV"
+
       - name: Check API Version
-        if: ${{ env.API_DOC_YAML_PATTERN != ''}}
+        if: ${{ env.API_DOC_YAML_PATTERN != '' || env.VERSION_CHECK_API_DOC_YAML_PATTERN != '' }}
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |        
-          echo "API VERSION CHECK: $API_DOC_YAML_PATTERN"
+        run: |
+          if [[ -n "$VERSION_CHECK_API_DOC_YAML_PATTERN" ]]; then
+            yamlPattern=$VERSION_CHECK_API_DOC_YAML_PATTERN
+          else
+            yamlPattern=$API_DOC_YAML_PATTERN
+          fi
+          
+          echo "API VERSION CHECK: $yamlPattern"
           changedFiles=$(gh pr view ${{github.event.number}} --json files --jq '.files.[].path')
           echo -e "Änderungen an yaml-Dateien in Pullrequest #${{github.event.number}} gefunden!\n"
           # alle PR-Commits holen
           prCommits=$(gh pr view ${{github.event.number}} --json commits --jq '.commits.[].oid')          
-          yamlFiles=$(find . -wholename "$API_DOC_YAML_PATTERN")
+          yamlFiles=$(find . -wholename "$yamlPattern")
 
           for yamlFile in $yamlFiles; do
             yamlFile=${yamlFile#./}
