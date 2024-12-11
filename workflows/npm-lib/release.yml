@@ -331,7 +331,7 @@ jobs:
           echo "commit_sha=$commit_sha" >> "$GITHUB_OUTPUT"
 
       - name: Release erstellen
-        uses: softprops/action-gh-release@v2.0.8
+        uses: softprops/action-gh-release@v2.2.0
         with:
           body_path: '.github/templates/release_template_npmlib.md'
           files: |
