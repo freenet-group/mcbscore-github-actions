@@ -30,7 +30,6 @@ jobs:
     env:
       ACTIONS_REPOSITORY: freenet-group/mcbscore-github-actions
       ACTIONS_PATH: mcbscore/github
-      KEY_SERVER: ${{ secrets.CERT_SERVER }}
       TZ: Europe/Berlin
       LANG: de_DE.UTF-8
     steps:
@@ -76,14 +75,6 @@ jobs:
           echo "artifact_group_id=$ARTIFACT_GROUP_ID" | tee -a -- "$GITHUB_OUTPUT"
           JAVA_VERSION=$(grep --perl '^JAVA_VERSION\s*=' gradle.properties | cut -d'=' -f2 | xargs)
           echo "java_version=$JAVA_VERSION" | tee -a -- "$GITHUB_OUTPUT"
-
-      - name: keystore-files kopieren
-        if: ${{ env.KEY_SERVER != '' }}
-        shell: bash
-        run: |
-          certServer='${{ env.KEY_SERVER }}'
-          scp -p "${certServer}:oidc/keys/keystore.jwks" "${certServer}:oidc/keys/samlKeystore.jks" docker/home/oidc/keys/
-          ls -l docker/home/oidc/keys
 
       - name: Release Label einlesen
         id: release-label
