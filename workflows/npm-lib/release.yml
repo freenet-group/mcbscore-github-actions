@@ -33,6 +33,8 @@ jobs:
     steps:
       # Setup
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
 
       - name: AWS Credentials konfigurieren
         uses: aws-actions/configure-aws-credentials@v4
@@ -337,6 +339,7 @@ jobs:
           files: |
             ${{ steps.read-properties.outputs.SBOM_FILE }}
             ${{ steps.read-properties.outputs.JAR_FILES }}
+            ${{ steps.read-properties.outputs.SBOM_FILE_JAVA }}
           generate_release_notes: true
           name: ${{ steps.version-calculation.outputs.new_version }}
           tag_name: ${{ steps.version-calculation.outputs.new_version }}

@@ -129,8 +129,38 @@ jobs:
           dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
           bomfilename: ${{ steps.read-properties.outputs.SBOM_FILE }}
 
+      # SBOM Upload (Java)
+      - name: Dateinamen für SBOM Upload ermitteln (Java)
+        if: ${{ steps.read-properties.outputs.SBOM_FILE_JAVA != '' }}
+        id: sbom-file-name-java
+        env:
+          SBOM_FILE_JAVA: ${{ steps.read-properties.outputs.SBOM_FILE_JAVA }}
+        run: echo "SBOM_FILE_NAME_JAVA=$(basename -- "$SBOM_FILE_JAVA")" >> $GITHUB_OUTPUT
+
+      - name: SBOM vom Release herunterladen (Java)
+        if: ${{ steps.read-properties.outputs.SBOM_FILE_JAVA != '' }}
+        uses: dsaltares/fetch-gh-release-asset@1.1.2
+        with:
+          version: 'tags/${{ steps.determine-version.outputs.VERSION }}'
+          file: ${{ steps.sbom-file-name-java.outputs.SBOM_FILE_NAME_JAVA }}
+          target: ${{ steps.read-properties.outputs.SBOM_FILE_JAVA }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: SBOM an DependencyTrack übergeben (Java)
+        if: ${{ steps.read-properties.outputs.SBOM_FILE_JAVA != '' }}
+        uses: freenet-group/gh-upload-sbom-with-tagging@0.1.0
+        with:
+          component: ${{ steps.read-properties.outputs.JIRA_COMPONENT }}
+          component_version: ${{ steps.determine-version.outputs.VERSION }}
+          stage_tag: ${{ steps.determine-environment.outputs.ENVIRONMENT_LOWERCASE }}
+          dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
+          dependencytrack_hostname: ${{ env.DEPENDENCYTRACK_HOSTNAME }}
+          dependencytrack_port: ${{ env.DEPENDENCYTRACK_PORT }}
+          dependencytrack_api_key: ${{ env.DEPENDENCYTRACK_API_KEY }}
+          bomfilename: ${{ steps.read-properties.outputs.SBOM_FILE_JAVA }}
+
       - name: Alte SBOMs löschen
-        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' }}
+        if: ${{ steps.read-properties.outputs.SBOM_FILE != '' || steps.read-properties.outputs.SBOM_FILE_JAVA != '' }}
         uses: freenet-group/sbom-cleanup@1.1.0
         with:
           dependencytrack_protocol: ${{ env.DEPENDENCYTRACK_PROTOCOL }}
