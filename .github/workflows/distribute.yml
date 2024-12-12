@@ -18,7 +18,6 @@ on:
           - aws
           - framework
           - java-lib
-          - mandel
           - mcbs
           - metis
           - ms
