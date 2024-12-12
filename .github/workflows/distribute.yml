@@ -81,28 +81,6 @@ jobs:
           awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
           awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-  mandel:
-    if: ${{ inputs.group == 'mandel' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        repository:
-          - { name: mcbscore-mandel, branch: develop, group: mandel, workflows: "../check, build, ../encoding, ../vulnerability-detection, postBuild" }
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Distribute Workflows
-        uses: ./.github/actions/distribute-workflows
-        with:
-          repositoryName: ${{ matrix.repository.name }}
-          repositoryGroup: ${{ matrix.repository.group }}
-          repositoryBranch: ${{ matrix.repository.branch }}
-          workflows: ${{ matrix.repository.workflows }}
-          awsAccessKeyId: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          awsSecretAccessKey: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
   mcbs:
     if: ${{ inputs.group == 'mcbs' || inputs.group == 'ALL' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
@@ -242,6 +220,7 @@ jobs:
           - { name: lib-enterprise, branch: main, group: java-lib }
           - { name: lib-io, branch: main, group: java-lib }
           - { name: lib-relation, branch: main, group: java-lib }
+          - { name: mcbscore-mandel, branch: main, group: java-lib }
           - { name: mcbs-connector-api, branch: main, group: java-lib }
           - { name: mslib-aws, branch: main, group: java-lib }
           - { name: mslib-rest, branch: main, group: java-lib }
@@ -478,7 +457,7 @@ jobs:
           - { name: lib-service, branch: develop }
           - { name: mcbs-master, branch: develop }
           - { name: mcbs-logging, branch: develop }
-          - { name: mcbscore-mandel, branch: develop }
+          - { name: mcbscore-mandel, branch: main }
           - { name: mcbscore-bot, branch: develop }
           - { name: mcbscore-changelog-editor, branch: develop }
           - { name: mcbscore-customer-search-index, branch: develop }
