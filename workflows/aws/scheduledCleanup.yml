@@ -135,16 +135,3 @@ jobs:
             # sls remove mit den entsprechenden Optionen ausführen
             npx serverless remove --stage "$STAGE_NAME"
           done
-
-      - name: Alte Stacks entfernen
-        if: ${{ steps.filter_stacks.outputs.has_old_stacks == 'true' }}
-        env:
-          STACK_LIST: ${{ steps.filter_stacks.outputs.old_stacks }}
-        run: |
-          # Kommaseparierte Liste in Array umwandeln
-          IFS=',' read -r -a STACK_ARRAY <<< "$STACK_LIST"
-          for stack_name in "${STACK_ARRAY[@]}"; do
-            echo "Entferne Stack: $stack_name"
-            npx serverless remove --stage "${stack_name#*-}"
-          done
-
