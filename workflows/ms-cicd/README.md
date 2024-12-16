@@ -106,6 +106,12 @@ Im Repo mcbscore-github-action muss der Workflow distribute.yml mit einen eigene
 * Nach Abschluss des Umbau und Tests kann dieser PR ebenfalls gemerged werden.
 
 ### Anpassung im Microservice
+In der Renovate Konfiguration ist zusätzlich freenet-group/mcbscore-renovate:java-ms zu erweitern.
+```properties
+"local>freenet-group/mcbscore-renovate:java",
+"local>freenet-group/mcbscore-renovate:java-ms"
+```
+
 In den workflow.properties muß die AtlassianTools Version >=4.0.18 sein.
 
 ```properties
