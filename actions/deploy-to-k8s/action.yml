@@ -271,7 +271,7 @@ runs:
             javaCommandJsonArray=$(jq --null-input --compact-output --arg cmd "$JAVA_COMMAND" '
               [ "bash", "-x", "-c", $cmd ]
             ' | tee /dev/stderr)
-            helmCommandOpt=(--set-json="helmCommand=$javaCommandJsonArray")
+            helmCommandOpt=(--set-json="command=$javaCommandJsonArray")
           fi
           
           # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME"
