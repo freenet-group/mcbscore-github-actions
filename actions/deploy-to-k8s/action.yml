@@ -263,12 +263,17 @@ runs:
               helmOpts=("${helmOpts[@]}" "--values=$f")
             fi
           done
-
-          printf 'javaCommandJsonArray == ' >&2
-          javaCommandJsonArray=$(jq --null-input --compact-output --arg cmd "$JAVA_COMMAND" '
-            [ "bash", "-x", "-c", $cmd ]
-          ' | tee /dev/stderr)
-
+          
+          # JAVA_COMMAND in Helm Option konvertieren, wenn gesetzt
+          helmCommandOpt=()
+          if [ -n "$JAVA_COMMAND" ]; then
+            printf 'javaCommandJsonArray == ' >&2
+            javaCommandJsonArray=$(jq --null-input --compact-output --arg cmd "$JAVA_COMMAND" '
+              [ "bash", "-x", "-c", $cmd ]
+            ' | tee /dev/stderr)
+            helmCommandOpt=(--set-json="helmCommand=$javaCommandJsonArray")
+          fi
+          
           # vor dem Deployment helm status --namespace="$K8S_NAMESPACE" "$K8S_COMPONENT_NAME"
           # in einer Schleife (10s warten, insgesamt max. maxWaitForDeployment) prüfen
           maxWait='${{ inputs.maxWaitForDeployment }}'
@@ -315,4 +320,4 @@ runs:
             --set="aws_access_key_id=$AWS_ACCESS_KEY_ID" \
             --set="aws_secret_key=$AWS_SECRET_ACCESS_KEY" \
             --set="jasypt_password=$JASYPT_ENCRYPTOR_PASSWORD" \
-            --set-json="command=$javaCommandJsonArray"
+            "${helmCommandOpt[@]}"

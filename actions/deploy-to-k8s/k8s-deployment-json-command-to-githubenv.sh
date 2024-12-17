@@ -109,16 +109,19 @@ jqCommand='
 	;
 
 	def objectToCommandArgs: to_entries | map(toCommandArgs);
-
-	[
-		"java",
-		((.javaOptions // {}) | applySubst | objectToCommandArgs),
-		"-jar",
-		(.jarName // ("jarName fehlt" | halt_error)) + ".jar",
-		((.javaArgs // {}) | applySubst | objectToCommandArgs)
-	]
-	| flatten
-	| join(" ")
+  if .jarName == null then
+    ""
+  else
+	  [
+	    "java",
+	    ((.javaOptions // {}) | applySubst | objectToCommandArgs),
+	  	"-jar",
+	  	.jarName + ".jar",
+	  	((.javaArgs // {}) | applySubst | objectToCommandArgs)
+	  ]
+	  | flatten
+	  | join(" ")
+  end
 '
 cmd=$(jq --argjson subst "$substMapJson" --raw-output "$jqCommand" <<<"$json")
 printf 'JAVA_COMMAND=%s\n' "$cmd"
