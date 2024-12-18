@@ -205,6 +205,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
           JIRA_CLOUD_URL: ${{ env.JIRA_CLOUD_URL }}
           COVERAGE_OUTPUT: ${{ steps.fetch-coverage.outputs.coverage }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         shell: bash
         run: |
           template_file=".github/templates/release_template.md"
@@ -276,7 +277,7 @@ jobs:
           
             # Renovate Ticket überspringen, Rest aber prüfen
             if [ "$issueNumber" = "ABRMS-5265" ]; then
-              title="${{ github.event.pull_request.title }}"
+              title="$PR_TITLE"
               issueListLines+="| ABRMS-5265 | $title | Renovate | Renovate |"$'\n'
               echo "renovate=true" >> "$GITHUB_OUTPUT"
               echo "renovate_title=$title" >> "$GITHUB_OUTPUT"
