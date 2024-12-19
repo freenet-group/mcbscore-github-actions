@@ -22,6 +22,11 @@ on:
         description: 'Ist dies ein Pre-Release?'
         required: false
         type: boolean
+      sanityTestsEnabled:
+        default: true
+        description: Flag zum Deaktivieren der SanityTests beim Deployment nach Releasebuild. Standardmäßig aktiviert.
+        required: false
+        type: boolean
 
 jobs:
   release:
@@ -496,7 +501,8 @@ jobs:
             {
               "environment": "dev",
               "component": "${{ env.COMPONENT }}", 
-              "componentVersion": "${{ steps.version-calculation.outputs.new_version }}"
+              "componentVersion": "${{ steps.version-calculation.outputs.new_version }}",
+              "sanityTestsEnabled": ${{ inputs.sanityTestsEnabled }}
             }
 
       - name: Deployment Workflow Status prüfen
