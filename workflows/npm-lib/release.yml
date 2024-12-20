@@ -145,7 +145,7 @@ jobs:
       # Release Template
       - name: Issue-List Alternative aus Diff zur neuen Version erzeugen
         id: jira_keys
-        uses: varnerknut/jira-extract-issue-keys-from-tags@1.3
+        uses: varnerknut/jira-extract-issue-keys-from-tags@1.5
         with:
           token: ${{ env.TOKEN }}
           head-tag: ${{ steps.version-calculation.outputs.new_version }}
