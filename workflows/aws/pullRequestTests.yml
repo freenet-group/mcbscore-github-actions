@@ -110,7 +110,7 @@ jobs:
 
       # Coverage als Comment posten
       - name: Coverage Report als PR-Kommentar posten
-        uses: lucassabreu/comment-coverage-clover@v0.13.0
+        uses: lucassabreu/comment-coverage-clover@v0.15.1
         with:
           file: ${{ steps.read-properties.outputs.CLOVER_COVERAGE_FILE }}
           with-chart: false
