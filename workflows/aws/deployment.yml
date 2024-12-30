@@ -99,7 +99,7 @@ jobs:
           registry-url: 'https://npm.pkg.github.com/'
 
       - name: Dependencies installieren
-        run: npm ci
+        run: npm ci --force
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GH_R_PACKAGES }}
 
@@ -114,8 +114,8 @@ jobs:
         if: steps.determine-environment.outputs.ENVIRONMENT == 'GIT'
         run: npm run deploy --stage=git
 
-      - name: Deployment auf PET, wenn PROD oder PET
-        if: steps.determine-environment.outputs.ENVIRONMENT == 'PET' || steps.determine-environment.outputs.ENVIRONMENT == 'PROD'
+      - name: Deployment auf PET, wenn GIT oder PET
+        if: steps.determine-environment.outputs.ENVIRONMENT == 'GIT' || steps.determine-environment.outputs.ENVIRONMENT == 'PET'
         run: npm run deploy --stage=pet
 
       - name: Deployment auf PROD
