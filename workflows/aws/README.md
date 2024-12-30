@@ -31,11 +31,14 @@ Die folgenden `npm run`-Skripte werden in diesem Projekt verwendet und müssen i
 
 - **`npm run build`**: Baut das Projekt und generiert die notwendigen Artefakte.
 - **`npm run deploy --stage=<STAGE>`**: Führt das Deployment für eine spezifische Stage durch, z.B. `git`, `pet`, `prod`.
+- **`npm run remove --stage=<STAGE>`**: Entfernt das Deployment für eine spezifische Stage, z.B. `git`, `pet`, `prod`.
 - **`npm run generate:sbom`**: Generiert eine SBOM-Datei.
 - **`npm run lint`**: Führt Linting-Checks durch, um den Code auf Style-Verstöße und potenzielle Fehler zu prüfen.
 - **`npm run lint:fix`**: Führt Linting-Checks durch und versucht, die gefundenen Probleme automatisch zu beheben.
-- **`npm run prettier:check`**: Überprüft, ob der Code den Prettier-Formatierungsregeln entspricht.
-- **`npm run prettier:write`**: Formatiert den Code gemäß den Prettier-Regeln.
+- **`npm run prettier:check`**: Überprüft, ob der Code den Prettier-Formatierungsregeln entspricht. (@deprecated - bitte `npm run format:check` verwenden)
+- **`npm run prettier:write`**: Formatiert den Code gemäß den Prettier-Regeln. (@deprecated - bitte `npm run format:write` verwenden)
+- **`npm run format:check`**: Überprüft, ob der Code Regeln entspricht.
+- **`npm run format:write`**: Formatiert den Code gemäß den Regeln.
 - **`npm run test`**: Führt die Unit- und Integrationstests durch und erstellt eine Coverage unter coverage/coverage-summary.json.
 
 ## Serverless Framework Plugins

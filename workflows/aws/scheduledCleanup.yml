@@ -132,6 +132,10 @@ jobs:
               continue
             fi
 
-            # sls remove mit den entsprechenden Optionen ausführen
-            npx serverless remove --stage "$STAGE_NAME"
+            # Nutze 'npm run remove' wenn vorhanden, ansonsten fallback auf 'npx serverless remove', 
+            if [ -f "package.json" ] && grep -q '"remove":' package.json; then
+              npm run remove --stage "$STAGE_NAME"
+            else
+              npx serverless remove --stage "$STAGE_NAME"
+            fi
           done
