@@ -106,7 +106,7 @@ jobs:
 
       # Tests starten
       - name: Tests ausführen und Coverage generieren
-        run: npm run test --stage=pr-${{ github.event.number }}
+        run: npm run test --stage=pr${{ github.event.number }}
 
       # Coverage als Comment posten
       - name: Coverage Report als PR-Kommentar posten
