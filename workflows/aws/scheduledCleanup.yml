@@ -80,9 +80,9 @@ jobs:
           echo "Stacks output:"
           cat stacks.json
 
-          # Stack-Namen extrahieren und nach Service-Name filtern
+          # Stack-Namen extrahieren, nach Service-Name filtern und SubStacks mit mehreren "-" ignorieren
           OLD_STACKS=$(jq -r --arg date "$THRESHOLD_DATE" --arg service "$SERVICE_NAME" \
-            '.Stacks[] | select(.CreationTime < $date and (.StackName | startswith($service + "-"))) | .StackName' stacks.json)
+            '.Stacks[] | select(.CreationTime < $date and (.StackName | startswith($service + "-")) and (.StackName | gsub($service + "-"; "") | test("^[^\\-]+$"))) | .StackName' stacks.json)
 
           # Debugging: Check filtered stacks
           echo "Filtered stacks based on service name and date: $OLD_STACKS"
