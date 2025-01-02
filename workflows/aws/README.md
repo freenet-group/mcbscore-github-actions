@@ -42,6 +42,14 @@ Die folgenden `npm run`-Skripte werden in diesem Projekt verwendet und müssen i
 - **`npm run format`**: Formatiert den Code gemäß den Regeln.
 - **`npm run test`**: Führt die Unit- und Integrationstests durch und erstellt eine Coverage unter coverage/coverage-summary.json.
 
+## Serverless
+
+Ein Deployment über Serverless findet über `npm run deploy --stage=<STAGE>` statt.
+Die Stage wird im WF durch die Nummer des PullRequest ergänzt. Eine mögliche Stage ist z.B. "pr-123".
+Damit diese Development Stages korrekt abgeräumt werden, wird über den WF `scheduledCleanup` mit `npm run remove --stage=<STAGE>` ein Cleanup nach 9 Tagen durchgeführt.
+
+❗ Der Service-Name in der Main-ServerlessConfig, darf kein "-" enthalten, da dies zu Problemen beim Entfernen des Stacks führen kann. ❗
+
 ## Serverless Framework Plugins
 
 Dieses Projekt verwendet das Serverless Framework für die Verwaltung und Bereitstellung serverloser Anwendungen. Die folgenden Plugins sind in der `serverless.yml`-Datei erforderlich und sollten in der `package.json` unter den `devDependencies` aufgeführt sein:
