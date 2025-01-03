@@ -144,7 +144,7 @@ jobs:
 
       - name: Set up JDK
         id: setup-java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ steps.read-gradle-properties.outputs.java_version }}
           distribution: 'zulu'
