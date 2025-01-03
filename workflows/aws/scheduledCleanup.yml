@@ -80,9 +80,9 @@ jobs:
           echo "Stacks output:"
           cat stacks.json
 
-          # Stack-Namen extrahieren und nach Service-Name filtern
+          # Stack-Namen extrahieren, nach Service-Name filtern und SubStacks mit mehreren "-" ignorieren
           OLD_STACKS=$(jq -r --arg date "$THRESHOLD_DATE" --arg service "$SERVICE_NAME" \
-            '.Stacks[] | select(.CreationTime < $date and (.StackName | startswith($service + "-"))) | .StackName' stacks.json)
+            '.Stacks[] | select(.CreationTime < $date and (.StackName | startswith($service + "-")) and (.StackName | gsub($service + "-"; "") | test("^[^\\-]+$"))) | .StackName' stacks.json)
 
           # Debugging: Check filtered stacks
           echo "Filtered stacks based on service name and date: $OLD_STACKS"
@@ -132,6 +132,10 @@ jobs:
               continue
             fi
 
-            # sls remove mit den entsprechenden Optionen ausführen
-            npx serverless remove --stage "$STAGE_NAME"
+            # Nutze 'npm run remove' wenn vorhanden, ansonsten fallback auf 'npx serverless remove', 
+            if [ -f "package.json" ] && grep -q '"remove":' package.json; then
+              npm run remove --stage "$STAGE_NAME"
+            else
+              npx serverless remove --stage "$STAGE_NAME"
+            fi
           done

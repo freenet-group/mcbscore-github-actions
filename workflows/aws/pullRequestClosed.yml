@@ -46,16 +46,25 @@ jobs:
         id: set-stage
         run: |
           if [ -n "${{ inputs.stage }}" ]; then
-            echo "STAGE=${{ inputs.stage }}" >> $GITHUB_ENV
+            echo "STAGE=${{ inputs.stage }}" >> $GITHUB_OUTPUT
           else
-            PR_NUMBER=$(echo ${{ github.event.pull_request.number }})
-            echo "STAGE=pr-${PR_NUMBER}" >> $GITHUB_ENV
+            PR_NUMBER=${{ github.event.pull_request.number }}
+            echo "STAGE=pr${PR_NUMBER}" >> $GITHUB_OUTPUT
           fi
 
       - name: Serverless Deployment entfernen, wenn nicht GIT, PET oder PROD
+        env: 
+          STAGE: ${{ steps.set-stage.outputs.STAGE }}
         run: |
-          if [ "${{ env.STAGE }}" == "git" ] || [ "${{ env.STAGE }}" == "pet" ] || [ "${{ env.STAGE }}" == "prod" ]; then
+          echo "Überprüfe Stage: $STAGE"
+          if echo "$STAGE" | grep -iqE '^(git|pet|prod)$'; then
             echo "Stage darf nicht entfernt werden"
             exit 1
           fi
-          npx sls remove --stage ${{ env.STAGE }} --verbose
+          
+          # Nutze 'npm run remove' wenn vorhanden, ansonsten fallback auf 'npx serverless remove', 
+          if [ -f "package.json" ] && grep -q '"remove":' package.json; then
+            npm run remove --stage "$STAGE"
+          else
+            npx serverless remove --stage "$STAGE"
+          fi

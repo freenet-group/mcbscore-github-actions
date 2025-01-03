@@ -31,12 +31,24 @@ Die folgenden `npm run`-Skripte werden in diesem Projekt verwendet und müssen i
 
 - **`npm run build`**: Baut das Projekt und generiert die notwendigen Artefakte.
 - **`npm run deploy --stage=<STAGE>`**: Führt das Deployment für eine spezifische Stage durch, z.B. `git`, `pet`, `prod`.
+- **`npm run remove --stage=<STAGE>`**: Entfernt das Deployment für eine spezifische Stage, z.B. `git`, `pet`, `prod`.
 - **`npm run generate:sbom`**: Generiert eine SBOM-Datei.
 - **`npm run lint`**: Führt Linting-Checks durch, um den Code auf Style-Verstöße und potenzielle Fehler zu prüfen.
 - **`npm run lint:fix`**: Führt Linting-Checks durch und versucht, die gefundenen Probleme automatisch zu beheben.
-- **`npm run prettier:check`**: Überprüft, ob der Code den Prettier-Formatierungsregeln entspricht.
-- **`npm run prettier:write`**: Formatiert den Code gemäß den Prettier-Regeln.
+- **`npm run prettier:check`**: Überprüft, ob der Code den Prettier-Formatierungsregeln entspricht. (@deprecated - bitte `npm run format:check` verwenden)
+- **`npm run prettier:write`**: Formatiert den Code gemäß den Prettier-Regeln. (@deprecated - bitte `npm run format` verwenden)
+- **`npm run format:check`**: Überprüft, ob der Code Regeln entspricht.
+- **`npm run format:write`**: Formatiert den Code gemäß den Regeln.
+- **`npm run format`**: Formatiert den Code gemäß den Regeln.
 - **`npm run test`**: Führt die Unit- und Integrationstests durch und erstellt eine Coverage unter coverage/coverage-summary.json.
+
+## Serverless
+
+Ein Deployment über Serverless findet über `npm run deploy --stage=<STAGE>` statt.
+Die Stage wird im WF durch die Nummer des PullRequest ergänzt. Eine mögliche Stage ist z.B. "pr-123".
+Damit diese Development Stages korrekt abgeräumt werden, wird über den WF `scheduledCleanup` mit `npm run remove --stage=<STAGE>` ein Cleanup nach 9 Tagen durchgeführt.
+
+❗ Der Service-Name in der Main-ServerlessConfig, darf kein "-" enthalten, da dies zu Problemen beim Entfernen des Stacks führen kann. ❗
 
 ## Serverless Framework Plugins
 
